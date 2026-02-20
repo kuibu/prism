@@ -186,3 +186,63 @@ curl -sS "http://localhost:8080/api/v1/audit/events?action_type=agent_summarize&
 ```bash
 docker compose run --rm gateway_api pytest -q
 ```
+
+## Iteration 4: CLI 登录 / sync / 发消息
+
+1. 安装 CLI（本地虚拟环境示例）：
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -e clients/cli
+```
+
+2. 创建两个 Matrix 测试用户并建房（使用 Synapse Client API）：
+
+```bash
+SUFFIX=$(date +%s)
+ALICE="alice_${SUFFIX}"
+BOB="bob_${SUFFIX}"
+PASS="Passw0rd!"
+
+ALICE_JSON=$(curl -sS -X POST http://localhost:8008/_matrix/client/v3/register \
+  -H 'content-type: application/json' \
+  -d "{\"username\":\"${ALICE}\",\"password\":\"${PASS}\",\"auth\":{\"type\":\"m.login.dummy\"}}")
+BOB_JSON=$(curl -sS -X POST http://localhost:8008/_matrix/client/v3/register \
+  -H 'content-type: application/json' \
+  -d "{\"username\":\"${BOB}\",\"password\":\"${PASS}\",\"auth\":{\"type\":\"m.login.dummy\"}}")
+
+ALICE_TOKEN=$(echo "$ALICE_JSON" | python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])')
+BOB_USER=$(echo "$BOB_JSON" | python3 -c 'import json,sys; print(json.load(sys.stdin)["user_id"])')
+ROOM_JSON=$(curl -sS -X POST http://localhost:8008/_matrix/client/v3/createRoom \
+  -H "authorization: Bearer ${ALICE_TOKEN}" \
+  -H 'content-type: application/json' \
+  -d "{\"preset\":\"private_chat\",\"invite\":[\"${BOB_USER}\"]}")
+ROOM_ID=$(echo "$ROOM_JSON" | python3 -c 'import json,sys; print(json.load(sys.stdin)["room_id"])')
+echo "ROOM_ID=${ROOM_ID}"
+```
+
+3. 使用 CLI 登录 Alice：
+
+```bash
+.venv/bin/prism-cli login \
+  --homeserver http://localhost:8008 \
+  --user "${ALICE}" \
+  --password "${PASS}" \
+  --session-file /tmp/prism-cli-session.json
+```
+
+4. 使用 CLI 发消息：
+
+```bash
+.venv/bin/prism-cli send "${ROOM_ID}" "hello from prism-cli" \
+  --session-file /tmp/prism-cli-session.json
+```
+
+5. 使用 CLI 做一次 sync 查看消息：
+
+```bash
+.venv/bin/prism-cli sync \
+  --room-id "${ROOM_ID}" \
+  --timeout-ms 2000 \
+  --session-file /tmp/prism-cli-session.json
+```

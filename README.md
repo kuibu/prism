@@ -40,7 +40,7 @@ Prism 是一个“下一代微信”方向的可运行 MVP：基于 Matrix 协�
 
 ---
 
-## Current Status (Iteration 3) | 当前状态（迭代 3）
+## Current Status (Iteration 4) | 当前状态（迭代 4）
 
 ### Implemented | 已实现
 - `docker compose` local stack: Synapse, OPA, immudb, MinIO, `gateway_api`.
@@ -50,6 +50,10 @@ Prism 是一个“下一代微信”方向的可运行 MVP：基于 Matrix 协�
   - Policy: `/api/v1/policy/grants`, `/api/v1/policy/revoke`
   - Agent: `/api/v1/agent/summarize`
   - Matrix proxy: `/api/v1/matrix/sync`
+- Python CLI (`clients/cli`) commands:
+  - `prism-cli login`
+  - `prism-cli sync`
+  - `prism-cli send`
 - OPA policy uses persisted grant data (`data.prism.grants`) for allow/deny decisions.
 - Revocation is enforced immediately on subsequent agent access.
 - Audit chain hashing and verification implemented with immudb SQL table backend.
@@ -64,6 +68,7 @@ Prism 是一个“下一代微信”方向的可运行 MVP：基于 Matrix 协�
   - matrix sync failure audit
   - audit verify (actor/global)
 - Matrix smoke (register/create room/send/sync) validated after Synapse config hardening.
+- CLI smoke validated with real Matrix flow (`login -> send -> sync`).
 
 ---
 
@@ -175,16 +180,15 @@ For end-to-end step-by-step commands, see `docs/demo_script.md`.
 ### EN
 - No full E2EE product implementation yet (framework and audit boundaries are prioritized first).
 - Agent summarization is currently rule-based placeholder.
-- CLI experience and production hardening are still iterative.
+- Web client is not implemented yet (current client is Python CLI).
 
 ### 中文
 - 尚未实现完整产品级 E2EE（当前优先透明审计与策略边界）。
 - 智能体摘要目前是规则/占位实现。
-- CLI 体验与生产级加固仍在迭代中。
+- Web 客户端尚未实现（当前客户端为 Python CLI）。
 
 ---
 
 ## License | 许可证
 
 MIT License. See `LICENSE`.
-
