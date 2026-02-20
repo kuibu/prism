@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import deque
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from threading import Lock
 
 
@@ -16,7 +16,7 @@ class InMemoryRateCounter:
         self._lock = Lock()
 
     def increment_and_count(self, key: str, *, now: datetime | None = None) -> int:
-        ts = now.astimezone(timezone.utc) if now is not None else datetime.now(timezone.utc)
+        ts = now.astimezone(UTC) if now is not None else datetime.now(UTC)
         cutoff = ts - timedelta(seconds=self.window_seconds)
 
         with self._lock:

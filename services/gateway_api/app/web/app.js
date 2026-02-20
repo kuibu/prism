@@ -22,6 +22,8 @@ const el = {
   syncBtn: document.getElementById("syncBtn"),
   messageBody: document.getElementById("messageBody"),
   sendBtn: document.getElementById("sendBtn"),
+  fileInput: document.getElementById("fileInput"),
+  uploadBtn: document.getElementById("uploadBtn"),
   roomPills: document.getElementById("roomPills"),
   messageRows: document.getElementById("messageRows"),
   agentId: document.getElementById("agentId"),
@@ -63,6 +65,7 @@ function bindEvents() {
 
   el.createRoomBtn.addEventListener("click", () => handleCreateRoom().catch(handleUiError));
   el.sendBtn.addEventListener("click", () => handleSend().catch(handleUiError));
+  el.uploadBtn.addEventListener("click", () => handleUploadFile().catch(handleUiError));
   el.syncBtn.addEventListener("click", () => handleSync().catch(handleUiError));
 
   el.grantBtn.addEventListener("click", () => handleGrant().catch(handleUiError));
@@ -230,34 +233,51 @@ async function requestJson(url, options = {}) {
   return data;
 }
 
-async function matrixRequest(path, options = {}) {
-  const homeserver = el.homeserverUrl.value.trim();
-  if (!homeserver) {
-    throw new Error("Homeserver URL is required.");
+async function gatewayRequest(path, options = {}) {
+  const base = el.gatewayUrl.value.trim().replace(/\/+$/, "");
+  if (!base) {
+    throw new Error("Gateway URL is required.");
   }
-  const baseUrl = homeserver.replace(/\/+$/, "");
   const headers = { "content-type": "application/json" };
-  if (options.accessToken) {
-    headers.authorization = `Bearer ${options.accessToken}`;
+  if (options.auth !== false) {
+    const session = requireSession();
+    headers.authorization = `Bearer ${session.accessToken}`;
   }
-
-  return requestJson(`${baseUrl}${path}`, {
+  return requestJson(`${base}${path}`, {
     method: options.method || "GET",
     headers,
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
 }
 
-async function gatewayRequest(path, options = {}) {
+async function gatewayUpload(path, file) {
   const base = el.gatewayUrl.value.trim().replace(/\/+$/, "");
   if (!base) {
     throw new Error("Gateway URL is required.");
   }
-  return requestJson(`${base}${path}`, {
-    method: options.method || "GET",
-    headers: { "content-type": "application/json" },
-    body: options.body ? JSON.stringify(options.body) : undefined,
+  const session = requireSession();
+  const formData = new FormData();
+  formData.append("file", file, file.name || "upload.bin");
+
+  const resp = await fetch(`${base}${path}`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${session.accessToken}` },
+    body: formData,
   });
+
+  const text = await resp.text();
+  let data = {};
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch (_err) {
+    data = { raw: text };
+  }
+
+  if (!resp.ok) {
+    const detail = data?.error || data?.detail || JSON.stringify(data);
+    throw new Error(`${resp.status} ${resp.statusText}: ${detail}`);
+  }
+  return data;
 }
 
 async function handleRegister() {
@@ -267,12 +287,12 @@ async function handleRegister() {
     throw new Error("Username and password are required.");
   }
 
-  const payload = await matrixRequest("/_matrix/client/v3/register", {
+  const payload = await gatewayRequest("/matrix/register", {
     method: "POST",
+    auth: false,
     body: {
       username,
       password,
-      auth: { type: "m.login.dummy" },
     },
   });
 
@@ -294,11 +314,11 @@ async function handleLogin() {
     throw new Error("Username and password are required.");
   }
 
-  const payload = await matrixRequest("/_matrix/client/v3/login", {
+  const payload = await gatewayRequest("/matrix/login", {
     method: "POST",
+    auth: false,
     body: {
-      type: "m.login.password",
-      identifier: { type: "m.id.user", user: username },
+      username,
       password,
     },
   });
@@ -325,7 +345,7 @@ function handleLogout() {
 }
 
 async function handleCreateRoom() {
-  const session = requireSession();
+  requireSession();
   const invite = el.inviteUserId.value.trim();
   const body = {
     preset: "private_chat",
@@ -335,9 +355,8 @@ async function handleCreateRoom() {
     body.invite = [invite];
   }
 
-  const payload = await matrixRequest("/_matrix/client/v3/createRoom", {
+  const payload = await gatewayRequest("/matrix/rooms", {
     method: "POST",
-    accessToken: session.accessToken,
     body,
   });
   const roomId = payload.room_id;
@@ -348,25 +367,42 @@ async function handleCreateRoom() {
 }
 
 async function handleSend() {
-  const session = requireSession();
+  requireSession();
   const roomId = el.roomId.value.trim();
   const message = el.messageBody.value.trim();
   if (!roomId || !message) {
     throw new Error("Room ID and message are required.");
   }
 
-  const txnId = `web${Date.now()}`;
-  await matrixRequest(
-    `/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/send/m.room.message/${txnId}`,
-    {
-      method: "PUT",
-      accessToken: session.accessToken,
-      body: { msgtype: "m.text", body: message },
-    }
-  );
+  await gatewayRequest(`/matrix/rooms/${encodeURIComponent(roomId)}/messages`, {
+    method: "POST",
+    body: { body: message },
+  });
   state.roomSet.add(roomId);
   el.messageBody.value = "";
   renderRoomPills();
+}
+
+async function handleUploadFile() {
+  requireSession();
+  const roomId = el.roomId.value.trim();
+  const file = el.fileInput.files?.[0];
+
+  if (!roomId) {
+    throw new Error("Room ID is required.");
+  }
+  if (!file) {
+    throw new Error("Please choose a file first.");
+  }
+
+  const payload = await gatewayUpload(`/matrix/rooms/${encodeURIComponent(roomId)}/files`, file);
+  writeJson(el.sessionStatus, {
+    status: "file_uploaded",
+    room_id: payload.room_id,
+    event_id: payload.event_id,
+    filename: payload.filename,
+    size_bytes: payload.size_bytes,
+  });
 }
 
 function parseTimestamp(originServerTs) {
@@ -421,9 +457,8 @@ async function handleSync() {
     path += `&since=${encodeURIComponent(session.nextBatch)}`;
   }
 
-  const payload = await matrixRequest(path, {
+  const payload = await gatewayRequest(`/matrix${path.replace("/_matrix/client/v3", "")}`, {
     method: "GET",
-    accessToken: session.accessToken,
   });
 
   session.nextBatch = payload.next_batch || session.nextBatch;
@@ -496,7 +531,7 @@ function currentRoomMessages(roomId) {
 }
 
 async function handleSummarize() {
-  const session = requireSession();
+  requireSession();
   const roomId = el.roomId.value.trim();
   const agentId = el.agentId.value.trim();
   const purpose = el.purpose.value.trim();
@@ -505,22 +540,19 @@ async function handleSummarize() {
     throw new Error("Room ID, Agent ID and purpose are required.");
   }
 
-  const messages = currentRoomMessages(roomId).slice(-30);
-  if (messages.length === 0) {
-    throw new Error("No room messages available. Run sync first.");
-  }
+  const knownMessageCount = currentRoomMessages(roomId).length;
 
   const payload = await gatewayRequest("/agent/summarize", {
     method: "POST",
     body: {
       agent_id: agentId,
-      user_id: session.userId,
       room_id: roomId,
       purpose,
-      messages,
+      recent_message_limit: 50,
       max_items: 10,
     },
   });
+  payload.local_known_message_count = knownMessageCount;
   writeJson(el.agentOutput, payload);
 }
 
@@ -535,7 +567,7 @@ async function handleAuditQuery() {
   if (actionType) {
     params.set("action_type", actionType);
   }
-  const payload = await gatewayRequest(`/audit/events?${params.toString()}`);
+  const payload = await gatewayRequest(`/audit/events?${params.toString()}`, { auth: false });
   writeJson(el.auditOutput, payload);
 }
 
@@ -550,7 +582,7 @@ async function handleAuditVerify() {
   if (actionType) {
     params.set("action_type", actionType);
   }
-  const payload = await gatewayRequest(`/audit/verify?${params.toString()}`);
+  const payload = await gatewayRequest(`/audit/verify?${params.toString()}`, { auth: false });
   writeJson(el.auditOutput, payload);
 }
 

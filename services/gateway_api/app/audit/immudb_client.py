@@ -2,11 +2,19 @@ from __future__ import annotations
 
 import asyncio
 import json
-from datetime import datetime, timezone
-from typing import Any, Callable
+from collections.abc import Callable
+from datetime import UTC, datetime
+from typing import Any, cast
 from uuid import uuid4
 
-from app.audit.schemas import AuditEvent, AuditEventCreate, AuditQuery, AuditVerifyResponse
+from app.audit.schemas import (
+    ActorType,
+    AuditEvent,
+    AuditEventCreate,
+    AuditQuery,
+    AuditVerifyResponse,
+    DecisionType,
+)
 from app.audit.verification import compute_chain_hash, sha256_hex, verify_chain
 
 
@@ -74,7 +82,7 @@ class ImmudbClient:
     async def append_audit_event(self, request: AuditEventCreate) -> AuditEvent:
         await self._ensure_schema()
 
-        ts = datetime.now(timezone.utc)
+        ts = datetime.now(UTC)
         ts_ms = int(ts.timestamp() * 1000)
         prev_hash = await asyncio.to_thread(self._get_latest_chain_hash_sync)
         input_hash = request.input_hash or sha256_hex(request.input_data)
@@ -339,14 +347,20 @@ class ImmudbClient:
         def operation(client: Any) -> int | None:
             result = client.sqlExec(insert_stmt, params)
             txs = getattr(result, "txs", None)
-            if not txs:
+            if not isinstance(txs, list) or not txs:
                 return None
             header = getattr(txs[0], "header", None)
             if header is None:
                 return None
-            return int(getattr(header, "id", 0))
+            header_id = getattr(header, "id", None)
+            if header_id is None:
+                return None
+            try:
+                return int(header_id)
+            except (TypeError, ValueError):
+                return None
 
-        return self._with_session(operation)
+        return cast(int | None, self._with_session(operation))
 
     def _query_events_sync(self, query: AuditQuery, descending: bool) -> list[tuple[Any, ...]]:
         where_clause, params = self._build_where_clause(query)
@@ -365,15 +379,21 @@ class ImmudbClient:
         params["limit"] = query.limit
 
         def operation(client: Any) -> list[tuple[Any, ...]]:
-            return list(client.sqlQuery(sql, params))
+            rows = list(client.sqlQuery(sql, params))
+            return cast(list[tuple[Any, ...]], rows)
 
-        return self._with_session(operation)
+        return cast(list[tuple[Any, ...]], self._with_session(operation))
 
     def _get_latest_chain_hash_sync(self) -> str | None:
         def operation(client: Any) -> str | None:
-            rows = client.sqlQuery(
-                "SELECT chain_hash FROM audit_events "
-                f"WHERE {self._valid_event_predicate} ORDER BY id DESC LIMIT 1"
+            rows = cast(
+                list[tuple[Any, ...]],
+                list(
+                    client.sqlQuery(
+                        "SELECT chain_hash FROM audit_events "
+                        f"WHERE {self._valid_event_predicate} ORDER BY id DESC LIMIT 1"
+                    )
+                ),
             )
             if not rows:
                 return None
@@ -382,7 +402,7 @@ class ImmudbClient:
                 return None
             return str(chain_hash)
 
-        return self._with_session(operation)
+        return cast(str | None, self._with_session(operation))
 
     def _get_prev_hash_before_id_sync(self, event_row_id: int) -> str | None:
         stmt = (
@@ -392,7 +412,10 @@ class ImmudbClient:
         )
 
         def operation(client: Any) -> str | None:
-            rows = client.sqlQuery(stmt, {"event_row_id": event_row_id})
+            rows = cast(
+                list[tuple[Any, ...]],
+                list(client.sqlQuery(stmt, {"event_row_id": event_row_id})),
+            )
             if not rows:
                 return None
             value = rows[0][0]
@@ -400,7 +423,7 @@ class ImmudbClient:
                 return None
             return str(value)
 
-        return self._with_session(operation)
+        return cast(str | None, self._with_session(operation))
 
     def _current_state_sync(self) -> dict[str, Any]:
         def operation(client: Any) -> dict[str, Any]:
@@ -411,7 +434,7 @@ class ImmudbClient:
                 "tx_hash": tx_hash.hex() if isinstance(tx_hash, bytes) else "",
             }
 
-        return self._with_session(operation)
+        return cast(dict[str, Any], self._with_session(operation))
 
     def _build_where_clause(self, query: AuditQuery) -> tuple[str, dict[str, Any]]:
         clauses: list[str] = [self._valid_event_predicate]
@@ -467,18 +490,20 @@ class ImmudbClient:
         room_id_raw = row[16]
 
         ts_ms = int(row[2])
-        ts = datetime.fromtimestamp(ts_ms / 1000, tz=timezone.utc)
+        ts = datetime.fromtimestamp(ts_ms / 1000, tz=UTC)
+        actor_type = ActorType(str(row[3]))
+        decision = DecisionType(str(row[8]))
 
         return AuditEvent(
             event_id=str(row[1]),
             ts=ts,
             ts_ms=ts_ms,
-            actor_type=str(row[3]),
+            actor_type=actor_type,
             actor_id=str(row[4]),
             action_type=str(row[5]),
             resource_type=str(row[6]),
             resource_id=str(row[7]),
-            decision=str(row[8]),
+            decision=decision,
             reason_code=str(reason_code_raw) if reason_code_raw else None,
             input_hash=str(row[10]),
             output_hash=str(row[11]),

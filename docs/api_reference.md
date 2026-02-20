@@ -1,82 +1,146 @@
-# API Reference (Iteration 3)
+# API Reference (Latest MVP)
 
 Base URL: `http://localhost:8080/api/v1`
+
+## Auth Model
+
+- `matrix/register` and `matrix/login` are anonymous.
+- `matrix/whoami`, `matrix/rooms*`, `matrix/sync`, `policy/*`, `agent/summarize` require:
+  - `Authorization: Bearer <matrix_access_token>`
+- Gateway resolves caller identity via Matrix `/_matrix/client/v3/account/whoami`.
+- `user_id` in policy payload must match authenticated caller, otherwise `403 user_id_mismatch`.
 
 ## Health
 
 ### `GET /health/live`
-
-Returns gateway process liveness.
+Process liveness.
 
 ### `GET /health/ready`
+Dependency readiness (OPA + immudb).
 
-Checks dependency connectivity for OPA and immudb.
+## Matrix Proxy
 
-## Audit
+### `POST /matrix/register`
+Register Matrix account via gateway and audit the action.
 
-### `POST /audit/events`
+Request:
+```json
+{"username":"alice","password":"Passw0rd!"}
+```
 
-Writes an immutable audit event to immudb.
+### `POST /matrix/login`
+Login via gateway and audit the action.
 
-Required fields include:
+Request:
+```json
+{"username":"alice","password":"Passw0rd!"}
+```
 
-- `actor_type`, `actor_id`
-- `action_type`
-- `resource_type`, `resource_id`
-- `decision`
+### `GET /matrix/whoami`
+Returns authenticated Matrix user id.
 
-Optional filters and hashes can also be included.
+### `POST /matrix/rooms`
+Create room (audited).
 
-### `GET /audit/events`
+Request:
+```json
+{"name":"demo-room","invite":[],"preset":"private_chat"}
+```
 
-Query audit events by:
+### `POST /matrix/rooms/{room_id}/join`
+Join room (audited).
 
-- `actor_id`
-- `user_id`
-- `room_id`
-- `action_type`
-- `decision`
-- `start_ts`, `end_ts`
-- `limit`
+### `POST /matrix/rooms/{room_id}/messages`
+Send text message (audited).
 
-### `GET /audit/verify`
+Request:
+```json
+{"body":"hello"}
+```
 
-Verifies chain continuity for the selected event range and returns:
+### `POST /matrix/rooms/{room_id}/files`
+Upload media and send file message (audited for both upload and send).
+`multipart/form-data`, field name: `file`.
 
-- `verified`
-- `checked_events`
-- first/last/broken event ids
-- current immudb state tx id/hash
+### `GET /matrix/sync`
+Proxy sync (audited).
+
+Query params:
+- `room_id` (optional)
+- `since` (optional)
+- `timeout_ms` (default 0, max 60000)
+- `full_state` (default false)
 
 ## Policy
 
 ### `GET /policy/grants`
+List grants for authenticated user by default.
 
-Lists current grants (filterable by `user_id`, `agent_id`, and `include_revoked`).
+Query:
+- `user_id` (optional; if provided must equal caller)
+- `agent_id` (optional)
+- `include_revoked` (default false)
 
 ### `POST /policy/grants`
+Create grant in OPA data store (`data.prism.grants`) and write audit event.
 
-Creates a grant record for an agent, persists it into OPA `data.prism.grants`, and logs an audit event.
+Request:
+```json
+{
+  "user_id":"@alice:localhost",
+  "agent_id":"agent.summary",
+  "data_category":"room_messages",
+  "purpose":"daily_summary",
+  "rate_limit_per_minute":60
+}
+```
 
 ### `POST /policy/revoke`
+Revoke grant and write audit event.
 
-Revokes a grant in OPA data, and logs an audit event.
+Request:
+```json
+{"user_id":"@alice:localhost","grant_id":"grant_xxx","reason":"user_request"}
+```
 
 ## Agent
 
 ### `POST /agent/summarize`
+Server-side agent flow:
+1. OPA decision on `read_messages`
+2. Read room messages via Matrix using caller token
+3. Summarize
+4. Audit read + summarize events
 
-Runs policy decision via OPA before summarization.
+Request:
+```json
+{
+  "agent_id":"agent.summary",
+  "room_id":"!room:localhost",
+  "purpose":"daily_summary",
+  "recent_message_limit":30,
+  "max_items":8
+}
+```
 
-- On allow: returns summary + audited allow event
-- On deny: returns 403 + audited deny event (for example `grant_revoked`)
+## Audit
 
-## Matrix
+### `POST /audit/events`
+Low-level direct audit write endpoint.
 
-### `GET /matrix/sync`
+### `GET /audit/events`
+Query by `actor_id`, `user_id`, `room_id`, `action_type`, `decision`, `start_ts`, `end_ts`, `limit`.
 
-Proxy sync endpoint:
+### `GET /audit/verify`
+Verify hash-chain integrity for selected scope.
 
-- `access_token` (required)
-- `since`, `timeout_ms`, `full_state`
-- optional `user_id` and `room_id` for audit context
+Response fields:
+- `verified`
+- `checked_events`
+- `first_event_id`, `last_event_id`, `broken_event_id`, `reason`
+- `state_tx_id`, `state_tx_hash`
+
+## Observability
+
+### `GET /metrics`
+Prometheus metrics endpoint for gateway.

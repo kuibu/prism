@@ -12,6 +12,7 @@ from app.audit.schemas import (
     AuditListResponse,
     AuditQuery,
     AuditVerifyResponse,
+    DecisionType,
 )
 from app.core.deps import get_immudb_client
 
@@ -35,7 +36,7 @@ async def query_audit_events(
     user_id: str | None = Query(default=None),
     room_id: str | None = Query(default=None),
     action_type: str | None = Query(default=None),
-    decision: str | None = Query(default=None),
+    decision: DecisionType | None = Query(default=None),
     start_ts: datetime | None = Query(default=None),
     end_ts: datetime | None = Query(default=None),
     limit: int = Query(default=100, ge=1, le=1000),
@@ -66,7 +67,7 @@ async def verify_audit_chain(
     user_id: str | None = Query(default=None),
     room_id: str | None = Query(default=None),
     action_type: str | None = Query(default=None),
-    decision: str | None = Query(default=None),
+    decision: DecisionType | None = Query(default=None),
     start_ts: datetime | None = Query(default=None),
     end_ts: datetime | None = Query(default=None),
     limit: int = Query(default=1000, ge=1, le=5000),

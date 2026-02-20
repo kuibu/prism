@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -21,12 +21,12 @@ class PolicyDecision(BaseModel):
     reason: str
 
 
-class GrantStatus(str, Enum):
+class GrantStatus(StrEnum):
     ACTIVE = "active"
     REVOKED = "revoked"
 
 
-class DataCategory(str, Enum):
+class DataCategory(StrEnum):
     ROOM_MESSAGES = "room_messages"
 
 

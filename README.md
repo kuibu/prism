@@ -2,115 +2,53 @@
 ## AI-Native + Transparent Security Messaging (Matrix)  
 ## AI 原生 + 透明安全消息系统（基于 Matrix）
 
-Prism is an MVP for a next-generation WeChat-like product built on Matrix, with security-by-default, immutable audit, policy-based agent access control, and practical developer operations.
+Prism is a runnable MVP for a next-gen WeChat-like product on Matrix with security-by-default:
+- immutable audit (immudb)
+- policy-controlled agent access (OPA)
+- gateway-enforced identity binding
+- observable operations (OpenTelemetry + Prometheus + Grafana)
 
-Prism 是一个“下一代微信”方向的可运行 MVP：基于 Matrix 协议，默认安全、不可篡改审计、策略驱动智能体访问控制，并且强调工程可落地与可运维性。
-
----
-
-## Why This Project Matters | 项目意义
-
-### EN
-- Most AI assistants in chat apps are opaque: users cannot clearly know what data was read, why it was read, and whether permissions were respected.
-- Prism treats **AI agents as first-class actors** and makes every sensitive action auditable and policy-gated.
-- The goal is not just “chat + bot”, but a foundation for **trustworthy AI communication infrastructure**.
-
-### 中文
-- 现有聊天产品中的 AI 助手普遍“不透明”：用户很难知道读了什么数据、为什么读、权限是否被遵守。
-- Prism 把**智能体当作一级对象**，并让每个敏感动作都经过策略判定且可审计追溯。
-- 目标不只是“聊天 + 机器人”，而是构建**可信 AI 通信基础设施**。
+Prism 是一个可运行的“下一代微信”方向 MVP，基于 Matrix，并默认开启透明安全：
+- 不可篡改审计（immudb）
+- 策略控制的智能体访问（OPA）
+- 网关身份绑定（防 user_id 伪造）
+- 可观测性（OpenTelemetry + Prometheus + Grafana）
 
 ---
 
-## MVP Goals | MVP 目标
-
-### EN
-1. Matrix-based messaging baseline (Synapse).
-2. Immutable audit for sensitive actions (immudb).
-3. OPA-backed grant/revoke and runtime policy decisions.
-4. Agent runtime with controlled tool access (`read_messages` + `summarize` path).
-5. One-command local startup and repeatable validation.
-
-### 中文
-1. 基于 Matrix/Synapse 的消息能力底座。
-2. 对敏感动作进行不可篡改审计（immudb）。
-3. 基于 OPA 的授权/撤权与实时策略判定。
-4. 受控智能体运行时（`read_messages` + `summarize` 流程）。
-5. 本地一键启动与可重复验证。
-
----
-
-## Current Status (Iteration 4+) | 当前状态（迭代 4+）
+## Current MVP Status | 当前 MVP 状态
 
 ### Implemented | 已实现
-- `docker compose` local stack: Synapse, OPA, immudb, MinIO, `gateway_api`.
-- FastAPI gateway APIs:
-  - Health: `/api/v1/health/live`, `/api/v1/health/ready`
-  - Audit: `/api/v1/audit/events`, `/api/v1/audit/verify`
-  - Policy: `/api/v1/policy/grants`, `/api/v1/policy/revoke`
-  - Agent: `/api/v1/agent/summarize`
-  - Matrix proxy: `/api/v1/matrix/sync`
-- Python CLI (`clients/cli`) commands:
-  - `prism-cli login`
-  - `prism-cli sync`
-  - `prism-cli send`
-- Browser client (`/web`) with:
-  - Register / Login
-  - Sync / Send
-  - Agent grant/revoke/summarize
-  - Audit query/verify
-- OPA policy uses persisted grant data (`data.prism.grants`) for allow/deny decisions.
-- Revocation is enforced immediately on subsequent agent access.
-- Audit chain hashing and verification implemented with immudb SQL table backend.
-- Integrated tests for core policy/audit/agent/matrix paths.
-
-### Validation done on latest code | 最新代码已验证
-- Containerized tests: `docker compose run --rm gateway_api pytest -q` -> pass.
-- Real API scenario loop:
-  - grant -> allow
-  - revoke -> deny
-  - rate-limit deny
-  - matrix sync failure audit
-  - audit verify (actor/global)
-- Matrix smoke (register/create room/send/sync) validated after Synapse config hardening.
-- CLI smoke validated with real Matrix flow (`login -> send -> sync`).
-- Web smoke validated through live server integration (`/web` + Matrix + Gateway APIs).
+- Gateway-authenticated Matrix proxy APIs:
+  - register/login/whoami/create room/join/send text/upload file/sync
+- Mandatory immutable audit for sensitive actions:
+  - matrix login/create/send/upload/sync
+  - policy grant/revoke
+  - agent data access + summarize allow/deny
+- OPA grant/revoke wired to real OPA data API (`data.prism.grants`)
+- Revoke immediately enforced on next agent access
+- Agent runtime reads room messages server-side (not client-passed text)
+- Web client at `/web` (gateway-backed)
+- CLI client (`prism-cli`) gateway-backed commands:
+  - `register`, `login`, `send`, `send-file`, `sync`
+- Observability stack:
+  - gateway `/metrics`
+  - Prometheus scrape
+  - Grafana pre-provisioned datasource
+- Test suite:
+  - unit/integration with stubs
+  - optional live integration tests against running services
 
 ---
 
-## Repository Structure | 仓库结构
+## Stack | 技术栈
 
-```text
-repo/
-  docker-compose.yml
-  services/
-    gateway_api/
-      app/
-        main.py
-        api/
-        core/
-        policy/
-        audit/
-        agent/
-        matrix/
-        tests/
-      Dockerfile
-      pyproject.toml
-  clients/
-    cli/
-      pyproject.toml
-      src/
-  policies/
-    opa/
-      policy.rego
-      data.json
-      README.md
-  docs/
-    architecture.md
-    threat_model.md
-    api_reference.md
-    demo_script.md
-```
+- Matrix homeserver: Synapse
+- Gateway API: FastAPI + Pydantic v2
+- Policy: OPA (Rego)
+- Immutable audit DB: immudb
+- Object storage: MinIO
+- Observability: OpenTelemetry + Prometheus + Grafana
 
 ---
 
@@ -121,15 +59,11 @@ repo/
 cp .env.example .env
 ```
 
-### 2) Start all services | 启动全部服务
+### 2) Start stack | 启动服务
 ```bash
 docker compose up -d --build
 docker compose ps
 ```
-
-Note: `immudb` host port defaults to `3332` (container-internal port remains `3322`) to avoid common local port conflicts.
-
-说明：为避免本机常见端口冲突，`immudb` 默认映射到宿主机 `3332`（容器内部端口仍为 `3322`）。
 
 ### 3) Health checks | 健康检查
 ```bash
@@ -137,73 +71,87 @@ curl -sS http://localhost:8080/api/v1/health/live | python3 -m json.tool
 curl -sS http://localhost:8080/api/v1/health/ready | python3 -m json.tool
 ```
 
-### 4) Run tests | 运行测试
+### 4) Run core tests | 运行核心测试
 ```bash
 docker compose run --rm gateway_api pytest -q
 ```
 
-### 5) Open web client | 打开 Web 客户端
+### 5) Run one-command demo | 一键演示
 ```bash
-open http://localhost:8080/web/
+make demo
 ```
 
-For end-to-end step-by-step commands, see `docs/demo_script.md`.
-
-完整端到端演示命令请参考 `docs/demo_script.md`。
-
----
-
-## Security Model (MVP) | 安全模型（MVP）
-
-### EN
-- Least privilege by default.
-- Explicit grant/revoke for agent data access.
-- Every sensitive operation must be auditable.
-- Deny decisions are audited with reason codes.
-- Audit chain integrity verification API is provided.
-
-### 中文
-- 默认最小权限。
-- 智能体访问需要显式授权/可随时撤权。
-- 敏感操作必须可审计。
-- 拒绝决策（deny）同样写入审计并带原因码。
-- 提供审计链完整性校验接口。
+### 6) Optional live integration tests | 可选真实联调测试
+```bash
+make live-test
+```
 
 ---
 
-## Components | 关键组件
+## Service Endpoints | 服务入口
 
-- Matrix homeserver: **Synapse**
-- Policy engine: **OPA** (Rego)
-- Immutable audit DB: **immudb**
-- Gateway API: **FastAPI + Pydantic v2**
-- Object storage (reserved path for media evolution): **MinIO**
+- Gateway API: `http://localhost:8080`
+- Web client: `http://localhost:8080/web/`
+- Prometheus: `http://localhost:9090`
+- Grafana: `http://localhost:3000` (default `admin/admin`)
+- Synapse client API: `http://localhost:8008`
+
+Port mapping notes:
+- immudb host port defaults to `3332` (container internal still `3322`)
+- MinIO host ports default to `9100` (API) and `9101` (console)
+- OPA is internal-only by default (no host port exposure)
 
 ---
 
-## Key Docs | 核心文档
+## Repository Layout | 仓库结构
+
+```text
+repo/
+  docker-compose.yml
+  Makefile
+  scripts/demo_flow.py
+  observability/
+    prometheus/prometheus.yml
+    grafana/provisioning/datasources/datasource.yml
+  services/
+    gateway_api/
+      app/
+        api/
+        agent/
+        audit/
+        core/
+        matrix/
+        web/
+        tests/
+  clients/
+    cli/
+  policies/
+    opa/
+  docs/
+```
+
+---
+
+## Security Defaults | 默认安全策略
+
+- Gateway binds caller identity with Matrix token (`whoami`)
+- `policy/*` and `agent/*` enforce user-token consistency
+- Sensitive actions must be audited (allow + deny)
+- Audit chain verification API available (`/api/v1/audit/verify`)
+- OPA not exposed on host port by default
+
+---
+
+## Docs | 文档
 
 - Architecture: `docs/architecture.md`
 - Threat model: `docs/threat_model.md`
 - API reference: `docs/api_reference.md`
 - Demo script: `docs/demo_script.md`
-
----
-
-## Known MVP Limits | 当前限制
-
-### EN
-- No full E2EE product implementation yet (framework and audit boundaries are prioritized first).
-- Agent summarization is currently rule-based placeholder.
-- Production-grade web auth/session hardening is still pending.
-
-### 中文
-- 尚未实现完整产品级 E2EE（当前优先透明审计与策略边界）。
-- 智能体摘要目前是规则/占位实现。
-- Web 端仍是开发者控制台形态，生产级鉴权与会话加固仍需迭代。
+- Licenses: `docs/licenses.md`
 
 ---
 
 ## License | 许可证
 
-MIT License. See `LICENSE`.
+MIT (`LICENSE`)

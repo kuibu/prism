@@ -65,8 +65,8 @@ services:
     container_name: prism_opa
     restart: unless-stopped
     command: ["run", "--server", "--addr=0.0.0.0:8181", "/policies"]
-    ports:
-      - "8181:8181"
+    expose:
+      - "8181"
     volumes:
       - ./policies/opa:/policies:ro
 
@@ -79,8 +79,8 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
     command: server /data --console-address ":9001"
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "${MINIO_API_HOST_PORT:-9100}:9000"
+      - "${MINIO_CONSOLE_HOST_PORT:-9101}:9001"
     volumes:
       - minio_data:/data
 
@@ -129,6 +129,34 @@ services:
       interval: 10s
       timeout: 5s
       retries: 12
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prism_prometheus
+    restart: unless-stopped
+    command: ["--config.file=/etc/prometheus/prometheus.yml"]
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      gateway_api:
+        condition: service_started
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    container_name: prism_grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      prometheus:
+        condition: service_started
 
 volumes:
   synapse_data:

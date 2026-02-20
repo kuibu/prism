@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 from app.audit.schemas import AuditEvent
 

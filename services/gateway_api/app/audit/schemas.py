@@ -1,19 +1,19 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from enum import Enum
+from datetime import UTC, datetime
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
 
 
-class ActorType(str, Enum):
+class ActorType(StrEnum):
     USER = "user"
     AGENT = "agent"
     SERVICE = "service"
 
 
-class DecisionType(str, Enum):
+class DecisionType(StrEnum):
     ALLOW = "allow"
     DENY = "deny"
 
@@ -105,4 +105,4 @@ class AuditVerifyResponse(BaseModel):
 
 
 def now_utc() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
@@ -9,6 +9,7 @@ from app.agent.tool_gateway import InMemoryRateCounter
 from app.audit.schemas import AuditEvent, AuditEventCreate, AuditQuery, AuditVerifyResponse
 from app.audit.verification import compute_chain_hash, sha256_hex, verify_chain
 from app.main import app
+from app.matrix.client import MatrixClientError
 from app.policy.opa_client import OPANotFoundError
 
 
@@ -20,7 +21,7 @@ class _StubAuditClient:
         return {"reachable": True, "host": "stub", "port": 3322}
 
     async def append_audit_event(self, request: AuditEventCreate) -> AuditEvent:
-        ts = datetime.now(timezone.utc)
+        ts = datetime.now(UTC)
         ts_ms = int(ts.timestamp() * 1000)
         prev_hash = self.events[-1].chain_hash if self.events else None
         input_hash = request.input_hash or sha256_hex(request.input_data)
@@ -252,14 +253,14 @@ class _StubOPAClient:
     @staticmethod
     def _parse_ts(value: object) -> datetime:
         if not isinstance(value, str) or value == "":
-            return datetime.now(timezone.utc)
-        return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(timezone.utc)
+            return datetime.now(UTC)
+        return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(UTC)
 
     @staticmethod
     def _parse_optional_ts(value: object) -> datetime | None:
         if not isinstance(value, str) or value == "":
             return None
-        return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(timezone.utc)
+        return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(UTC)
 
     @classmethod
     def _in_time_window(cls, grant: dict[str, object], ts: datetime) -> bool:
@@ -290,6 +291,96 @@ class _StubOPAClient:
 
 
 class _StubMatrixClient:
+    _tokens = {
+        "token_alice": "@alice:localhost",
+        "token_bob": "@bob:localhost",
+    }
+
+    async def whoami(self, *, access_token: str) -> dict[str, object]:
+        user_id = self._tokens.get(access_token)
+        if user_id is None:
+            raise MatrixClientError("invalid_token")
+        return {"user_id": user_id}
+
+    async def register(self, *, username: str, password: str) -> dict[str, object]:
+        _ = password
+        user_id = f"@{username}:localhost"
+        return {
+            "user_id": user_id,
+            "device_id": "DEVICE123",
+            "access_token": "token_alice" if user_id == "@alice:localhost" else "token_bob",
+        }
+
+    async def login(self, *, username: str, password: str) -> dict[str, object]:
+        _ = password
+        user_id = f"@{username}:localhost"
+        return {
+            "user_id": user_id,
+            "device_id": "DEVICE123",
+            "access_token": "token_alice" if user_id == "@alice:localhost" else "token_bob",
+        }
+
+    async def create_room(
+        self,
+        *,
+        access_token: str,
+        name: str | None,
+        invite: list[str],
+        preset: str,
+    ) -> dict[str, object]:
+        _ = access_token, name, invite, preset
+        return {"room_id": "!room:localhost"}
+
+    async def join_room(self, *, access_token: str, room_id: str) -> dict[str, object]:
+        _ = access_token
+        return {"room_id": room_id}
+
+    async def send_text_message(
+        self,
+        *,
+        access_token: str,
+        room_id: str,
+        body: str,
+        txn_id: str | None = None,
+    ) -> dict[str, object]:
+        _ = access_token, room_id, body, txn_id
+        return {"event_id": "$event:localhost"}
+
+    async def upload_media(
+        self,
+        *,
+        access_token: str,
+        filename: str,
+        content_type: str,
+        content: bytes,
+    ) -> dict[str, object]:
+        _ = access_token, filename, content_type, content
+        return {"content_uri": "mxc://localhost/abc123"}
+
+    async def send_file_message(
+        self,
+        *,
+        access_token: str,
+        room_id: str,
+        filename: str,
+        content_uri: str,
+        content_type: str,
+        size_bytes: int,
+        txn_id: str | None = None,
+    ) -> dict[str, object]:
+        _ = access_token, room_id, filename, content_uri, content_type, size_bytes, txn_id
+        return {"event_id": "$fileevent:localhost"}
+
+    async def read_room_messages(
+        self,
+        *,
+        access_token: str,
+        room_id: str,
+        limit: int,
+    ) -> list[str]:
+        _ = access_token, room_id, limit
+        return ["finish API", "review PR", "write docs"]
+
     async def sync(
         self,
         *,
@@ -332,12 +423,15 @@ def _grant_payload() -> dict[str, object]:
 def _summarize_payload() -> dict[str, object]:
     return {
         "agent_id": "agent.summary",
-        "user_id": "@alice:localhost",
         "room_id": "!room:localhost",
         "purpose": "daily_summary",
-        "messages": ["finish API", "review PR", "write docs"],
+        "recent_message_limit": 20,
         "max_items": 3,
     }
+
+
+def _auth_headers(token: str = "token_alice") -> dict[str, str]:
+    return {"Authorization": f"Bearer {token}"}
 
 
 def test_required_mvp_routes_not_404() -> None:
@@ -392,8 +486,16 @@ def test_audit_event_write_and_verify() -> None:
 def test_policy_allow_with_opa_grant() -> None:
     with TestClient(app) as client:
         _install_stubs(client)
-        grant_response = client.post("/api/v1/policy/grants", json=_grant_payload())
-        summarize_response = client.post("/api/v1/agent/summarize", json=_summarize_payload())
+        grant_response = client.post(
+            "/api/v1/policy/grants",
+            json=_grant_payload(),
+            headers=_auth_headers(),
+        )
+        summarize_response = client.post(
+            "/api/v1/agent/summarize",
+            json=_summarize_payload(),
+            headers=_auth_headers(),
+        )
 
     assert grant_response.status_code == 201
     assert summarize_response.status_code == 200
@@ -404,7 +506,11 @@ def test_policy_allow_with_opa_grant() -> None:
 def test_policy_deny_after_revoke() -> None:
     with TestClient(app) as client:
         _install_stubs(client)
-        grant_response = client.post("/api/v1/policy/grants", json=_grant_payload())
+        grant_response = client.post(
+            "/api/v1/policy/grants",
+            json=_grant_payload(),
+            headers=_auth_headers(),
+        )
         grant = grant_response.json()
         revoke_response = client.post(
             "/api/v1/policy/revoke",
@@ -413,8 +519,13 @@ def test_policy_deny_after_revoke() -> None:
                 "grant_id": grant["grant_id"],
                 "reason": "user_request",
             },
+            headers=_auth_headers(),
         )
-        summarize_response = client.post("/api/v1/agent/summarize", json=_summarize_payload())
+        summarize_response = client.post(
+            "/api/v1/agent/summarize",
+            json=_summarize_payload(),
+            headers=_auth_headers(),
+        )
 
     assert grant_response.status_code == 201
     assert revoke_response.status_code == 200
@@ -426,8 +537,16 @@ def test_policy_deny_after_revoke() -> None:
 def test_agent_tool_call_writes_audit() -> None:
     with TestClient(app) as client:
         _install_stubs(client)
-        client.post("/api/v1/policy/grants", json=_grant_payload())
-        summarize_response = client.post("/api/v1/agent/summarize", json=_summarize_payload())
+        client.post(
+            "/api/v1/policy/grants",
+            json=_grant_payload(),
+            headers=_auth_headers(),
+        )
+        summarize_response = client.post(
+            "/api/v1/agent/summarize",
+            json=_summarize_payload(),
+            headers=_auth_headers(),
+        )
         audit_response = client.get(
             "/api/v1/audit/events",
             params={"actor_id": "agent.summary", "action_type": "agent_summarize"},
@@ -447,9 +566,8 @@ def test_matrix_sync_smoke_mocked() -> None:
 
         response = client.get(
             "/api/v1/matrix/sync",
+            headers=_auth_headers(),
             params={
-                "access_token": "abc123",
-                "user_id": "@alice:localhost",
                 "room_id": "!room:localhost",
                 "since": "s0",
                 "timeout_ms": 1000,
@@ -460,3 +578,80 @@ def test_matrix_sync_smoke_mocked() -> None:
     payload = response.json()
     assert payload["next_batch"] == "s1"
     assert payload["echo"]["since"] == "s0"
+
+
+def test_matrix_proxy_login_create_send_audited() -> None:
+    with TestClient(app) as client:
+        _install_stubs(client)
+        login_response = client.post(
+            "/api/v1/matrix/login",
+            json={"username": "alice", "password": "Passw0rd!"},
+        )
+        assert login_response.status_code == 200
+        token = login_response.json()["access_token"]
+        headers = _auth_headers(token)
+
+        create_response = client.post(
+            "/api/v1/matrix/rooms",
+            headers=headers,
+            json={"name": "Test", "invite": [], "preset": "private_chat"},
+        )
+        send_response = client.post(
+            "/api/v1/matrix/rooms/!room:localhost/messages",
+            headers=headers,
+            json={"body": "hello"},
+        )
+        audit_response = client.get(
+            "/api/v1/audit/events",
+            params={"actor_id": "@alice:localhost", "action_type": "matrix_send_message"},
+        )
+
+    assert create_response.status_code == 201
+    assert send_response.status_code == 201
+    assert audit_response.status_code == 200
+    events = audit_response.json()["events"]
+    assert len(events) >= 1
+    assert events[0]["decision"] == "allow"
+
+
+def test_matrix_file_upload_audited() -> None:
+    with TestClient(app) as client:
+        _install_stubs(client)
+        response = client.post(
+            "/api/v1/matrix/rooms/room123/files",
+            headers=_auth_headers(),
+            files={"file": ("notes.txt", b"hello from test", "text/plain")},
+        )
+        audit_response = client.get(
+            "/api/v1/audit/events",
+            params={"actor_id": "@alice:localhost", "action_type": "matrix_upload_media"},
+        )
+
+    assert response.status_code == 201
+    payload = response.json()
+    assert payload["content_uri"].startswith("mxc://")
+    assert payload["event_id"] == "$fileevent:localhost"
+    assert audit_response.status_code == 200
+    assert len(audit_response.json()["events"]) >= 1
+
+
+def test_policy_rejects_user_spoofing() -> None:
+    with TestClient(app) as client:
+        _install_stubs(client)
+        response = client.post(
+            "/api/v1/policy/grants",
+            headers=_auth_headers("token_bob"),
+            json=_grant_payload(),
+        )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "user_id_mismatch"
+
+
+def test_agent_requires_auth_header() -> None:
+    with TestClient(app) as client:
+        _install_stubs(client)
+        response = client.post("/api/v1/agent/summarize", json=_summarize_payload())
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "missing_bearer_token"

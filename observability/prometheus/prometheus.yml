@@ -1,0 +1,16 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: gateway_api
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - gateway_api:8000
+
+  - job_name: opa
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - opa:8181

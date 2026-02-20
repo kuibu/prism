@@ -21,7 +21,5 @@ def summarize_messages(messages: list[str], *, max_items: int = 8) -> str:
     terms_line = ", ".join(top_terms) if top_terms else "(none)"
 
     return (
-        f"Summary of {len(selected)} recent messages:\n"
-        f"{bullets}\n"
-        f"Top terms: {terms_line}"
+        f"Summary of {len(selected)} recent messages:\n" f"{bullets}\n" f"Top terms: {terms_line}"
     )

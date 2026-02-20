@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -8,7 +8,12 @@ from pydantic import ValidationError
 
 from app.audit.immudb_client import ImmudbClient, ImmudbOperationError
 from app.audit.schemas import ActorType, AuditEventCreate, DecisionType
-from app.core.deps import get_immudb_client, get_opa_client
+from app.core.deps import (
+    AuthenticatedUser,
+    get_authenticated_user,
+    get_immudb_client,
+    get_opa_client,
+)
 from app.policy.models import (
     GrantCreateRequest,
     GrantListResponse,
@@ -37,9 +42,13 @@ async def list_grants(
     user_id: str | None = Query(default=None),
     agent_id: str | None = Query(default=None),
     include_revoked: bool = Query(default=False),
+    authenticated_user: AuthenticatedUser = Depends(get_authenticated_user),
     opa_client: OPAClient = Depends(get_opa_client),
 ) -> GrantListResponse:
     settings = http_request.app.state.settings
+    effective_user_id = user_id or authenticated_user.user_id
+    if user_id is not None and user_id != authenticated_user.user_id:
+        raise HTTPException(status_code=403, detail="user_id_mismatch")
 
     try:
         raw_grants = await opa_client.get_document(_grants_root_path(settings))
@@ -56,7 +65,7 @@ async def list_grants(
             grant = GrantRecord.model_validate(value)
         except ValidationError:
             continue
-        if user_id is not None and grant.user_id != user_id:
+        if grant.user_id != effective_user_id:
             continue
         if agent_id is not None and grant.agent_id != agent_id:
             continue
@@ -72,9 +81,13 @@ async def list_grants(
 async def create_grant(
     request: GrantCreateRequest,
     http_request: Request,
+    authenticated_user: AuthenticatedUser = Depends(get_authenticated_user),
     opa_client: OPAClient = Depends(get_opa_client),
     immudb_client: ImmudbClient = Depends(get_immudb_client),
 ) -> GrantRecord:
+    if request.user_id != authenticated_user.user_id:
+        raise HTTPException(status_code=403, detail="user_id_mismatch")
+
     if (
         request.time_window_start is not None
         and request.time_window_end is not None
@@ -93,7 +106,7 @@ async def create_grant(
         time_window_end=request.time_window_end,
         rate_limit_per_minute=request.rate_limit_per_minute,
         status=GrantStatus.ACTIVE,
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
         metadata=request.metadata,
     )
     grant_path = _grant_document_path(settings, created.grant_id)
@@ -117,7 +130,7 @@ async def create_grant(
             "data_category": request.data_category.value,
             "purpose": request.purpose,
             "rate_limit_per_minute": request.rate_limit_per_minute,
-            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
         },
     )
 
@@ -146,9 +159,13 @@ async def revoke_help() -> RevokeResponse:
 async def revoke_grant(
     request: RevokeRequest,
     http_request: Request,
+    authenticated_user: AuthenticatedUser = Depends(get_authenticated_user),
     opa_client: OPAClient = Depends(get_opa_client),
     immudb_client: ImmudbClient = Depends(get_immudb_client),
 ) -> RevokeResponse:
+    if request.user_id != authenticated_user.user_id:
+        raise HTTPException(status_code=403, detail="user_id_mismatch")
+
     settings = http_request.app.state.settings
     grant_path = _grant_document_path(settings, request.grant_id)
 
@@ -170,7 +187,7 @@ async def revoke_grant(
             await immudb_client.append_audit_event(deny_event)
         except ImmudbOperationError:
             pass
-        raise HTTPException(status_code=404, detail="grant_not_found")
+        raise HTTPException(status_code=404, detail="grant_not_found") from None
     except OPAClientError as exc:
         raise HTTPException(status_code=503, detail=f"policy_query_failed: {exc}") from exc
 
@@ -204,7 +221,7 @@ async def revoke_grant(
     updated = existing.model_copy(
         update={
             "status": GrantStatus.REVOKED,
-            "revoked_at": existing.revoked_at or datetime.now(timezone.utc),
+            "revoked_at": existing.revoked_at or datetime.now(UTC),
             "metadata": updated_metadata,
         }
     )

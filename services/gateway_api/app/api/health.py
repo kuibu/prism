@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import APIRouter, Request
@@ -28,7 +28,7 @@ async def live() -> LivenessResponse:
     return LivenessResponse(
         status="ok",
         service="gateway_api",
-        ts=datetime.now(timezone.utc),
+        ts=datetime.now(UTC),
     )
 
 
@@ -41,7 +41,7 @@ async def ready(request: Request) -> JSONResponse | ReadinessResponse:
     payload = ReadinessResponse(
         status="ready" if is_ready else "degraded",
         service="gateway_api",
-        ts=datetime.now(timezone.utc),
+        ts=datetime.now(UTC),
         dependencies={
             "opa": opa_status,
             "immudb": immudb_status,

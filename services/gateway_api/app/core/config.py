@@ -27,6 +27,10 @@ class Settings(BaseSettings):
         default="http://synapse:8008",
         validation_alias="MATRIX_HOMESERVER_URL",
     )
+    matrix_upload_max_bytes: int = Field(
+        default=10_485_760,
+        validation_alias="MATRIX_UPLOAD_MAX_BYTES",
+    )
 
     http_timeout_seconds: float = Field(default=3.0, validation_alias="HTTP_TIMEOUT_SECONDS")
     http_retry_attempts: int = Field(default=3, validation_alias="HTTP_RETRY_ATTEMPTS")
