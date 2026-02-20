@@ -13,11 +13,15 @@ class Settings(BaseSettings):
 
     opa_url: str = Field(default="http://opa:8181", validation_alias="OPA_URL")
     opa_policy_path: str = Field(default="/v1/data/prism/allow", validation_alias="OPA_POLICY_PATH")
+    opa_data_root: str = Field(default="/v1/data/prism", validation_alias="OPA_DATA_ROOT")
 
     immudb_host: str = Field(default="immudb", validation_alias="IMMUDB_HOST")
     immudb_port: int = Field(default=3322, validation_alias="IMMUDB_PORT")
     immudb_timeout_seconds: float = Field(default=2.0, validation_alias="IMMUDB_TIMEOUT_SECONDS")
     immudb_retry_attempts: int = Field(default=3, validation_alias="IMMUDB_RETRY_ATTEMPTS")
+    immudb_username: str = Field(default="immudb", validation_alias="IMMUDB_USERNAME")
+    immudb_password: str = Field(default="immudb", validation_alias="IMMUDB_PASSWORD")
+    immudb_database: str = Field(default="defaultdb", validation_alias="IMMUDB_DATABASE")
 
     matrix_homeserver_url: str = Field(
         default="http://synapse:8008",

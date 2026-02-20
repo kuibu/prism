@@ -3,7 +3,7 @@
 This folder contains the policy bundle loaded by the OPA sidecar.
 
 - `policy.rego`: Rego rules used by `gateway_api`
-- `data.json`: dynamic data for policy evaluation (grants will be added in Iteration 3)
+- `data.json`: dynamic data for policy evaluation (`grants` map keyed by `grant_id`)
 
 Quick check:
 

@@ -20,11 +20,23 @@ services:
             --config-path /data/homeserver.yaml \
             --generate-config \
             --report-stats=no
-          sed -i "s/^enable_registration: false/enable_registration: true/" /data/homeserver.yaml
           if ! grep -q "^registration_shared_secret:" /data/homeserver.yaml; then
             echo "registration_shared_secret: \"$${SYNAPSE_REGISTRATION_SHARED_SECRET:-dev_shared_secret}\"" >> /data/homeserver.yaml
           fi
         fi
+        if grep -q '^enable_registration:' /data/homeserver.yaml; then
+          sed -i "s/^enable_registration:.*/enable_registration: true/" /data/homeserver.yaml
+        else
+          echo "enable_registration: true" >> /data/homeserver.yaml
+        fi
+        if grep -q '^enable_registration_without_verification:' /data/homeserver.yaml; then
+          sed -i "s/^enable_registration_without_verification:.*/enable_registration_without_verification: true/" /data/homeserver.yaml
+        else
+          echo "enable_registration_without_verification: true" >> /data/homeserver.yaml
+        fi
+        # Ensure Synapse client API is reachable from other containers.
+        sed -i 's/- ::1/- 0.0.0.0/' /data/homeserver.yaml
+        sed -i '/- 127.0.0.1/d' /data/homeserver.yaml
         exec python -m synapse.app.homeserver --config-path /data/homeserver.yaml
     healthcheck:
       test:
@@ -86,10 +98,14 @@ services:
       GATEWAY_PORT: 8000
       OPA_URL: ${OPA_URL:-http://opa:8181}
       OPA_POLICY_PATH: ${OPA_POLICY_PATH:-/v1/data/prism/allow}
+      OPA_DATA_ROOT: ${OPA_DATA_ROOT:-/v1/data/prism}
       IMMUDB_HOST: ${IMMUDB_HOST:-immudb}
       IMMUDB_PORT: ${IMMUDB_PORT:-3322}
       IMMUDB_TIMEOUT_SECONDS: ${IMMUDB_TIMEOUT_SECONDS:-2.0}
       IMMUDB_RETRY_ATTEMPTS: ${IMMUDB_RETRY_ATTEMPTS:-3}
+      IMMUDB_USERNAME: ${IMMUDB_USERNAME:-immudb}
+      IMMUDB_PASSWORD: ${IMMUDB_PASSWORD:-immudb}
+      IMMUDB_DATABASE: ${IMMUDB_DATABASE:-defaultdb}
       HTTP_TIMEOUT_SECONDS: ${HTTP_TIMEOUT_SECONDS:-3.0}
       HTTP_RETRY_ATTEMPTS: ${HTTP_RETRY_ATTEMPTS:-3}
       MATRIX_HOMESERVER_URL: ${MATRIX_HOMESERVER_URL:-http://synapse:8008}

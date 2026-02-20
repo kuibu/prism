@@ -2,9 +2,11 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app.agent.tool_gateway import InMemoryRateCounter
 from app.api.router import api_router
 from app.audit.immudb_client import ImmudbClient
 from app.core.config import get_settings
+from app.matrix.client import MatrixClient
 from app.policy.opa_client import OPAClient
 
 
@@ -22,6 +24,15 @@ async def lifespan(app: FastAPI):
         port=settings.immudb_port,
         timeout_seconds=settings.immudb_timeout_seconds,
         retry_attempts=settings.immudb_retry_attempts,
+        username=settings.immudb_username,
+        password=settings.immudb_password,
+        database=settings.immudb_database,
+    )
+    app.state.agent_rate_counter = InMemoryRateCounter(window_seconds=60)
+    app.state.matrix_client = MatrixClient(
+        homeserver_url=settings.matrix_homeserver_url,
+        timeout_seconds=settings.http_timeout_seconds,
+        retry_attempts=settings.http_retry_attempts,
     )
     yield
     await app.state.opa_client.close()
