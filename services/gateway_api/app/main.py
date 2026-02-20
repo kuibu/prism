@@ -1,6 +1,9 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.agent.tool_gateway import InMemoryRateCounter
 from app.api.router import api_router
@@ -45,3 +48,12 @@ app = FastAPI(
     lifespan=lifespan,
 )
 app.include_router(api_router, prefix="/api/v1")
+
+web_root = Path(__file__).resolve().parent / "web"
+if web_root.exists():
+    app.mount("/web", StaticFiles(directory=str(web_root), html=True), name="web")
+
+
+@app.get("/", include_in_schema=False)
+async def root_redirect() -> RedirectResponse:
+    return RedirectResponse(url="/web/", status_code=307)

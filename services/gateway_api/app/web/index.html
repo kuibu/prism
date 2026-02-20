@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prism Web Console</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-veil"></div>
+    <main class="layout">
+      <header class="hero card reveal">
+        <p class="eyebrow">Prism Web Client</p>
+        <h1>AI-Native Messaging Control Panel</h1>
+        <p class="hero-copy">
+          Login, sync, send messages, grant or revoke agent access, and inspect audit records from
+          one browser page.
+        </p>
+      </header>
+
+      <section class="card reveal" style="--delay: 0.05s">
+        <h2>Session</h2>
+        <div class="grid two">
+          <label>
+            <span>Homeserver URL</span>
+            <input id="homeserverUrl" type="text" value="http://localhost:8008" />
+          </label>
+          <label>
+            <span>Gateway API URL</span>
+            <input id="gatewayUrl" type="text" value="http://localhost:8080/api/v1" />
+          </label>
+          <label>
+            <span>Username (localpart)</span>
+            <input id="username" type="text" placeholder="alice_web" />
+          </label>
+          <label>
+            <span>Password</span>
+            <input id="password" type="password" placeholder="Passw0rd!" />
+          </label>
+        </div>
+        <div class="actions">
+          <button id="registerBtn" class="btn">Register</button>
+          <button id="loginBtn" class="btn">Login</button>
+          <button id="logoutBtn" class="btn ghost">Logout</button>
+          <button id="statusBtn" class="btn ghost">Refresh Status</button>
+        </div>
+        <pre id="sessionStatus" class="output"></pre>
+      </section>
+
+      <section class="card reveal" style="--delay: 0.1s">
+        <h2>Room + Messaging</h2>
+        <div class="grid two">
+          <label>
+            <span>Invite user id (optional)</span>
+            <input id="inviteUserId" type="text" placeholder="@bob:localhost" />
+          </label>
+          <label>
+            <span>Active room id</span>
+            <input id="roomId" type="text" placeholder="!room:localhost" />
+          </label>
+        </div>
+        <div class="actions">
+          <button id="createRoomBtn" class="btn">Create Room</button>
+          <button id="syncBtn" class="btn">Sync</button>
+        </div>
+
+        <label>
+          <span>Message</span>
+          <textarea id="messageBody" rows="3" placeholder="hello from prism web"></textarea>
+        </label>
+        <div class="actions">
+          <button id="sendBtn" class="btn">Send</button>
+        </div>
+        <div id="roomPills" class="pill-wrap"></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Room</th>
+                <th>Sender</th>
+                <th>Body</th>
+                <th>Timestamp (UTC)</th>
+              </tr>
+            </thead>
+            <tbody id="messageRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card reveal" style="--delay: 0.15s">
+        <h2>Agent + Policy</h2>
+        <div class="grid two">
+          <label>
+            <span>Agent ID</span>
+            <input id="agentId" type="text" value="agent.summary.web" />
+          </label>
+          <label>
+            <span>Purpose</span>
+            <input id="purpose" type="text" value="daily_summary" />
+          </label>
+          <label>
+            <span>Rate limit per minute</span>
+            <input id="rateLimit" type="number" value="60" min="1" max="10000" />
+          </label>
+          <label>
+            <span>Revoke grant id</span>
+            <input id="revokeGrantId" type="text" placeholder="grant_xxx" />
+          </label>
+        </div>
+        <div class="actions">
+          <button id="grantBtn" class="btn">Grant</button>
+          <button id="listGrantBtn" class="btn ghost">List Grants</button>
+          <button id="revokeBtn" class="btn warn">Revoke</button>
+          <button id="summarizeBtn" class="btn">Summarize Current Room</button>
+        </div>
+        <pre id="agentOutput" class="output"></pre>
+      </section>
+
+      <section class="card reveal" style="--delay: 0.2s">
+        <h2>Audit</h2>
+        <div class="grid two">
+          <label>
+            <span>Actor ID</span>
+            <input id="auditActorId" type="text" placeholder="agent.summary.web" />
+          </label>
+          <label>
+            <span>Action type</span>
+            <input id="auditActionType" type="text" placeholder="agent_summarize" />
+          </label>
+        </div>
+        <div class="actions">
+          <button id="auditQueryBtn" class="btn ghost">Query Events</button>
+          <button id="auditVerifyBtn" class="btn ghost">Verify Chain</button>
+        </div>
+        <pre id="auditOutput" class="output"></pre>
+      </section>
+    </main>
+
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>

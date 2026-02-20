@@ -55,8 +55,8 @@ services:
     container_name: prism_immudb
     restart: unless-stopped
     ports:
-      - "3322:3322"
-      - "9497:9497"
+      - "${IMMUDB_HOST_PORT:-3332}:3322"
+      - "${IMMUDB_ADMIN_HOST_PORT:-9497}:9497"
     volumes:
       - immudb_data:/var/lib/immudb
 

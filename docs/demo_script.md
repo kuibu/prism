@@ -246,3 +246,162 @@ echo "ROOM_ID=${ROOM_ID}"
   --timeout-ms 2000 \
   --session-file /tmp/prism-cli-session.json
 ```
+
+## Web 客户端联调（新增）
+
+1. 启动服务后打开 Web 客户端：
+
+```bash
+open http://localhost:8080/web/
+```
+
+2. 在页面中填入：
+- Homeserver URL: `http://localhost:8008`
+- Gateway API URL: `http://localhost:8080/api/v1`
+
+3. 先 `Register`，再 `Sync`，然后：
+- `Create Room`（可选填写邀请用户）
+- 输入房间 ID + 文本后 `Send`
+- 再次 `Sync` 确认消息到达
+
+4. Agent + Policy 联调：
+- `Grant` 授权
+- `Summarize Current Room`
+- `Revoke` 后再次摘要应被拒绝
+
+5. Audit 联调：
+- `Query Events`
+- `Verify Chain`
+
+6. 自动化联调（无浏览器，覆盖与 Web 客户端一致的核心链路）：
+
+```bash
+python3 - <<'PY'
+import json
+import random
+import string
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+
+HS = "http://localhost:8008"
+GW = "http://localhost:8080/api/v1"
+
+def req_json(method, url, body=None, token=None):
+    data = None
+    headers = {"Content-Type": "application/json"}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    if body is not None:
+        data = json.dumps(body).encode("utf-8")
+    req = urllib.request.Request(url, data=data, headers=headers, method=method)
+    try:
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            raw = resp.read().decode("utf-8")
+            return resp.status, json.loads(raw) if raw else {}
+    except urllib.error.HTTPError as exc:
+        raw = exc.read().decode("utf-8")
+        return exc.code, json.loads(raw) if raw else {}
+
+suffix = "".join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8))
+username = f"webu_{suffix}"
+password = "Passw0rd!"
+agent_id = "agent.web.demo"
+purpose = "daily_summary"
+
+code, reg = req_json("POST", f"{HS}/_matrix/client/v3/register", {
+    "username": username,
+    "password": password,
+    "auth": {"type": "m.login.dummy"},
+})
+assert code in (200, 201), (code, reg)
+user_id = reg["user_id"]
+
+code, login = req_json("POST", f"{HS}/_matrix/client/v3/login", {
+    "type": "m.login.password",
+    "identifier": {"type": "m.id.user", "user": username},
+    "password": password,
+})
+assert code == 200, (code, login)
+token = login["access_token"]
+
+code, room = req_json("POST", f"{HS}/_matrix/client/v3/createRoom", {
+    "preset": "private_chat",
+    "name": f"web-room-{suffix}",
+}, token=token)
+assert code == 200, (code, room)
+room_id = room["room_id"]
+
+msgs = ["今天完成 Matrix 登录流程", "OPA 授权链路已接通", "需要整理发布清单"]
+for idx, msg in enumerate(msgs, 1):
+    txn = f"tx{int(time.time() * 1000)}_{idx}"
+    code, out = req_json(
+        "PUT",
+        f"{HS}/_matrix/client/v3/rooms/{urllib.parse.quote(room_id, safe='')}/send/m.room.message/{txn}",
+        {"msgtype": "m.text", "body": msg},
+        token=token,
+    )
+    assert code == 200, (code, out)
+
+code, sync = req_json("GET", f"{HS}/_matrix/client/v3/sync?timeout=0", token=token)
+assert code == 200, (code, sync)
+events = sync.get("rooms", {}).get("join", {}).get(room_id, {}).get("timeline", {}).get("events", [])
+bodies = [e.get("content", {}).get("body", "") for e in events if e.get("type") == "m.room.message"]
+assert len(bodies) >= 3
+
+code, grant = req_json("POST", f"{GW}/policy/grants", {
+    "user_id": user_id,
+    "agent_id": agent_id,
+    "data_category": "room_messages",
+    "purpose": purpose,
+    "rate_limit_per_minute": 20,
+})
+assert code == 201, (code, grant)
+grant_id = grant["grant_id"]
+
+code, allow = req_json("POST", f"{GW}/agent/summarize", {
+    "agent_id": agent_id,
+    "user_id": user_id,
+    "room_id": room_id,
+    "purpose": purpose,
+    "messages": bodies[-20:],
+    "max_items": 8,
+})
+assert code == 200 and allow.get("decision") == "allow", (code, allow)
+
+code, revoke = req_json("POST", f"{GW}/policy/revoke", {
+    "user_id": user_id,
+    "grant_id": grant_id,
+    "reason": "web_integration_test",
+})
+assert code == 200, (code, revoke)
+
+code, deny = req_json("POST", f"{GW}/agent/summarize", {
+    "agent_id": agent_id,
+    "user_id": user_id,
+    "room_id": room_id,
+    "purpose": purpose,
+    "messages": bodies[-20:],
+    "max_items": 8,
+})
+assert code == 403, (code, deny)
+
+query = urllib.parse.urlencode({"actor_id": agent_id, "limit": 50})
+code, audit = req_json("GET", f"{GW}/audit/events?{query}")
+assert code == 200 and len(audit.get("events", [])) >= 2, (code, audit)
+
+code, verify = req_json("GET", f"{GW}/audit/verify?{query}")
+assert code == 200 and verify.get("verified") is True, (code, verify)
+
+print("WEB_CLIENT_FLOW_OK")
+print(json.dumps({
+    "user_id": user_id,
+    "room_id": room_id,
+    "grant_id": grant_id,
+    "audit_events": len(audit.get("events", [])),
+    "verified": verify.get("verified"),
+    "checked_events": verify.get("checked_events"),
+}, ensure_ascii=False, indent=2))
+PY
+```

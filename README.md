@@ -40,7 +40,7 @@ Prism 是一个“下一代微信”方向的可运行 MVP：基于 Matrix 协�
 
 ---
 
-## Current Status (Iteration 4) | 当前状态（迭代 4）
+## Current Status (Iteration 4+) | 当前状态（迭代 4+）
 
 ### Implemented | 已实现
 - `docker compose` local stack: Synapse, OPA, immudb, MinIO, `gateway_api`.
@@ -54,6 +54,11 @@ Prism 是一个“下一代微信”方向的可运行 MVP：基于 Matrix 协�
   - `prism-cli login`
   - `prism-cli sync`
   - `prism-cli send`
+- Browser client (`/web`) with:
+  - Register / Login
+  - Sync / Send
+  - Agent grant/revoke/summarize
+  - Audit query/verify
 - OPA policy uses persisted grant data (`data.prism.grants`) for allow/deny decisions.
 - Revocation is enforced immediately on subsequent agent access.
 - Audit chain hashing and verification implemented with immudb SQL table backend.
@@ -69,6 +74,7 @@ Prism 是一个“下一代微信”方向的可运行 MVP：基于 Matrix 协�
   - audit verify (actor/global)
 - Matrix smoke (register/create room/send/sync) validated after Synapse config hardening.
 - CLI smoke validated with real Matrix flow (`login -> send -> sync`).
+- Web smoke validated through live server integration (`/web` + Matrix + Gateway APIs).
 
 ---
 
@@ -121,6 +127,10 @@ docker compose up -d --build
 docker compose ps
 ```
 
+Note: `immudb` host port defaults to `3332` (container-internal port remains `3322`) to avoid common local port conflicts.
+
+说明：为避免本机常见端口冲突，`immudb` 默认映射到宿主机 `3332`（容器内部端口仍为 `3322`）。
+
 ### 3) Health checks | 健康检查
 ```bash
 curl -sS http://localhost:8080/api/v1/health/live | python3 -m json.tool
@@ -130,6 +140,11 @@ curl -sS http://localhost:8080/api/v1/health/ready | python3 -m json.tool
 ### 4) Run tests | 运行测试
 ```bash
 docker compose run --rm gateway_api pytest -q
+```
+
+### 5) Open web client | 打开 Web 客户端
+```bash
+open http://localhost:8080/web/
 ```
 
 For end-to-end step-by-step commands, see `docs/demo_script.md`.
@@ -180,12 +195,12 @@ For end-to-end step-by-step commands, see `docs/demo_script.md`.
 ### EN
 - No full E2EE product implementation yet (framework and audit boundaries are prioritized first).
 - Agent summarization is currently rule-based placeholder.
-- Web client is not implemented yet (current client is Python CLI).
+- Production-grade web auth/session hardening is still pending.
 
 ### 中文
 - 尚未实现完整产品级 E2EE（当前优先透明审计与策略边界）。
 - 智能体摘要目前是规则/占位实现。
-- Web 客户端尚未实现（当前客户端为 Python CLI）。
+- Web 端仍是开发者控制台形态，生产级鉴权与会话加固仍需迭代。
 
 ---
 
