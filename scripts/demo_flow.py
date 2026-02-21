@@ -95,6 +95,20 @@ def main() -> None:
     )
     assert code == 200 and summary.get("decision") == "allow", (code, summary)
 
+    code, sent = req_json(
+        "POST",
+        f"{GW}/agent/summarize-and-send",
+        {
+            "agent_id": agent_id,
+            "room_id": room_id,
+            "purpose": purpose,
+            "recent_message_limit": 30,
+            "max_items": 8,
+        },
+        token=token,
+    )
+    assert code == 200 and isinstance(sent.get("event_id"), str), (code, sent)
+
     code, revoke = req_json(
         "POST",
         f"{GW}/policy/revoke",
@@ -118,7 +132,7 @@ def main() -> None:
     assert code == 403, (code, denied)
 
     query = urllib.parse.urlencode({"actor_id": agent_id, "limit": 100})
-    code, verify = req_json("GET", f"{GW}/audit/verify?{query}")
+    code, verify = req_json("GET", f"{GW}/audit/verify?{query}", token=token)
     assert code == 200 and verify.get("verified") is True, (code, verify)
 
     print("DEMO_OK")

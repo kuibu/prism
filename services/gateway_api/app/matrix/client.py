@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 from urllib.parse import quote
 from uuid import uuid4
@@ -82,6 +83,16 @@ class MatrixClient:
             path=f"/_matrix/client/v3/rooms/{encoded_room_id}/join",
             headers=headers,
             body={},
+        )
+
+    async def invite_user(self, *, access_token: str, room_id: str, user_id: str) -> dict[str, Any]:
+        headers = {"Authorization": f"Bearer {access_token}"}
+        encoded_room_id = quote(room_id, safe="")
+        return await self._request_json(
+            method="POST",
+            path=f"/_matrix/client/v3/rooms/{encoded_room_id}/invite",
+            headers=headers,
+            body={"user_id": user_id},
         )
 
     async def send_text_message(
@@ -232,7 +243,7 @@ class MatrixClient:
 
         last_error: str | None = None
         async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
-            for _ in range(self.retry_attempts):
+            for attempt in range(self.retry_attempts):
                 try:
                     response = await client.request(
                         method=method,
@@ -245,7 +256,53 @@ class MatrixClient:
                     response.raise_for_status()
                     payload: dict[str, Any] = response.json()
                     return payload
-                except (httpx.RequestError, httpx.HTTPStatusError, ValueError) as exc:
+                except httpx.RequestError as exc:
                     last_error = str(exc)
+                except httpx.HTTPStatusError as exc:
+                    status = exc.response.status_code
+                    last_error = str(exc)
+                    if status == 429 and attempt + 1 < self.retry_attempts:
+                        await asyncio.sleep(self._retry_delay_from_response(exc.response, attempt))
+                        continue
+                    if 500 <= status < 600 and attempt + 1 < self.retry_attempts:
+                        await asyncio.sleep(self._default_backoff_delay(attempt))
+                        continue
+                    break
+                except ValueError as exc:
+                    last_error = str(exc)
+                    break
+
+                if attempt + 1 < self.retry_attempts:
+                    await asyncio.sleep(self._default_backoff_delay(attempt))
 
         raise MatrixClientError(last_error or "matrix_request_failed")
+
+    @staticmethod
+    def _default_backoff_delay(attempt: int) -> float:
+        delay = 0.25 * float(2**attempt)
+        return 2.0 if delay > 2.0 else delay
+
+    @classmethod
+    def _retry_delay_from_response(cls, response: httpx.Response, attempt: int) -> float:
+        retry_after = response.headers.get("Retry-After")
+        if retry_after is not None:
+            try:
+                parsed = float(retry_after)
+                if parsed > 0:
+                    return 30.0 if parsed > 30.0 else parsed
+            except ValueError:
+                pass
+
+        try:
+            payload = response.json()
+        except ValueError:
+            payload = None
+
+        if isinstance(payload, dict):
+            retry_after_ms = payload.get("retry_after_ms")
+            if isinstance(retry_after_ms, (int, float)) and retry_after_ms > 0:
+                parsed_ms = float(retry_after_ms) / 1000.0
+                return 30.0 if parsed_ms > 30.0 else parsed_ms
+
+        fallback = cls._default_backoff_delay(attempt)
+        return 1.0 if fallback < 1.0 else fallback

@@ -15,7 +15,7 @@ make demo
 This command runs:
 - `docker compose up -d --build`
 - health checks (`/health/live`, `/health/ready`)
-- full flow (`register -> create room -> send -> grant -> summarize allow -> revoke -> summarize deny -> audit verify`)
+- full flow (`register -> create room -> send -> grant -> summarize allow -> summarize-and-send -> revoke -> summarize deny -> audit verify`)
 
 Expected output includes:
 - `DEMO_OK`

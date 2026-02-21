@@ -14,7 +14,6 @@ This list captures major components selected for the MVP stack.
 - Pydantic - MIT
 - OpenTelemetry API/SDK + instrumentation - Apache-2.0
 - prometheus-client (Python) - Apache-2.0
-- matrix-nio - Apache-2.0
 
 Notes:
 - Confirm image tag-specific licenses before production release.

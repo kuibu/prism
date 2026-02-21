@@ -9,6 +9,7 @@ from app.agent.tool_gateway import InMemoryRateCounter
 from app.audit.schemas import AuditEvent, AuditEventCreate, AuditQuery, AuditVerifyResponse
 from app.audit.verification import compute_chain_hash, sha256_hex, verify_chain
 from app.main import app
+from app.matrix.admin import AgentBotManager
 from app.matrix.client import MatrixClientError
 from app.policy.opa_client import OPANotFoundError
 
@@ -291,16 +292,33 @@ class _StubOPAClient:
 
 
 class _StubMatrixClient:
-    _tokens = {
-        "token_alice": "@alice:localhost",
-        "token_bob": "@bob:localhost",
-    }
+    def __init__(self) -> None:
+        self._token_to_user = {
+            "token_alice": "@alice:localhost",
+            "token_bob": "@bob:localhost",
+        }
+        self._user_to_token = {
+            "@alice:localhost": "token_alice",
+            "@bob:localhost": "token_bob",
+        }
+        self._token_counter = 0
 
     async def whoami(self, *, access_token: str) -> dict[str, object]:
-        user_id = self._tokens.get(access_token)
+        user_id = self._token_to_user.get(access_token)
         if user_id is None:
             raise MatrixClientError("invalid_token")
         return {"user_id": user_id}
+
+    def _token_for_user(self, user_id: str) -> str:
+        existing = self._user_to_token.get(user_id)
+        if existing is not None:
+            return existing
+
+        self._token_counter += 1
+        token = f"token_auto_{self._token_counter}"
+        self._user_to_token[user_id] = token
+        self._token_to_user[token] = user_id
+        return token
 
     async def register(self, *, username: str, password: str) -> dict[str, object]:
         _ = password
@@ -308,7 +326,7 @@ class _StubMatrixClient:
         return {
             "user_id": user_id,
             "device_id": "DEVICE123",
-            "access_token": "token_alice" if user_id == "@alice:localhost" else "token_bob",
+            "access_token": self._token_for_user(user_id),
         }
 
     async def login(self, *, username: str, password: str) -> dict[str, object]:
@@ -317,7 +335,7 @@ class _StubMatrixClient:
         return {
             "user_id": user_id,
             "device_id": "DEVICE123",
-            "access_token": "token_alice" if user_id == "@alice:localhost" else "token_bob",
+            "access_token": self._token_for_user(user_id),
         }
 
     async def create_room(
@@ -332,8 +350,21 @@ class _StubMatrixClient:
         return {"room_id": "!room:localhost"}
 
     async def join_room(self, *, access_token: str, room_id: str) -> dict[str, object]:
-        _ = access_token
+        if access_token not in self._token_to_user:
+            raise MatrixClientError("invalid_token")
         return {"room_id": room_id}
+
+    async def invite_user(
+        self,
+        *,
+        access_token: str,
+        room_id: str,
+        user_id: str,
+    ) -> dict[str, object]:
+        _ = room_id, user_id
+        if access_token not in self._token_to_user:
+            raise MatrixClientError("invalid_token")
+        return {}
 
     async def send_text_message(
         self,
@@ -343,8 +374,11 @@ class _StubMatrixClient:
         body: str,
         txn_id: str | None = None,
     ) -> dict[str, object]:
-        _ = access_token, room_id, body, txn_id
-        return {"event_id": "$event:localhost"}
+        _ = room_id, body
+        if access_token not in self._token_to_user:
+            raise MatrixClientError("invalid_token")
+        suffix = txn_id or f"m{self._token_counter + 1}"
+        return {"event_id": f"$event_{suffix}:localhost"}
 
     async def upload_media(
         self,
@@ -378,7 +412,9 @@ class _StubMatrixClient:
         room_id: str,
         limit: int,
     ) -> list[str]:
-        _ = access_token, room_id, limit
+        _ = room_id, limit
+        if access_token not in self._token_to_user:
+            raise MatrixClientError("invalid_token")
         return ["finish API", "review PR", "write docs"]
 
     async def sync(
@@ -403,9 +439,15 @@ class _StubMatrixClient:
 
 def _install_stubs(client: TestClient) -> _StubAuditClient:
     audit_stub = _StubAuditClient()
+    matrix_stub = _StubMatrixClient()
     client.app.state.immudb_client = audit_stub
     client.app.state.opa_client = _StubOPAClient()
-    client.app.state.matrix_client = _StubMatrixClient()
+    client.app.state.matrix_client = matrix_stub
+    client.app.state.agent_bot_manager = AgentBotManager(
+        matrix_client=matrix_stub,
+        username_prefix="agent_stub",
+        password_secret="secret_stub",
+    )
     client.app.state.agent_rate_counter = InMemoryRateCounter(window_seconds=60)
     return audit_stub
 
@@ -469,10 +511,18 @@ def test_audit_event_write_and_verify() -> None:
             "output_data": {"result": "sent"},
         }
 
-        first = client.post("/api/v1/audit/events", json=payload)
-        second = client.post("/api/v1/audit/events", json=payload)
-        listed = client.get("/api/v1/audit/events", params={"actor_id": "@alice:localhost"})
-        verified = client.get("/api/v1/audit/verify", params={"actor_id": "@alice:localhost"})
+        first = client.post("/api/v1/audit/events", json=payload, headers=_auth_headers())
+        second = client.post("/api/v1/audit/events", json=payload, headers=_auth_headers())
+        listed = client.get(
+            "/api/v1/audit/events",
+            params={"actor_id": "@alice:localhost"},
+            headers=_auth_headers(),
+        )
+        verified = client.get(
+            "/api/v1/audit/verify",
+            params={"actor_id": "@alice:localhost"},
+            headers=_auth_headers(),
+        )
 
     assert first.status_code == 201
     assert second.status_code == 201
@@ -550,6 +600,7 @@ def test_agent_tool_call_writes_audit() -> None:
         audit_response = client.get(
             "/api/v1/audit/events",
             params={"actor_id": "agent.summary", "action_type": "agent_summarize"},
+            headers=_auth_headers(),
         )
 
     assert summarize_response.status_code == 200
@@ -557,6 +608,36 @@ def test_agent_tool_call_writes_audit() -> None:
     events = audit_response.json()["events"]
     assert len(events) >= 1
     assert events[0]["action_type"] == "agent_summarize"
+    assert events[0]["decision"] == "allow"
+
+
+def test_agent_summarize_and_send_writes_audit() -> None:
+    with TestClient(app) as client:
+        _install_stubs(client)
+        client.post(
+            "/api/v1/policy/grants",
+            json=_grant_payload(),
+            headers=_auth_headers(),
+        )
+        summarize_response = client.post(
+            "/api/v1/agent/summarize-and-send",
+            json=_summarize_payload(),
+            headers=_auth_headers(),
+        )
+        audit_response = client.get(
+            "/api/v1/audit/events",
+            params={"actor_id": "agent.summary", "action_type": "agent_send_summary_message"},
+            headers=_auth_headers(),
+        )
+
+    assert summarize_response.status_code == 200
+    payload = summarize_response.json()
+    assert payload["decision"] == "allow"
+    assert payload["event_id"].startswith("$event_")
+    assert payload["bot_user_id"].startswith("@agent_stub_")
+    assert audit_response.status_code == 200
+    events = audit_response.json()["events"]
+    assert len(events) >= 1
     assert events[0]["decision"] == "allow"
 
 
@@ -604,6 +685,7 @@ def test_matrix_proxy_login_create_send_audited() -> None:
         audit_response = client.get(
             "/api/v1/audit/events",
             params={"actor_id": "@alice:localhost", "action_type": "matrix_send_message"},
+            headers=headers,
         )
 
     assert create_response.status_code == 201
@@ -625,6 +707,7 @@ def test_matrix_file_upload_audited() -> None:
         audit_response = client.get(
             "/api/v1/audit/events",
             params={"actor_id": "@alice:localhost", "action_type": "matrix_upload_media"},
+            headers=_auth_headers(),
         )
 
     assert response.status_code == 201
@@ -655,3 +738,16 @@ def test_agent_requires_auth_header() -> None:
 
     assert response.status_code == 401
     assert response.json()["detail"] == "missing_bearer_token"
+
+
+def test_audit_query_rejects_cross_user_scope() -> None:
+    with TestClient(app) as client:
+        _install_stubs(client)
+        response = client.get(
+            "/api/v1/audit/events",
+            params={"user_id": "@alice:localhost"},
+            headers=_auth_headers("token_bob"),
+        )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "user_id_mismatch"

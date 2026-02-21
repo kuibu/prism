@@ -5,8 +5,11 @@ Base URL: `http://localhost:8080/api/v1`
 ## Auth Model
 
 - `matrix/register` and `matrix/login` are anonymous.
-- `matrix/whoami`, `matrix/rooms*`, `matrix/sync`, `policy/*`, `agent/summarize` require:
+- `matrix/whoami`, `matrix/rooms*`, `matrix/sync`, `policy/*`, `agent/summarize*` require:
   - `Authorization: Bearer <matrix_access_token>`
+- `audit/*` requires `Authorization: Bearer <matrix_access_token>` and is scoped to caller:
+  - if `user_id` omitted, gateway defaults it to the authenticated user
+  - cross-user `user_id` query is rejected with `403 user_id_mismatch`
 - Gateway resolves caller identity via Matrix `/_matrix/client/v3/account/whoami`.
 - `user_id` in policy payload must match authenticated caller, otherwise `403 user_id_mismatch`.
 
@@ -123,10 +126,17 @@ Request:
 }
 ```
 
+### `POST /agent/summarize-and-send`
+Same as `/agent/summarize`, plus:
+1. Ensure deterministic bot identity for `agent_id`
+2. Send summary back to room as bot account
+3. Audit send allow/deny (`agent_send_summary_message`)
+
 ## Audit
 
 ### `POST /audit/events`
-Low-level direct audit write endpoint.
+Low-level direct audit write endpoint (authenticated).  
+`actor_type=user` requires `actor_id` to match authenticated user.
 
 ### `GET /audit/events`
 Query by `actor_id`, `user_id`, `room_id`, `action_type`, `decision`, `start_ts`, `end_ts`, `limit`.

@@ -19,6 +19,7 @@ from app.agent.tool_gateway import InMemoryRateCounter
 from app.api.router import api_router
 from app.audit.immudb_client import ImmudbClient
 from app.core.config import get_settings
+from app.matrix.admin import AgentBotManager
 from app.matrix.client import MatrixClient
 from app.policy.opa_client import OPAClient
 
@@ -83,6 +84,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         timeout_seconds=settings.http_timeout_seconds,
         retry_attempts=settings.http_retry_attempts,
     )
+    app.state.agent_bot_manager = AgentBotManager(
+        matrix_client=app.state.matrix_client,
+        username_prefix=settings.matrix_agent_bot_username_prefix,
+        password_secret=settings.matrix_agent_bot_password_secret,
+    )
     _setup_observability(app)
     yield
     await app.state.opa_client.close()
@@ -112,6 +118,10 @@ async def metrics_middleware(
     finally:
         duration = time.perf_counter() - start
         path = request.url.path
+        route = request.scope.get("route")
+        template = getattr(route, "path", None)
+        if isinstance(template, str) and template != "":
+            path = template
         method = request.method
         HTTP_REQUEST_COUNT.labels(
             method=method,

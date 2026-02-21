@@ -59,6 +59,7 @@ Prism addresses them directly:
 - grants/revokes are stored in OPA data (`data.prism.grants`)
 - revoke is effective immediately on next agent request
 - agent summary flow performs server-side room reads after OPA decision
+- `summarize-and-send` sends summary back to room as deterministic bot identity
 
 ### 4) Developer-facing clients are available
 - Web client: `http://localhost:8080/web/`
@@ -209,6 +210,7 @@ Prism 是一个“下一代微信”方向的可运行 MVP，核心是：
 - 授权/撤权存入 OPA `data.prism.grants`
 - 撤权后下一次智能体访问立即拒绝
 - 智能体摘要是“先 OPA 决策，再服务端读消息，再写审计”
+- 新增 `summarize-and-send`：以确定性 bot 身份把摘要发回房间
 
 ### 4) 客户端已具备双入口
 - Web 端：`/web/`

@@ -34,6 +34,7 @@ const el = {
   listGrantBtn: document.getElementById("listGrantBtn"),
   revokeBtn: document.getElementById("revokeBtn"),
   summarizeBtn: document.getElementById("summarizeBtn"),
+  summarizeSendBtn: document.getElementById("summarizeSendBtn"),
   agentOutput: document.getElementById("agentOutput"),
   auditActorId: document.getElementById("auditActorId"),
   auditActionType: document.getElementById("auditActionType"),
@@ -72,6 +73,9 @@ function bindEvents() {
   el.listGrantBtn.addEventListener("click", () => handleListGrants().catch(handleUiError));
   el.revokeBtn.addEventListener("click", () => handleRevoke().catch(handleUiError));
   el.summarizeBtn.addEventListener("click", () => handleSummarize().catch(handleUiError));
+  el.summarizeSendBtn.addEventListener("click", () =>
+    handleSummarizeAndSend().catch(handleUiError)
+  );
 
   el.auditQueryBtn.addEventListener("click", () => handleAuditQuery().catch(handleUiError));
   el.auditVerifyBtn.addEventListener("click", () => handleAuditVerify().catch(handleUiError));
@@ -556,6 +560,29 @@ async function handleSummarize() {
   writeJson(el.agentOutput, payload);
 }
 
+async function handleSummarizeAndSend() {
+  requireSession();
+  const roomId = el.roomId.value.trim();
+  const agentId = el.agentId.value.trim();
+  const purpose = el.purpose.value.trim();
+
+  if (!roomId || !agentId || !purpose) {
+    throw new Error("Room ID, Agent ID and purpose are required.");
+  }
+
+  const payload = await gatewayRequest("/agent/summarize-and-send", {
+    method: "POST",
+    body: {
+      agent_id: agentId,
+      room_id: roomId,
+      purpose,
+      recent_message_limit: 50,
+      max_items: 10,
+    },
+  });
+  writeJson(el.agentOutput, payload);
+}
+
 async function handleAuditQuery() {
   const actorId = el.auditActorId.value.trim();
   const actionType = el.auditActionType.value.trim();
@@ -567,7 +594,7 @@ async function handleAuditQuery() {
   if (actionType) {
     params.set("action_type", actionType);
   }
-  const payload = await gatewayRequest(`/audit/events?${params.toString()}`, { auth: false });
+  const payload = await gatewayRequest(`/audit/events?${params.toString()}`);
   writeJson(el.auditOutput, payload);
 }
 
@@ -582,7 +609,7 @@ async function handleAuditVerify() {
   if (actionType) {
     params.set("action_type", actionType);
   }
-  const payload = await gatewayRequest(`/audit/verify?${params.toString()}`, { auth: false });
+  const payload = await gatewayRequest(`/audit/verify?${params.toString()}`);
   writeJson(el.auditOutput, payload);
 }
 

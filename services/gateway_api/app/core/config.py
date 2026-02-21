@@ -31,6 +31,14 @@ class Settings(BaseSettings):
         default=10_485_760,
         validation_alias="MATRIX_UPLOAD_MAX_BYTES",
     )
+    matrix_agent_bot_username_prefix: str = Field(
+        default="prism_agent",
+        validation_alias="MATRIX_AGENT_BOT_USERNAME_PREFIX",
+    )
+    matrix_agent_bot_password_secret: str = Field(
+        default="dev_agent_bot_secret",
+        validation_alias="MATRIX_AGENT_BOT_PASSWORD_SECRET",
+    )
 
     http_timeout_seconds: float = Field(default=3.0, validation_alias="HTTP_TIMEOUT_SECONDS")
     http_retry_attempts: int = Field(default=3, validation_alias="HTTP_RETRY_ATTEMPTS")

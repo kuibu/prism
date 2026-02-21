@@ -1,6 +1,6 @@
 services:
   synapse:
-    image: matrixdotorg/synapse:latest
+    image: matrixdotorg/synapse@sha256:657cfa115c71701d188f227feb9d1c0fcd2213b26fcc1afd6c647ba333582634
     container_name: prism_synapse
     restart: unless-stopped
     environment:
@@ -51,7 +51,7 @@ services:
       retries: 10
 
   immudb:
-    image: codenotary/immudb:latest
+    image: codenotary/immudb@sha256:54f1fb4722034fe6531beed9616284d8e6766b831f18a7b288fc169fa27c6898
     container_name: prism_immudb
     restart: unless-stopped
     ports:
@@ -61,7 +61,7 @@ services:
       - immudb_data:/var/lib/immudb
 
   opa:
-    image: openpolicyagent/opa:latest
+    image: openpolicyagent/opa@sha256:22770e039a71a885231059c93166cce0644db256cab751043d94bfd150f220d5
     container_name: prism_opa
     restart: unless-stopped
     command: ["run", "--server", "--addr=0.0.0.0:8181", "/policies"]
@@ -71,7 +71,7 @@ services:
       - ./policies/opa:/policies:ro
 
   minio:
-    image: minio/minio:latest
+    image: minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
     container_name: prism_minio
     restart: unless-stopped
     environment:
@@ -109,6 +109,8 @@ services:
       HTTP_TIMEOUT_SECONDS: ${HTTP_TIMEOUT_SECONDS:-3.0}
       HTTP_RETRY_ATTEMPTS: ${HTTP_RETRY_ATTEMPTS:-3}
       MATRIX_HOMESERVER_URL: ${MATRIX_HOMESERVER_URL:-http://synapse:8008}
+      MATRIX_AGENT_BOT_USERNAME_PREFIX: ${MATRIX_AGENT_BOT_USERNAME_PREFIX:-prism_agent}
+      MATRIX_AGENT_BOT_PASSWORD_SECRET: ${MATRIX_AGENT_BOT_PASSWORD_SECRET:-dev_agent_bot_secret}
     depends_on:
       opa:
         condition: service_started
@@ -131,7 +133,7 @@ services:
       retries: 12
 
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus@sha256:1f0f50f06acaceb0f5670d2c8a658a599affe7b0d8e78b898c1035653849a702
     container_name: prism_prometheus
     restart: unless-stopped
     command: ["--config.file=/etc/prometheus/prometheus.yml"]
@@ -144,7 +146,7 @@ services:
         condition: service_started
 
   grafana:
-    image: grafana/grafana-oss:latest
+    image: grafana/grafana-oss@sha256:9e1e77ade304069aee3196e9a4f210830e96e80ce9a2640891eccc324b152faf
     container_name: prism_grafana
     restart: unless-stopped
     environment:

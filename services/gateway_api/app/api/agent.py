@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -14,6 +15,7 @@ from app.core.deps import (
     get_immudb_client,
     get_opa_client,
 )
+from app.matrix.admin import AgentBotManager, AgentBotManagerError
 from app.matrix.client import MatrixClientError
 from app.policy.opa_client import OPAClient
 
@@ -36,6 +38,19 @@ class SummarizeResponse(BaseModel):
     summary: str | None = None
 
 
+class SummarizeAndSendResponse(SummarizeResponse):
+    event_id: str
+    bot_user_id: str
+
+
+@dataclass
+class _SummaryExecutionResult:
+    summary: str
+    message_count: int
+    reason: str
+    request_count: int
+
+
 async def _write_audit_or_raise(
     *,
     immudb_client: ImmudbClient,
@@ -47,17 +62,17 @@ async def _write_audit_or_raise(
         raise HTTPException(status_code=503, detail=f"agent_audit_failed: {exc}") from exc
 
 
-@router.post("/summarize", response_model=SummarizeResponse)
-async def summarize(
+async def _execute_summary_flow(
+    *,
     payload: SummarizeRequest,
-    http_request: Request,
-    authenticated_user: AuthenticatedUser = Depends(get_authenticated_user),
-    opa_client: OPAClient = Depends(get_opa_client),
-    immudb_client: ImmudbClient = Depends(get_immudb_client),
-) -> SummarizeResponse:
-    settings = http_request.app.state.settings
-    rate_counter = http_request.app.state.agent_rate_counter
-    matrix_client = http_request.app.state.matrix_client
+    request: Request,
+    authenticated_user: AuthenticatedUser,
+    opa_client: OPAClient,
+    immudb_client: ImmudbClient,
+) -> _SummaryExecutionResult:
+    settings = request.app.state.settings
+    rate_counter = request.app.state.agent_rate_counter
+    matrix_client = request.app.state.matrix_client
     user_id = authenticated_user.user_id
     rate_key = f"{user_id}:{payload.agent_id}:{payload.room_id}:{payload.purpose}"
     request_count = rate_counter.increment_and_count(rate_key)
@@ -150,7 +165,7 @@ async def summarize(
     await _write_audit_or_raise(immudb_client=immudb_client, event=read_allow_event)
 
     summary = summarize_messages(messages, max_items=payload.max_items)
-    allow_event = AuditEventCreate(
+    summarize_event = AuditEventCreate(
         actor_type=ActorType.AGENT,
         actor_id=payload.agent_id,
         action_type="agent_summarize",
@@ -172,12 +187,166 @@ async def summarize(
             },
         },
     )
-    await _write_audit_or_raise(immudb_client=immudb_client, event=allow_event)
+    await _write_audit_or_raise(immudb_client=immudb_client, event=summarize_event)
+
+    return _SummaryExecutionResult(
+        summary=summary,
+        message_count=len(messages),
+        reason=reason,
+        request_count=request_count,
+    )
+
+
+@router.post("/summarize", response_model=SummarizeResponse)
+async def summarize(
+    payload: SummarizeRequest,
+    http_request: Request,
+    authenticated_user: AuthenticatedUser = Depends(get_authenticated_user),
+    opa_client: OPAClient = Depends(get_opa_client),
+    immudb_client: ImmudbClient = Depends(get_immudb_client),
+) -> SummarizeResponse:
+    result = await _execute_summary_flow(
+        payload=payload,
+        request=http_request,
+        authenticated_user=authenticated_user,
+        opa_client=opa_client,
+        immudb_client=immudb_client,
+    )
 
     return SummarizeResponse(
         status="ok",
         decision="allow",
-        reason=reason,
-        message_count=len(messages),
-        summary=summary,
+        reason=result.reason,
+        message_count=result.message_count,
+        summary=result.summary,
+    )
+
+
+@router.post("/summarize-and-send", response_model=SummarizeAndSendResponse)
+async def summarize_and_send(
+    payload: SummarizeRequest,
+    http_request: Request,
+    authenticated_user: AuthenticatedUser = Depends(get_authenticated_user),
+    opa_client: OPAClient = Depends(get_opa_client),
+    immudb_client: ImmudbClient = Depends(get_immudb_client),
+) -> SummarizeAndSendResponse:
+    result = await _execute_summary_flow(
+        payload=payload,
+        request=http_request,
+        authenticated_user=authenticated_user,
+        opa_client=opa_client,
+        immudb_client=immudb_client,
+    )
+
+    matrix_client = http_request.app.state.matrix_client
+    bot_manager: AgentBotManager = http_request.app.state.agent_bot_manager
+    summary_message = (
+        f"[Agent Summary]\n"
+        f"agent_id: {payload.agent_id}\n"
+        f"purpose: {payload.purpose}\n\n"
+        f"{result.summary}"
+    )
+
+    try:
+        bot_identity = await bot_manager.ensure_identity(agent_id=payload.agent_id)
+    except AgentBotManagerError as exc:
+        deny_event = AuditEventCreate(
+            actor_type=ActorType.AGENT,
+            actor_id=payload.agent_id,
+            action_type="agent_send_summary_message",
+            resource_type="message",
+            resource_id=payload.room_id,
+            decision=DecisionType.DENY,
+            reason_code="agent_bot_auth_failed",
+            user_id=authenticated_user.user_id,
+            room_id=payload.room_id,
+            input_data={"summary_length": len(result.summary)},
+            metadata={"error": str(exc), "purpose": payload.purpose},
+        )
+        await _write_audit_or_raise(immudb_client=immudb_client, event=deny_event)
+        raise HTTPException(status_code=502, detail=f"agent_bot_auth_failed: {exc}") from exc
+
+    try:
+        await matrix_client.join_room(
+            access_token=bot_identity.access_token,
+            room_id=payload.room_id,
+        )
+    except MatrixClientError:
+        try:
+            await matrix_client.invite_user(
+                access_token=authenticated_user.access_token,
+                room_id=payload.room_id,
+                user_id=bot_identity.user_id,
+            )
+            await matrix_client.join_room(
+                access_token=bot_identity.access_token,
+                room_id=payload.room_id,
+            )
+        except MatrixClientError as exc:
+            deny_event = AuditEventCreate(
+                actor_type=ActorType.AGENT,
+                actor_id=payload.agent_id,
+                action_type="agent_send_summary_message",
+                resource_type="room",
+                resource_id=payload.room_id,
+                decision=DecisionType.DENY,
+                reason_code="matrix_bot_join_failed",
+                user_id=authenticated_user.user_id,
+                room_id=payload.room_id,
+                input_data={"bot_user_id": bot_identity.user_id},
+                metadata={"error": str(exc)},
+            )
+            await _write_audit_or_raise(immudb_client=immudb_client, event=deny_event)
+            raise HTTPException(status_code=502, detail=f"matrix_bot_join_failed: {exc}") from exc
+
+    try:
+        send_payload = await matrix_client.send_text_message(
+            access_token=bot_identity.access_token,
+            room_id=payload.room_id,
+            body=summary_message,
+        )
+    except MatrixClientError as exc:
+        deny_event = AuditEventCreate(
+            actor_type=ActorType.AGENT,
+            actor_id=payload.agent_id,
+            action_type="agent_send_summary_message",
+            resource_type="message",
+            resource_id=payload.room_id,
+            decision=DecisionType.DENY,
+            reason_code="matrix_send_summary_failed",
+            user_id=authenticated_user.user_id,
+            room_id=payload.room_id,
+            input_data={"summary_length": len(result.summary)},
+            metadata={"error": str(exc), "bot_user_id": bot_identity.user_id},
+        )
+        await _write_audit_or_raise(immudb_client=immudb_client, event=deny_event)
+        raise HTTPException(status_code=502, detail=f"matrix_send_summary_failed: {exc}") from exc
+
+    event_id = send_payload.get("event_id")
+    if not isinstance(event_id, str) or event_id == "":
+        raise HTTPException(status_code=502, detail="matrix_send_summary_invalid_response")
+
+    allow_event = AuditEventCreate(
+        actor_type=ActorType.AGENT,
+        actor_id=payload.agent_id,
+        action_type="agent_send_summary_message",
+        resource_type="message",
+        resource_id=event_id,
+        decision=DecisionType.ALLOW,
+        reason_code="send_summary_ok",
+        user_id=authenticated_user.user_id,
+        room_id=payload.room_id,
+        input_data={"summary_length": len(result.summary), "message_count": result.message_count},
+        metadata={"purpose": payload.purpose, "bot_user_id": bot_identity.user_id},
+    )
+    await _write_audit_or_raise(immudb_client=immudb_client, event=allow_event)
+
+    return SummarizeAndSendResponse(
+        status="ok",
+        decision="allow",
+        reason=result.reason,
+        message_count=result.message_count,
+        summary=result.summary,
+        event_id=event_id,
+        bot_user_id=bot_identity.user_id,
     )

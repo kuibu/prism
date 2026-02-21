@@ -7,6 +7,7 @@ from pydantic import ValidationError
 
 from app.audit.immudb_client import ImmudbClient, ImmudbOperationError
 from app.audit.schemas import (
+    ActorType,
     AuditEvent,
     AuditEventCreate,
     AuditListResponse,
@@ -14,18 +15,38 @@ from app.audit.schemas import (
     AuditVerifyResponse,
     DecisionType,
 )
-from app.core.deps import get_immudb_client
+from app.core.deps import AuthenticatedUser, get_authenticated_user, get_immudb_client
 
 router = APIRouter(prefix="/audit", tags=["audit"])
+
+
+def _scoped_user_id(
+    *,
+    requested_user_id: str | None,
+    authenticated_user: AuthenticatedUser,
+) -> str:
+    if requested_user_id is not None and requested_user_id != authenticated_user.user_id:
+        raise HTTPException(status_code=403, detail="user_id_mismatch")
+    return requested_user_id or authenticated_user.user_id
 
 
 @router.post("/events", response_model=AuditEvent, status_code=201)
 async def create_audit_event(
     request: AuditEventCreate,
+    authenticated_user: AuthenticatedUser = Depends(get_authenticated_user),
     immudb_client: ImmudbClient = Depends(get_immudb_client),
 ) -> AuditEvent:
+    if request.user_id is not None and request.user_id != authenticated_user.user_id:
+        raise HTTPException(status_code=403, detail="user_id_mismatch")
+    if request.actor_type == ActorType.USER and request.actor_id != authenticated_user.user_id:
+        raise HTTPException(status_code=403, detail="actor_id_mismatch")
+
+    scoped_request = request
+    if request.user_id is None:
+        scoped_request = request.model_copy(update={"user_id": authenticated_user.user_id})
+
     try:
-        return await immudb_client.append_audit_event(request)
+        return await immudb_client.append_audit_event(scoped_request)
     except ImmudbOperationError as exc:
         raise HTTPException(status_code=503, detail=f"audit_write_failed: {exc}") from exc
 
@@ -40,12 +61,18 @@ async def query_audit_events(
     start_ts: datetime | None = Query(default=None),
     end_ts: datetime | None = Query(default=None),
     limit: int = Query(default=100, ge=1, le=1000),
+    authenticated_user: AuthenticatedUser = Depends(get_authenticated_user),
     immudb_client: ImmudbClient = Depends(get_immudb_client),
 ) -> AuditListResponse:
+    scoped_user_id = _scoped_user_id(
+        requested_user_id=user_id,
+        authenticated_user=authenticated_user,
+    )
+
     try:
         query = AuditQuery(
             actor_id=actor_id,
-            user_id=user_id,
+            user_id=scoped_user_id,
             room_id=room_id,
             action_type=action_type,
             decision=decision,
@@ -71,12 +98,18 @@ async def verify_audit_chain(
     start_ts: datetime | None = Query(default=None),
     end_ts: datetime | None = Query(default=None),
     limit: int = Query(default=1000, ge=1, le=5000),
+    authenticated_user: AuthenticatedUser = Depends(get_authenticated_user),
     immudb_client: ImmudbClient = Depends(get_immudb_client),
 ) -> AuditVerifyResponse:
+    scoped_user_id = _scoped_user_id(
+        requested_user_id=user_id,
+        authenticated_user=authenticated_user,
+    )
+
     try:
         query = AuditQuery(
             actor_id=actor_id,
-            user_id=user_id,
+            user_id=scoped_user_id,
             room_id=room_id,
             action_type=action_type,
             decision=decision,

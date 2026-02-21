@@ -193,11 +193,13 @@ def test_live_policy_deny_after_revoke(live_ctx: dict[str, str]) -> None:
 
 
 def test_live_audit_chain_verify(live_ctx: dict[str, str]) -> None:
+    headers = {"Authorization": f"Bearer {live_ctx['token']}"}
     with httpx.Client(timeout=20.0) as client:
         code, verify = _request_json(
             client,
             method="GET",
             path=f"/audit/verify?user_id={live_ctx['user_id']}&limit=500",
+            headers=headers,
         )
         assert code == 200, verify
         assert verify["verified"] is True
@@ -244,6 +246,55 @@ def test_live_agent_tool_call_writes_audit(live_ctx: dict[str, str]) -> None:
             client,
             method="GET",
             path=f"/audit/events?actor_id={agent_id}&action_type=agent_summarize&limit=20",
+            headers=headers,
+        )
+        assert code == 200, events
+        assert len(events.get("events", [])) >= 1
+
+
+def test_live_agent_summarize_and_send(live_ctx: dict[str, str]) -> None:
+    agent_id = f"agent.live.{_suffix(6)}"
+    purpose = f"purpose_{_suffix(5)}"
+    headers = {"Authorization": f"Bearer {live_ctx['token']}"}
+
+    with httpx.Client(timeout=20.0) as client:
+        code, grant = _request_json(
+            client,
+            method="POST",
+            path="/policy/grants",
+            headers=headers,
+            json_body={
+                "user_id": live_ctx["user_id"],
+                "agent_id": agent_id,
+                "data_category": "room_messages",
+                "purpose": purpose,
+                "rate_limit_per_minute": 100,
+            },
+        )
+        assert code == 201, grant
+
+        code, sent = _request_json(
+            client,
+            method="POST",
+            path="/agent/summarize-and-send",
+            headers=headers,
+            json_body={
+                "agent_id": agent_id,
+                "room_id": live_ctx["room_id"],
+                "purpose": purpose,
+                "recent_message_limit": 20,
+                "max_items": 5,
+            },
+        )
+        assert code == 200, sent
+        assert sent.get("event_id")
+        assert str(sent.get("bot_user_id", "")).startswith("@")
+
+        code, events = _request_json(
+            client,
+            method="GET",
+            path=f"/audit/events?actor_id={agent_id}&action_type=agent_send_summary_message&limit=20",
+            headers=headers,
         )
         assert code == 200, events
         assert len(events.get("events", [])) >= 1
