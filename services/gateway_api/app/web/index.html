@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,143 +7,197 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div class="page-veil"></div>
-    <main class="layout">
-      <header class="hero card reveal">
-        <p class="eyebrow">Prism Web Client</p>
-        <h1>AI-Native Messaging Control Panel</h1>
-        <p class="hero-copy">
-          Login, sync, send messages, grant or revoke agent access, and inspect audit records from
-          one browser page.
-        </p>
+    <main class="wx-app">
+      <header class="wx-topbar">
+        <div class="brand-wrap">
+          <div class="brand-mark">P</div>
+          <div>
+            <p class="brand-eyebrow">Prism Web Console</p>
+            <h1 data-i18n="app_title">Prism Chat Pilot</h1>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <button id="langZhBtn" class="lang-btn">中文</button>
+          <button id="langEnBtn" class="lang-btn">EN</button>
+        </div>
       </header>
 
-      <section class="card reveal" style="--delay: 0.05s">
-        <h2>Session</h2>
-        <div class="grid two">
-          <label>
-            <span>Homeserver URL</span>
-            <input id="homeserverUrl" type="text" value="http://localhost:8008" />
-          </label>
-          <label>
-            <span>Gateway API URL</span>
-            <input id="gatewayUrl" type="text" value="http://localhost:8080/api/v1" />
-          </label>
-          <label>
-            <span>Username (localpart)</span>
-            <input id="username" type="text" placeholder="alice_web" />
-          </label>
-          <label>
-            <span>Password</span>
-            <input id="password" type="password" placeholder="Passw0rd!" />
-          </label>
-        </div>
-        <div class="actions">
-          <button id="registerBtn" class="btn">Register</button>
-          <button id="loginBtn" class="btn">Login</button>
-          <button id="logoutBtn" class="btn ghost">Logout</button>
-          <button id="statusBtn" class="btn ghost">Refresh Status</button>
-        </div>
-        <pre id="sessionStatus" class="output"></pre>
-      </section>
+      <section class="wx-shell">
+        <aside class="panel side-left">
+          <article class="card">
+            <h2 data-i18n="account_title">Account</h2>
+            <div class="form-grid">
+              <label>
+                <span data-i18n="label_homeserver">Homeserver URL</span>
+                <input id="homeserverUrl" type="text" value="http://localhost:8008" />
+              </label>
+              <label>
+                <span data-i18n="label_gateway">Gateway API URL</span>
+                <input id="gatewayUrl" type="text" value="http://localhost:8080/api/v1" />
+              </label>
+              <label>
+                <span data-i18n="label_username">Username</span>
+                <input
+                  id="username"
+                  type="text"
+                  data-i18n-placeholder="placeholder_username"
+                  placeholder="grandma_demo"
+                />
+              </label>
+              <label>
+                <span data-i18n="label_password">Password</span>
+                <input
+                  id="password"
+                  type="password"
+                  data-i18n-placeholder="placeholder_password"
+                  placeholder="Passw0rd!"
+                />
+              </label>
+            </div>
+            <div class="actions">
+              <button id="registerBtn" class="btn primary" data-i18n="btn_register">Register</button>
+              <button id="loginBtn" class="btn primary" data-i18n="btn_login">Login</button>
+              <button id="logoutBtn" class="btn ghost" data-i18n="btn_logout">Logout</button>
+              <button id="statusBtn" class="btn ghost" data-i18n="btn_refresh">Refresh</button>
+            </div>
+            <pre id="sessionStatus" class="output"></pre>
+          </article>
 
-      <section class="card reveal" style="--delay: 0.1s">
-        <h2>Room + Messaging</h2>
-        <div class="grid two">
-          <label>
-            <span>Invite user id (optional)</span>
-            <input id="inviteUserId" type="text" placeholder="@bob:localhost" />
-          </label>
-          <label>
-            <span>Active room id</span>
-            <input id="roomId" type="text" placeholder="!room:localhost" />
-          </label>
-        </div>
-        <div class="actions">
-          <button id="createRoomBtn" class="btn">Create Room</button>
-          <button id="syncBtn" class="btn">Sync</button>
-        </div>
+          <article class="card">
+            <h2 data-i18n="rooms_title">Rooms</h2>
+            <div class="form-grid">
+              <label>
+                <span data-i18n="label_invite">Invite User (optional)</span>
+                <input
+                  id="inviteUserId"
+                  type="text"
+                  data-i18n-placeholder="placeholder_invite"
+                  placeholder="@bob:localhost"
+                />
+              </label>
+              <label>
+                <span data-i18n="label_room_id">Active Room ID</span>
+                <input
+                  id="roomId"
+                  type="text"
+                  data-i18n-placeholder="placeholder_room"
+                  placeholder="!room:localhost"
+                />
+              </label>
+            </div>
+            <div class="actions">
+              <button id="createRoomBtn" class="btn primary" data-i18n="btn_create_room">
+                Create Room
+              </button>
+              <button id="syncBtn" class="btn ghost" data-i18n="btn_sync">Sync</button>
+            </div>
+            <div id="roomPills" class="room-list"></div>
+          </article>
+        </aside>
 
-        <label>
-          <span>Message</span>
-          <textarea id="messageBody" rows="3" placeholder="hello from prism web"></textarea>
-        </label>
-        <div class="actions">
-          <button id="sendBtn" class="btn">Send</button>
-        </div>
-        <label>
-          <span>File Upload</span>
-          <input id="fileInput" type="file" />
-        </label>
-        <div class="actions">
-          <button id="uploadBtn" class="btn">Upload File</button>
-        </div>
-        <div id="roomPills" class="pill-wrap"></div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Room</th>
-                <th>Sender</th>
-                <th>Body</th>
-                <th>Timestamp (UTC)</th>
-              </tr>
-            </thead>
-            <tbody id="messageRows"></tbody>
-          </table>
-        </div>
-      </section>
+        <section class="panel chat-center">
+          <div class="chat-head">
+            <h2 data-i18n="chat_title">Conversation</h2>
+            <span id="activeRoomDisplay" class="room-chip">-</span>
+          </div>
+          <div id="messageFeed" class="message-feed"></div>
+          <div class="composer">
+            <label>
+              <span data-i18n="label_message">Message</span>
+              <textarea
+                id="messageBody"
+                rows="3"
+                data-i18n-placeholder="placeholder_message"
+                placeholder="Hello from Prism"
+              ></textarea>
+            </label>
+            <div class="actions">
+              <button id="sendBtn" class="btn primary" data-i18n="btn_send">Send</button>
+              <label class="file-label">
+                <span data-i18n="label_upload">Upload File</span>
+                <input id="fileInput" type="file" />
+              </label>
+              <button id="uploadBtn" class="btn ghost" data-i18n="btn_upload">Upload</button>
+            </div>
+          </div>
+        </section>
 
-      <section class="card reveal" style="--delay: 0.15s">
-        <h2>Agent + Policy</h2>
-        <div class="grid two">
-          <label>
-            <span>Agent ID</span>
-            <input id="agentId" type="text" value="agent.summary.web" />
-          </label>
-          <label>
-            <span>Purpose</span>
-            <input id="purpose" type="text" value="daily_summary" />
-          </label>
-          <label>
-            <span>Rate limit per minute</span>
-            <input id="rateLimit" type="number" value="60" min="1" max="10000" />
-          </label>
-          <label>
-            <span>Revoke grant id</span>
-            <input id="revokeGrantId" type="text" placeholder="grant_xxx" />
-          </label>
-        </div>
-        <div class="actions">
-          <button id="grantBtn" class="btn">Grant</button>
-          <button id="listGrantBtn" class="btn ghost">List Grants</button>
-          <button id="revokeBtn" class="btn warn">Revoke</button>
-          <button id="summarizeBtn" class="btn">Summarize Current Room</button>
-          <button id="summarizeSendBtn" class="btn">Summarize + Send</button>
-        </div>
-        <pre id="agentOutput" class="output"></pre>
-      </section>
+        <aside class="panel side-right">
+          <article class="card">
+            <h2 data-i18n="agent_title">Agent + Policy</h2>
+            <div class="form-grid">
+              <label>
+                <span data-i18n="label_agent_id">Agent ID</span>
+                <input id="agentId" type="text" value="agent.summary.web" />
+              </label>
+              <label>
+                <span data-i18n="label_purpose">Purpose</span>
+                <input id="purpose" type="text" value="daily_summary" />
+              </label>
+              <label>
+                <span data-i18n="label_rate_limit">Rate Limit / Minute</span>
+                <input id="rateLimit" type="number" value="60" min="1" max="10000" />
+              </label>
+              <label>
+                <span data-i18n="label_grant_id">Grant ID</span>
+                <input
+                  id="revokeGrantId"
+                  type="text"
+                  data-i18n-placeholder="placeholder_grant"
+                  placeholder="grant_xxx"
+                />
+              </label>
+            </div>
+            <div class="actions">
+              <button id="grantBtn" class="btn primary" data-i18n="btn_grant">Grant</button>
+              <button id="listGrantBtn" class="btn ghost" data-i18n="btn_list_grants">List</button>
+              <button id="revokeBtn" class="btn warn" data-i18n="btn_revoke">Revoke</button>
+              <button id="summarizeBtn" class="btn ghost" data-i18n="btn_summarize">
+                Summarize
+              </button>
+              <button id="summarizeSendBtn" class="btn primary" data-i18n="btn_summarize_send">
+                Summarize + Send
+              </button>
+            </div>
+            <pre id="agentOutput" class="output"></pre>
+          </article>
 
-      <section class="card reveal" style="--delay: 0.2s">
-        <h2>Audit</h2>
-        <div class="grid two">
-          <label>
-            <span>Actor ID</span>
-            <input id="auditActorId" type="text" placeholder="agent.summary.web" />
-          </label>
-          <label>
-            <span>Action type</span>
-            <input id="auditActionType" type="text" placeholder="agent_summarize" />
-          </label>
-        </div>
-        <div class="actions">
-          <button id="auditQueryBtn" class="btn ghost">Query Events</button>
-          <button id="auditVerifyBtn" class="btn ghost">Verify Chain</button>
-        </div>
-        <pre id="auditOutput" class="output"></pre>
+          <article class="card">
+            <h2 data-i18n="audit_title">Audit</h2>
+            <div class="form-grid">
+              <label>
+                <span data-i18n="label_audit_actor">Actor ID</span>
+                <input
+                  id="auditActorId"
+                  type="text"
+                  data-i18n-placeholder="placeholder_audit_actor"
+                  placeholder="agent.summary.web"
+                />
+              </label>
+              <label>
+                <span data-i18n="label_audit_action">Action Type</span>
+                <input
+                  id="auditActionType"
+                  type="text"
+                  data-i18n-placeholder="placeholder_audit_action"
+                  placeholder="agent_summarize"
+                />
+              </label>
+            </div>
+            <div class="actions">
+              <button id="auditQueryBtn" class="btn ghost" data-i18n="btn_audit_query">
+                Query
+              </button>
+              <button id="auditVerifyBtn" class="btn ghost" data-i18n="btn_audit_verify">
+                Verify
+              </button>
+              <button id="runDemoBtn" class="btn primary" data-i18n="btn_run_demo">Run Demo</button>
+            </div>
+            <pre id="auditOutput" class="output"></pre>
+          </article>
+        </aside>
       </section>
     </main>
-
     <script src="./app.js" type="module"></script>
   </body>
 </html>
