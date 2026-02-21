@@ -3,317 +3,398 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Prism Web Console</title>
+    <title>Prism Web Console - 前端测试页面</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div id="app" class="tg-app">
-      <header class="topbar">
-        <div class="brand">
-          <div class="logo">P</div>
-          <div>
-            <p class="eyebrow">Prism Web Console</p>
-            <h1>{{ tt("app_title") }}</h1>
+    <div id="app" class="frontend-test-page">
+      <!-- Prism Web Console -->
+      <el-container class="app-shell">
+        <el-header class="app-header">
+          <div class="brand-area">
+            <div class="brand-logo">P</div>
+            <div>
+              <p class="brand-subtitle">Prism Web Console</p>
+              <h1 class="brand-title">{{ tt("app_title") }}</h1>
+            </div>
           </div>
-        </div>
-        <div class="top-actions">
-          <button
-            class="lang-btn"
-            :class="{ active: language === 'zh' }"
-            @click="setLanguage('zh', true)"
-          >
-            中文
-          </button>
-          <button
-            class="lang-btn"
-            :class="{ active: language === 'en' }"
-            @click="setLanguage('en', true)"
-          >
-            EN
-          </button>
-        </div>
-      </header>
+          <div class="header-actions">
+            <el-button
+              size="small"
+              :type="language === 'zh' ? 'primary' : 'default'"
+              @click="setLanguage('zh', true)"
+            >
+              中文
+            </el-button>
+            <el-button
+              size="small"
+              :type="language === 'en' ? 'primary' : 'default'"
+              @click="setLanguage('en', true)"
+            >
+              EN
+            </el-button>
+          </div>
+        </el-header>
 
-      <div class="layout">
-        <aside class="left-pane">
-          <section class="panel user-card">
-            <h2>{{ tt("sidebar_account") }}</h2>
-            <p class="muted" v-if="!session">{{ tt("status_logged_out") }}</p>
-            <template v-else>
-              <p class="user-id">{{ session.userId }}</p>
-              <p class="muted">token: {{ mask(session.accessToken) }}</p>
-            </template>
-            <button class="btn ghost full" @click="openSecondClient">
-              {{ tt("btn_open_second") }}
-            </button>
-          </section>
-
-          <section class="panel tabs-panel">
-            <h2>{{ tt("sidebar_tabs") }}</h2>
-            <div class="tabs-list">
-              <button
-                v-for="tab in tabs"
-                :key="tab.id"
-                class="tab-btn"
-                :class="{ active: activeTab === tab.id }"
-                @click="switchTab(tab.id)"
-              >
-                {{ tt(tab.label) }}
-              </button>
-            </div>
-          </section>
-
-          <section class="panel rooms-panel">
-            <div class="rooms-head">
-              <h2>{{ tt("sidebar_rooms") }}</h2>
-              <button class="mini-btn" @click="syncMessages">{{ tt("btn_sync") }}</button>
-            </div>
-            <div class="rooms-list">
-              <button
-                v-for="roomId in knownRooms"
-                :key="roomId"
-                class="room-pill"
-                :class="{ active: roomId === forms.activeRoomId }"
-                @click="selectRoom(roomId)"
-              >
-                {{ roomId }}
-              </button>
-            </div>
-          </section>
-        </aside>
-
-        <main class="main-pane">
-          <section class="panel page-panel" v-if="activeTab === 'auth'">
-            <h2>{{ tt("tab_auth") }}</h2>
-            <div class="grid two">
-              <label>
-                <span>{{ tt("label_homeserver") }}</span>
-                <input v-model.trim="config.homeserverUrl" type="text" />
-              </label>
-              <label>
-                <span>{{ tt("label_gateway") }}</span>
-                <input v-model.trim="config.gatewayUrl" type="text" />
-              </label>
-              <label>
-                <span>{{ tt("label_username") }}</span>
-                <input
-                  v-model.trim="forms.username"
-                  type="text"
-                  :placeholder="tt('placeholder_username')"
-                />
-              </label>
-              <label>
-                <span>{{ tt("label_password") }}</span>
-                <input
-                  v-model="forms.password"
-                  type="password"
-                  :placeholder="tt('placeholder_password')"
-                />
-              </label>
-            </div>
-            <div class="actions">
-              <button class="btn primary" @click="registerUser">{{ tt("btn_register") }}</button>
-              <button class="btn primary" @click="loginUser">{{ tt("btn_login") }}</button>
-              <button class="btn ghost" @click="logoutUser">{{ tt("btn_logout") }}</button>
-              <button class="btn ghost" @click="refreshStatusAndToast">
-                {{ tt("btn_refresh") }}
-              </button>
-            </div>
-            <pre class="output">{{ pretty(sessionOutput) }}</pre>
-          </section>
-
-          <section class="panel page-panel" v-if="activeTab === 'room'">
-            <h2>{{ tt("tab_room") }}</h2>
-            <div class="grid two">
-              <label>
-                <span>{{ tt("label_room_name") }}</span>
-                <input
-                  v-model.trim="forms.roomName"
-                  type="text"
-                  :placeholder="tt('placeholder_room_name')"
-                />
-              </label>
-              <label>
-                <span>{{ tt("label_invite_on_create") }}</span>
-                <input
-                  v-model.trim="forms.inviteOnCreate"
-                  type="text"
-                  :placeholder="tt('placeholder_invite')"
-                />
-              </label>
-              <label>
-                <span>{{ tt("label_active_room") }}</span>
-                <input
-                  v-model.trim="forms.activeRoomId"
-                  type="text"
-                  :placeholder="tt('placeholder_room_id')"
-                />
-              </label>
-              <label>
-                <span>{{ tt("label_join_room_id") }}</span>
-                <input
-                  v-model.trim="forms.joinRoomId"
-                  type="text"
-                  :placeholder="tt('placeholder_room_id')"
-                />
-              </label>
-            </div>
-            <div class="actions">
-              <button class="btn primary" @click="createRoom">{{ tt("btn_create_room") }}</button>
-              <button class="btn ghost" @click="joinRoom">{{ tt("btn_join_room") }}</button>
-              <button class="btn ghost" @click="syncMessages">{{ tt("btn_sync") }}</button>
-            </div>
-            <pre class="output">{{ pretty(roomOutput) }}</pre>
-          </section>
-
-          <section class="panel page-panel" v-if="activeTab === 'invite'">
-            <h2>{{ tt("tab_invite") }}</h2>
-            <div class="grid two">
-              <label>
-                <span>{{ tt("label_active_room") }}</span>
-                <input
-                  v-model.trim="forms.activeRoomId"
-                  type="text"
-                  :placeholder="tt('placeholder_room_id')"
-                />
-              </label>
-              <label>
-                <span>{{ tt("label_invite_user_id") }}</span>
-                <input
-                  v-model.trim="forms.inviteUserId"
-                  type="text"
-                  :placeholder="tt('placeholder_invite')"
-                />
-              </label>
-            </div>
-            <div class="actions">
-              <button class="btn primary" @click="inviteFriend">{{ tt("btn_invite_user") }}</button>
-            </div>
-            <pre class="output">{{ pretty(inviteOutput) }}</pre>
-          </section>
-
-          <section class="panel page-panel" v-if="activeTab === 'agent'">
-            <h2>{{ tt("tab_agent") }}</h2>
-            <div class="grid two">
-              <label>
-                <span>{{ tt("label_agent_id") }}</span>
-                <input
-                  v-model.trim="forms.agentId"
-                  type="text"
-                  :placeholder="tt('placeholder_agent_id')"
-                />
-              </label>
-              <label>
-                <span>{{ tt("label_purpose") }}</span>
-                <input
-                  v-model.trim="forms.purpose"
-                  type="text"
-                  :placeholder="tt('placeholder_purpose')"
-                />
-              </label>
-              <label>
-                <span>{{ tt("label_rate_limit") }}</span>
-                <input v-model.number="forms.rateLimit" type="number" min="1" max="10000" />
-              </label>
-              <label>
-                <span>{{ tt("label_grant_id") }}</span>
-                <input
-                  v-model.trim="forms.grantId"
-                  type="text"
-                  :placeholder="tt('placeholder_grant')"
-                />
-              </label>
-            </div>
-            <div class="actions">
-              <button class="btn primary" @click="createAgentProfile">{{ tt("btn_create_agent") }}</button>
-              <button class="btn primary" @click="grantAgent">{{ tt("btn_grant") }}</button>
-              <button class="btn warn" @click="revokeAgent">{{ tt("btn_revoke") }}</button>
-              <button class="btn ghost" @click="summarizeOnly">{{ tt("btn_summarize") }}</button>
-              <button class="btn primary" @click="summarizeAndSend">
-                {{ tt("btn_summarize_send") }}
-              </button>
-            </div>
-            <pre class="output">{{ pretty(agentOutput) }}</pre>
-          </section>
-
-          <section class="panel chat-panel" v-if="activeTab === 'chat'">
-            <div class="chat-head">
-              <h2>{{ tt("tab_chat") }}</h2>
-              <span class="active-chip">{{ forms.activeRoomId || "-" }}</span>
-            </div>
-
-            <div class="chat-feed" ref="chatFeed">
-              <p v-if="activeRoomMessages.length === 0" class="empty-tip">{{ tt("empty_chat") }}</p>
-              <article
-                v-for="msg in activeRoomMessages"
-                :key="msg.eventId"
-                class="bubble-row"
-                :class="{ self: isSelfMessage(msg) }"
-              >
-                <div class="bubble" :class="{ self: isSelfMessage(msg), other: !isSelfMessage(msg) }">
-                  <p class="meta">{{ displaySender(msg.sender) }} · {{ msg.timestamp }}</p>
-                  <p class="body">{{ msg.body }}</p>
+        <el-container class="app-body">
+          <el-aside width="320px" class="app-aside">
+            <el-card shadow="hover" class="panel-card account-card">
+              <template #header>
+                <div class="card-header">
+                  <span>{{ tt("sidebar_account") }}</span>
                 </div>
-              </article>
-            </div>
-
-            <div class="composer">
-              <label>
-                <span>{{ tt("label_message") }}</span>
-                <textarea
-                  v-model="forms.messageBody"
-                  rows="3"
-                  :placeholder="tt('placeholder_message')"
-                ></textarea>
-              </label>
-              <div class="actions">
-                <button class="btn primary" @click="sendMessage">{{ tt("btn_send") }}</button>
-                <input type="file" @change="onFileSelected" />
-                <button class="btn ghost" @click="uploadFile">{{ tt("btn_upload") }}</button>
-                <button class="btn ghost" @click="syncMessages">{{ tt("btn_sync") }}</button>
+              </template>
+              <div class="account-info">
+                <img
+                  class="pixel-avatar large"
+                  :src="avatarForUser(session ? session.userId : forms.username || 'guest')"
+                  alt="avatar"
+                />
+                <div class="account-meta">
+                  <p v-if="!session" class="muted">{{ tt("status_logged_out") }}</p>
+                  <template v-else>
+                    <p class="mono-row">{{ session.userId }}</p>
+                    <p class="muted">token: {{ mask(session.accessToken) }}</p>
+                  </template>
+                </div>
               </div>
-            </div>
-          </section>
+              <div class="card-actions">
+                <el-button class="w-full" @click="openSecondClient">{{ tt("btn_open_second") }}</el-button>
+              </div>
+            </el-card>
 
-          <section class="panel page-panel" v-if="activeTab === 'audit'">
-            <h2>{{ tt("tab_audit") }}</h2>
-            <div class="grid two">
-              <label>
-                <span>{{ tt("label_actor_id") }}</span>
-                <input
-                  v-model.trim="forms.auditActorId"
-                  type="text"
-                  :placeholder="tt('placeholder_actor')"
-                />
-              </label>
-              <label>
-                <span>{{ tt("label_action_type") }}</span>
-                <input
-                  v-model.trim="forms.auditActionType"
-                  type="text"
-                  :placeholder="tt('placeholder_action')"
-                />
-              </label>
-            </div>
-            <div class="actions">
-              <button class="btn ghost" @click="queryAudit">{{ tt("btn_query_audit") }}</button>
-              <button class="btn ghost" @click="verifyAudit">{{ tt("btn_verify_audit") }}</button>
-              <button class="btn primary" @click="runDemoFlow">{{ tt("btn_run_demo") }}</button>
-            </div>
-            <pre class="output">{{ pretty(auditOutput) }}</pre>
-          </section>
-        </main>
-      </div>
+            <el-card shadow="hover" class="panel-card inbox-side-card">
+              <template #header>
+                <div class="card-header">
+                  <span>{{ tt("sidebar_inbox") }}</span>
+                  <el-button size="small" @click="activeTab = 'inbox'">{{ tt("btn_view_detail") }}</el-button>
+                </div>
+              </template>
+              <el-scrollbar height="210px" class="inbox-side-scroll">
+                <div v-if="sidebarInboxItems.length === 0" class="muted">{{ tt("empty_inbox") }}</div>
+                <button
+                  v-for="item in sidebarInboxItems"
+                  :key="item.id"
+                  class="inbox-side-item"
+                  @click="openInboxFromSidebar(item)"
+                >
+                  <p class="inbox-side-time">{{ item.time }}</p>
+                  <p class="inbox-side-line">{{ item.line }}</p>
+                </button>
+              </el-scrollbar>
+            </el-card>
 
-      <div class="toast-wrap">
-        <article v-for="toast in toasts" :key="toast.id" class="toast" :class="toast.type">
-          <p class="toast-title">{{ toast.title }}</p>
-          <p class="toast-body">{{ toast.message }}</p>
-        </article>
-      </div>
+            <el-card shadow="hover" class="panel-card room-card">
+              <template #header>
+                <div class="card-header room-header">
+                  <span>{{ tt("sidebar_rooms") }}</span>
+                  <el-button size="small" @click="syncMessages()">{{ tt("btn_sync") }}</el-button>
+                </div>
+              </template>
+              <el-scrollbar height="260px" class="room-scroll">
+                <div v-if="knownRooms.length === 0" class="muted">{{ tt("empty_rooms") }}</div>
+                <button
+                  v-for="roomId in knownRooms"
+                  :key="roomId"
+                  class="room-item"
+                  :class="{ active: roomId === forms.activeRoomId }"
+                  @click="selectRoom(roomId)"
+                >
+                  <div class="room-main">
+                    <span class="mono-row room-id">{{ roomId }}</span>
+                    <span class="muted room-meta">{{ memberCountText(roomId) }}</span>
+                  </div>
+                </button>
+              </el-scrollbar>
+            </el-card>
+          </el-aside>
+
+          <el-main class="app-main">
+            <el-tabs
+              v-model="activeTab"
+              class="main-tabs"
+              stretch
+              @tab-change="onTabChanged"
+            >
+              <el-tab-pane :label="tt('tab_auth')" name="auth">
+                <el-card shadow="never" class="page-card">
+                  <el-form label-position="top" class="form-grid two-col">
+                    <el-form-item :label="tt('label_homeserver')">
+                      <el-input v-model.trim="config.homeserverUrl" />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_gateway')">
+                      <el-input v-model.trim="config.gatewayUrl" />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_username')">
+                      <el-input v-model.trim="forms.username" :placeholder="tt('placeholder_username')" />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_password')">
+                      <el-input
+                        v-model="forms.password"
+                        :placeholder="tt('placeholder_password')"
+                        show-password
+                      />
+                    </el-form-item>
+                  </el-form>
+
+                  <div class="action-row">
+                    <el-button type="primary" @click="registerUser">{{ tt("btn_register") }}</el-button>
+                    <el-button type="primary" @click="loginUser">{{ tt("btn_login") }}</el-button>
+                    <el-button @click="logoutUser">{{ tt("btn_logout") }}</el-button>
+                    <el-button @click="refreshStatusAndToast">{{ tt("btn_refresh") }}</el-button>
+                  </div>
+
+                  <pre class="output-box">{{ pretty(sessionOutput) }}</pre>
+                </el-card>
+              </el-tab-pane>
+
+              <el-tab-pane :label="tt('tab_room')" name="room">
+                <el-card shadow="never" class="page-card">
+                  <el-form label-position="top" class="form-grid two-col">
+                    <el-form-item :label="tt('label_room_name')">
+                      <el-input v-model.trim="forms.roomName" :placeholder="tt('placeholder_room_name')" />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_invite_on_create')">
+                      <el-input v-model.trim="forms.inviteOnCreate" :placeholder="tt('placeholder_invite')" />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_active_room')">
+                      <el-input v-model.trim="forms.activeRoomId" :placeholder="tt('placeholder_room_id')" />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_join_room_id')">
+                      <el-input v-model.trim="forms.joinRoomId" :placeholder="tt('placeholder_room_id')" />
+                    </el-form-item>
+                  </el-form>
+
+                  <div class="action-row">
+                    <el-button type="primary" @click="createRoom">{{ tt("btn_create_room") }}</el-button>
+                    <el-button @click="joinRoom">{{ tt("btn_join_room") }}</el-button>
+                    <el-button @click="refreshRoomMembers()">{{ tt("btn_refresh_members") }}</el-button>
+                  </div>
+
+                  <pre class="output-box">{{ pretty(roomOutput) }}</pre>
+                </el-card>
+              </el-tab-pane>
+
+              <el-tab-pane :label="tt('tab_invite')" name="invite">
+                <el-card shadow="never" class="page-card">
+                  <el-form label-position="top" class="form-grid two-col">
+                    <el-form-item :label="tt('label_active_room')">
+                      <el-input v-model.trim="forms.activeRoomId" :placeholder="tt('placeholder_room_id')" />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_invite_user_id')">
+                      <el-input
+                        v-model.trim="forms.inviteUserId"
+                        :placeholder="tt('placeholder_invite')"
+                      />
+                      <div class="hint-row">
+                        <el-text size="small" type="info">{{ tt("hint_invite_auto") }}</el-text>
+                        <el-text size="small" class="mono-row">
+                          {{ tt("hint_invite_preview") }} {{ normalizedInviteUserId || "-" }}
+                        </el-text>
+                      </div>
+                    </el-form-item>
+                  </el-form>
+
+                  <div class="action-row">
+                    <el-button type="primary" @click="inviteFriend">{{ tt("btn_invite_user") }}</el-button>
+                  </div>
+
+                  <pre class="output-box">{{ pretty(inviteOutput) }}</pre>
+                </el-card>
+              </el-tab-pane>
+
+              <el-tab-pane :label="tt('tab_inbox')" name="inbox">
+                <el-card shadow="never" class="page-card">
+                  <div class="action-row">
+                    <el-button @click="syncMessages">{{ tt("btn_sync") }}</el-button>
+                    <el-button @click="clearInbox">{{ tt("btn_clear_inbox") }}</el-button>
+                  </div>
+
+                  <el-table
+                    :data="inboxItems"
+                    stripe
+                    border
+                    height="460"
+                    @row-click="openInboxDetail"
+                  >
+                    <el-table-column :label="tt('col_time')" width="170">
+                      <template #default="scope">{{ scope.row.time }}</template>
+                    </el-table-column>
+                    <el-table-column :label="tt('col_type')" width="140">
+                      <template #default="scope">{{ inboxTypeLabel(scope.row.type) }}</template>
+                    </el-table-column>
+                    <el-table-column :label="tt('col_line')">
+                      <template #default="scope">{{ scope.row.line }}</template>
+                    </el-table-column>
+                    <el-table-column :label="tt('col_action')" width="130">
+                      <template #default="scope">
+                        <el-button type="primary" link @click.stop="openInboxDetail(scope.row)">
+                          {{ tt("btn_view_detail") }}
+                        </el-button>
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                </el-card>
+              </el-tab-pane>
+
+              <el-tab-pane :label="tt('tab_agent')" name="agent">
+                <el-card shadow="never" class="page-card">
+                  <el-form label-position="top" class="form-grid two-col">
+                    <el-form-item :label="tt('label_agent_id')">
+                      <el-input v-model.trim="forms.agentId" :placeholder="tt('placeholder_agent_id')" />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_purpose')">
+                      <el-input v-model.trim="forms.purpose" :placeholder="tt('placeholder_purpose')" />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_rate_limit')">
+                      <el-input-number v-model="forms.rateLimit" :min="1" :max="10000" />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_grant_id')">
+                      <el-input v-model.trim="forms.grantId" :placeholder="tt('placeholder_grant')" />
+                    </el-form-item>
+                  </el-form>
+
+                  <div class="action-row">
+                    <el-button @click="createAgentProfile">{{ tt("btn_create_agent") }}</el-button>
+                    <el-button type="primary" @click="grantAgent">{{ tt("btn_grant") }}</el-button>
+                    <el-button type="warning" @click="revokeAgent">{{ tt("btn_revoke") }}</el-button>
+                    <el-button @click="summarizeOnly">{{ tt("btn_summarize") }}</el-button>
+                    <el-button type="primary" @click="summarizeAndSend">{{ tt("btn_summarize_send") }}</el-button>
+                  </div>
+
+                  <pre class="output-box">{{ pretty(agentOutput) }}</pre>
+                </el-card>
+              </el-tab-pane>
+
+              <el-tab-pane :label="tt('tab_chat')" name="chat">
+                <el-card shadow="never" class="page-card chat-card">
+                  <div class="chat-header">
+                    <div class="chat-title-wrap">
+                      <span class="chat-title">{{ tt("tab_chat") }}</span>
+                      <el-tag>{{ forms.activeRoomId || "-" }}</el-tag>
+                      <el-tag type="success">{{ tt("label_member_count") }}: {{ activeRoomMemberCount }}</el-tag>
+                    </div>
+                    <div class="chat-actions">
+                      <el-button size="small" @click="refreshRoomMembers()">
+                        {{ tt("btn_refresh_members") }}
+                      </el-button>
+                    </div>
+                  </div>
+
+                  <el-scrollbar class="chat-feed" ref="chatFeed">
+                    <p v-if="activeRoomMessages.length === 0" class="muted">{{ tt("empty_chat") }}</p>
+                    <article
+                      v-for="msg in activeRoomMessages"
+                      :key="msg.eventId"
+                      class="chat-row"
+                      :class="{ self: isSelfMessage(msg) }"
+                    >
+                      <img
+                        class="pixel-avatar"
+                        :src="avatarForUser(msg.sender)"
+                        alt="avatar"
+                      />
+                      <div class="chat-bubble" :class="{ self: isSelfMessage(msg) }">
+                        <p class="chat-meta">{{ displaySender(msg.sender) }} · {{ msg.timestamp }}</p>
+                        <p class="chat-body">{{ msg.body }}</p>
+                      </div>
+                    </article>
+                  </el-scrollbar>
+
+                  <div class="chat-composer">
+                    <el-form label-position="top">
+                      <el-form-item :label="tt('label_message')">
+                        <el-input
+                          v-model="forms.messageBody"
+                          type="textarea"
+                          :rows="3"
+                          :placeholder="tt('placeholder_message')"
+                        />
+                      </el-form-item>
+                    </el-form>
+
+                    <div class="action-row">
+                      <el-button type="primary" @click="sendMessage">{{ tt("btn_send") }}</el-button>
+                      <el-upload
+                        class="upload-inline"
+                        :auto-upload="false"
+                        :show-file-list="true"
+                        :limit="1"
+                        :on-change="onFilePicked"
+                        :on-exceed="onFileExceed"
+                      >
+                        <el-button>{{ tt("btn_pick_file") }}</el-button>
+                      </el-upload>
+                      <el-button @click="uploadFile">{{ tt("btn_upload") }}</el-button>
+                    </div>
+                  </div>
+                </el-card>
+              </el-tab-pane>
+
+              <el-tab-pane :label="tt('tab_audit')" name="audit">
+                <el-card shadow="never" class="page-card">
+                  <el-form label-position="top" class="form-grid two-col">
+                    <el-form-item :label="tt('label_actor_id')">
+                      <el-input v-model.trim="forms.auditActorId" :placeholder="tt('placeholder_actor')" />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_action_type')">
+                      <el-input
+                        v-model.trim="forms.auditActionType"
+                        :placeholder="tt('placeholder_action')"
+                      />
+                    </el-form-item>
+                  </el-form>
+
+                  <div class="action-row">
+                    <el-button @click="queryAudit">{{ tt("btn_query_audit") }}</el-button>
+                    <el-button @click="verifyAudit">{{ tt("btn_verify_audit") }}</el-button>
+                    <el-button type="primary" @click="runDemoFlow">{{ tt("btn_run_demo") }}</el-button>
+                  </div>
+
+                  <pre class="output-box">{{ pretty(auditOutput) }}</pre>
+                </el-card>
+              </el-tab-pane>
+            </el-tabs>
+          </el-main>
+        </el-container>
+      </el-container>
+
+      <el-dialog v-model="inboxDialogVisible" :title="tt('dialog_inbox_title')" width="680px">
+        <template v-if="selectedInboxItem">
+          <el-descriptions :column="1" border>
+            <el-descriptions-item :label="tt('col_time')">{{ selectedInboxItem.time }}</el-descriptions-item>
+            <el-descriptions-item :label="tt('col_type')">
+              {{ inboxTypeLabel(selectedInboxItem.type) }}
+            </el-descriptions-item>
+            <el-descriptions-item :label="tt('label_active_room')">
+              {{ selectedInboxItem.roomId || '-' }}
+            </el-descriptions-item>
+            <el-descriptions-item :label="tt('col_line')">{{ selectedInboxItem.line }}</el-descriptions-item>
+          </el-descriptions>
+          <el-input
+            class="detail-json"
+            type="textarea"
+            :rows="8"
+            readonly
+            :model-value="pretty(selectedInboxItem.detail)"
+          />
+        </template>
+        <template #footer>
+          <el-button @click="inboxDialogVisible = false">{{ tt("btn_close") }}</el-button>
+          <el-button
+            type="primary"
+            :disabled="!selectedInboxItem || !selectedInboxItem.roomId"
+            @click="jumpToInboxRoom"
+          >
+            {{ tt("btn_go_room") }}
+          </el-button>
+        </template>
+      </el-dialog>
     </div>
 
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://unpkg.com/element-plus/dist/index.full.min.js"></script>
     <script src="./app.js"></script>
   </body>
 </html>

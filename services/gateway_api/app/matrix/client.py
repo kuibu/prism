@@ -9,7 +9,16 @@ import httpx
 
 
 class MatrixClientError(RuntimeError):
-    pass
+    def __init__(
+        self,
+        message: str,
+        *,
+        status_code: int | None = None,
+        errcode: str | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+        self.errcode = errcode
 
 
 class MatrixClient:
@@ -93,6 +102,20 @@ class MatrixClient:
             path=f"/_matrix/client/v3/rooms/{encoded_room_id}/invite",
             headers=headers,
             body={"user_id": user_id},
+        )
+
+    async def get_joined_members(
+        self,
+        *,
+        access_token: str,
+        room_id: str,
+    ) -> dict[str, Any]:
+        headers = {"Authorization": f"Bearer {access_token}"}
+        encoded_room_id = quote(room_id, safe="")
+        return await self._request_json(
+            method="GET",
+            path=f"/_matrix/client/v3/rooms/{encoded_room_id}/joined_members",
+            headers=headers,
         )
 
     async def send_text_message(
@@ -226,6 +249,7 @@ class MatrixClient:
             path="/_matrix/client/v3/sync",
             params=params,
             headers=headers,
+            request_timeout_seconds=max(self.timeout_seconds, (float(timeout_ms) / 1000.0) + 2.0),
         )
 
     async def _request_json(
@@ -237,11 +261,14 @@ class MatrixClient:
         headers: dict[str, str] | None = None,
         body: dict[str, Any] | None = None,
         content: bytes | None = None,
+        request_timeout_seconds: float | None = None,
     ) -> dict[str, Any]:
         if body is not None and content is not None:
             raise MatrixClientError("invalid_request_payload")
 
         last_error: str | None = None
+        last_status_code: int | None = None
+        last_errcode: str | None = None
         async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
             for attempt in range(self.retry_attempts):
                 try:
@@ -252,15 +279,27 @@ class MatrixClient:
                         headers=headers,
                         json=body,
                         content=content,
+                        timeout=request_timeout_seconds or self.timeout_seconds,
                     )
                     response.raise_for_status()
                     payload: dict[str, Any] = response.json()
                     return payload
                 except httpx.RequestError as exc:
                     last_error = str(exc)
+                    last_status_code = None
+                    last_errcode = None
                 except httpx.HTTPStatusError as exc:
                     status = exc.response.status_code
-                    last_error = str(exc)
+                    last_status_code = status
+                    try:
+                        payload = exc.response.json()
+                    except ValueError:
+                        payload = {}
+                    errcode_raw = payload.get("errcode")
+                    error_raw = payload.get("error")
+                    last_errcode = str(errcode_raw) if isinstance(errcode_raw, str) else None
+                    detail = str(error_raw) if isinstance(error_raw, str) else str(exc)
+                    last_error = detail
                     if status == 429 and attempt + 1 < self.retry_attempts:
                         await asyncio.sleep(self._retry_delay_from_response(exc.response, attempt))
                         continue
@@ -275,7 +314,11 @@ class MatrixClient:
                 if attempt + 1 < self.retry_attempts:
                     await asyncio.sleep(self._default_backoff_delay(attempt))
 
-        raise MatrixClientError(last_error or "matrix_request_failed")
+        raise MatrixClientError(
+            last_error or "matrix_request_failed",
+            status_code=last_status_code,
+            errcode=last_errcode,
+        )
 
     @staticmethod
     def _default_backoff_delay(attempt: int) -> float:

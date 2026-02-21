@@ -366,6 +366,18 @@ class _StubMatrixClient:
             raise MatrixClientError("invalid_token")
         return {}
 
+    async def get_joined_members(
+        self,
+        *,
+        access_token: str,
+        room_id: str,
+    ) -> dict[str, object]:
+        _ = room_id
+        user_id = self._token_to_user.get(access_token)
+        if user_id is None:
+            raise MatrixClientError("invalid_token")
+        return {"joined": {user_id: {"display_name": user_id}}}
+
     async def send_text_message(
         self,
         *,
@@ -659,6 +671,79 @@ def test_matrix_sync_smoke_mocked() -> None:
     payload = response.json()
     assert payload["next_batch"] == "s1"
     assert payload["echo"]["since"] == "s0"
+
+
+def test_matrix_invite_forbidden_maps_to_403() -> None:
+    class _InviteForbiddenMatrix(_StubMatrixClient):
+        async def invite_user(
+            self,
+            *,
+            access_token: str,
+            room_id: str,
+            user_id: str,
+        ) -> dict[str, object]:
+            _ = access_token, room_id, user_id
+            raise MatrixClientError(
+                "M_FORBIDDEN: no invite permission",
+                status_code=403,
+                errcode="M_FORBIDDEN",
+            )
+
+    with TestClient(app) as client:
+        audit_stub = _install_stubs(client)
+        matrix_stub = _InviteForbiddenMatrix()
+        client.app.state.matrix_client = matrix_stub
+        client.app.state.agent_bot_manager = AgentBotManager(
+            matrix_client=matrix_stub,
+            username_prefix="agent_stub",
+            password_secret="secret_stub",
+        )
+
+        response = client.post(
+            "/api/v1/matrix/rooms/!room:localhost/invite",
+            headers=_auth_headers(),
+            json={"user_id": "@bob:localhost"},
+        )
+
+        assert response.status_code == 403
+        assert "matrix_invite_user_forbidden" in response.json()["detail"]
+
+        audit_events = [event for event in audit_stub.events if event.action_type == "matrix_invite_user"]
+        assert len(audit_events) == 1
+        assert audit_events[0].decision.value == "deny"
+
+
+def test_matrix_sync_timeout_maps_to_504() -> None:
+    class _SyncTimeoutMatrix(_StubMatrixClient):
+        async def sync(
+            self,
+            *,
+            access_token: str,
+            since: str | None,
+            timeout_ms: int,
+            full_state: bool,
+        ) -> dict[str, object]:
+            _ = access_token, since, timeout_ms, full_state
+            raise MatrixClientError("matrix_request_timeout")
+
+    with TestClient(app) as client:
+        _install_stubs(client)
+        matrix_stub = _SyncTimeoutMatrix()
+        client.app.state.matrix_client = matrix_stub
+        client.app.state.agent_bot_manager = AgentBotManager(
+            matrix_client=matrix_stub,
+            username_prefix="agent_stub",
+            password_secret="secret_stub",
+        )
+
+        response = client.get(
+            "/api/v1/matrix/sync",
+            headers=_auth_headers(),
+            params={"timeout_ms": 12000},
+        )
+
+    assert response.status_code == 504
+    assert "matrix_sync_timeout" in response.json()["detail"]
 
 
 def test_matrix_proxy_login_create_send_audited() -> None:

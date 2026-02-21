@@ -1,18 +1,20 @@
 (() => {
   const I18N = {
     zh: {
-      app_title: "仿 Telegram 多页面联调台",
+      app_title: "前端测试页面",
       sidebar_account: "当前会话",
-      sidebar_tabs: "功能页面",
+      sidebar_inbox: "消息中心",
       sidebar_rooms: "房间列表",
       tab_auth: "注册 / 登录",
       tab_room: "创建房间",
       tab_invite: "邀请好友",
+      tab_inbox: "消息中心",
       tab_agent: "创建 Agent",
       tab_chat: "聊天页面",
       tab_audit: "审计页面",
-      status_logged_out: "未登录（可在另一个窗口登录另一个用户）。",
-      btn_open_second: "打开第二个客户端窗口",
+      status_logged_out: "未登录（建议打开两个窗口分别登录两个用户进行联调）。",
+      empty_rooms: "暂无已知房间。创建或加入房间后会显示。",
+      empty_inbox: "暂无消息。",
       label_homeserver: "Homeserver URL",
       label_gateway: "Gateway API URL",
       label_username: "用户名（localpart）",
@@ -29,45 +31,67 @@
       label_message: "消息内容",
       label_actor_id: "Actor ID",
       label_action_type: "动作类型",
+      label_member_count: "房间成员",
       placeholder_username: "例如 tg_user_a",
       placeholder_password: "至少8位，例如 Passw0rd!",
       placeholder_room_name: "例如 Team Chat",
-      placeholder_invite: "@tg_user_b:localhost",
+      placeholder_invite: "支持 username 或 @username:localhost",
       placeholder_room_id: "!room:localhost",
       placeholder_agent_id: "agent.summary.demo",
       placeholder_purpose: "daily_summary",
       placeholder_grant: "grant_xxx",
-      placeholder_message: "输入消息后点击发送",
+      placeholder_message: "输入消息后点击发送，消息会自动实时刷新",
       placeholder_actor: "agent.summary.demo",
       placeholder_action: "agent_summarize",
+      hint_invite_auto: "可直接输入用户名（如 alice），系统会自动补全为 @alice:localhost",
+      hint_invite_preview: "将发送邀请给：",
+      btn_open_second: "打开第二个客户端窗口",
       btn_register: "注册",
       btn_login: "登录",
       btn_logout: "退出",
       btn_refresh: "刷新状态",
       btn_create_room: "创建房间",
       btn_join_room: "加入房间",
-      btn_sync: "同步消息",
+      btn_sync: "立即同步",
       btn_invite_user: "邀请好友",
+      btn_clear_inbox: "清空消息中心",
+      btn_view_detail: "查看详情",
+      btn_close: "关闭",
+      btn_go_room: "进入房间",
       btn_create_agent: "创建 Agent 资料",
       btn_grant: "授权 Agent",
       btn_revoke: "撤销授权",
       btn_summarize: "摘要（仅返回）",
       btn_summarize_send: "摘要并发送到房间",
       btn_send: "发送消息",
+      btn_pick_file: "选择文件",
       btn_upload: "上传文件",
       btn_query_audit: "查询审计",
       btn_verify_audit: "验证审计链",
       btn_run_demo: "一键双人联调演示",
-      empty_chat: "暂无消息。先发送或同步一次。",
+      btn_refresh_members: "刷新成员",
+      col_time: "时间",
+      col_type: "类型",
+      col_line: "消息",
+      col_action: "操作",
+      dialog_inbox_title: "消息中心详情",
+      inbox_type_invite: "邀请",
+      inbox_type_message: "新消息",
+      inbox_type_system: "系统",
+      inbox_invite_line: "收到邀请：{inviter} 邀请你加入 {room}",
+      inbox_message_line: "{room} 有新消息：{sender} 说「{preview}」",
+      inbox_join_hint: "你已加入房间 {room}",
+      empty_chat: "暂无消息，系统正在自动同步。",
       self_name: "我",
-      toast_success: "成功",
-      toast_error: "失败",
-      toast_info: "提示",
-      info_open_second: "已打开新窗口。你可以在新窗口登录另一个用户。",
-      info_profile_created: "Agent 资料已创建（本地），可继续授权。",
-      info_language_changed: "语言已切换。",
-      info_tab_switched: "已切换页面。",
-      info_status_refreshed: "状态已刷新。",
+      msg_switch_tab: "已切换页面",
+      msg_language: "语言已切换",
+      msg_open_second: "已打开新窗口，可在新窗口登录另一个用户。",
+      msg_status_refreshed: "状态已刷新",
+      msg_sync_ok: "同步成功：新增消息 {messages} 条，新增邀请 {invites} 条。",
+      msg_members_ok: "房间成员已刷新，共 {count} 人。",
+      msg_file_selected: "已选择文件：{name}",
+      msg_profile_created: "Agent 资料已创建（本地），可继续授权。",
+      msg_inbox_cleared: "消息中心已清空",
       err_no_session: "当前未登录，请先注册或登录。",
       err_need_credentials: "请输入用户名和密码。",
       err_password_short: "密码至少 8 位。",
@@ -76,9 +100,11 @@
       err_need_invite: "请填写房间 ID 和好友用户 ID。",
       err_need_agent: "请填写 Agent ID 和 Purpose。",
       err_need_grant: "请填写授权 ID。",
+      err_need_file: "请先选择文件。",
       err_demo_need_creds: "先填写用户名和密码，再执行演示。",
       err_demo_deny_expected: "撤权后应返回 403 deny，但本次未拒绝。",
       err_demo_audit_verify: "审计链验证失败。",
+      err_api: "请求失败",
       demo_start: "开始演示：注册/登录 -> 建房 -> 发消息 -> 授权 -> 摘要 -> 撤权 -> 验证。",
       demo_done: "演示完成：流程全部通过。",
       demo_messages: [
@@ -88,18 +114,20 @@
       ],
     },
     en: {
-      app_title: "Telegram-Like Multi-Page Test Console",
+      app_title: "Frontend Test Page",
       sidebar_account: "Current Session",
-      sidebar_tabs: "Pages",
+      sidebar_inbox: "Message Center",
       sidebar_rooms: "Rooms",
       tab_auth: "Register / Login",
       tab_room: "Create Room",
       tab_invite: "Invite Friend",
+      tab_inbox: "Message Center",
       tab_agent: "Create Agent",
       tab_chat: "Chat",
       tab_audit: "Audit",
-      status_logged_out: "Logged out (you can login another user in a second window).",
-      btn_open_second: "Open Second Client Window",
+      status_logged_out: "Logged out. Use two windows with two users for end-to-end chat tests.",
+      empty_rooms: "No known rooms yet. Create or join a room first.",
+      empty_inbox: "No messages yet.",
       label_homeserver: "Homeserver URL",
       label_gateway: "Gateway API URL",
       label_username: "Username (localpart)",
@@ -116,45 +144,67 @@
       label_message: "Message",
       label_actor_id: "Actor ID",
       label_action_type: "Action Type",
+      label_member_count: "Members",
       placeholder_username: "e.g. tg_user_a",
       placeholder_password: "at least 8 chars, e.g. Passw0rd!",
       placeholder_room_name: "e.g. Team Chat",
-      placeholder_invite: "@tg_user_b:localhost",
+      placeholder_invite: "username or @username:localhost",
       placeholder_room_id: "!room:localhost",
       placeholder_agent_id: "agent.summary.demo",
       placeholder_purpose: "daily_summary",
       placeholder_grant: "grant_xxx",
-      placeholder_message: "Type message and click Send",
+      placeholder_message: "Type and send. New messages appear automatically.",
       placeholder_actor: "agent.summary.demo",
       placeholder_action: "agent_summarize",
+      hint_invite_auto: "You can type only username (alice). It auto-completes to @alice:localhost",
+      hint_invite_preview: "Invite target:",
+      btn_open_second: "Open Second Client Window",
       btn_register: "Register",
       btn_login: "Login",
       btn_logout: "Logout",
       btn_refresh: "Refresh",
       btn_create_room: "Create Room",
       btn_join_room: "Join Room",
-      btn_sync: "Sync",
+      btn_sync: "Sync Now",
       btn_invite_user: "Invite User",
+      btn_clear_inbox: "Clear Message Center",
+      btn_view_detail: "View",
+      btn_close: "Close",
+      btn_go_room: "Go to Room",
       btn_create_agent: "Create Agent Profile",
       btn_grant: "Grant Agent",
       btn_revoke: "Revoke Grant",
       btn_summarize: "Summarize",
       btn_summarize_send: "Summarize and Send",
       btn_send: "Send",
+      btn_pick_file: "Pick File",
       btn_upload: "Upload File",
       btn_query_audit: "Query Audit",
       btn_verify_audit: "Verify Chain",
       btn_run_demo: "Run Demo Flow",
-      empty_chat: "No messages yet. Send or sync first.",
+      btn_refresh_members: "Refresh Members",
+      col_time: "Time",
+      col_type: "Type",
+      col_line: "Message",
+      col_action: "Action",
+      dialog_inbox_title: "Message Center Details",
+      inbox_type_invite: "Invite",
+      inbox_type_message: "New Message",
+      inbox_type_system: "System",
+      inbox_invite_line: "Invitation received: {inviter} invited you to {room}",
+      inbox_message_line: "{room} has a new message: {sender} said \"{preview}\"",
+      inbox_join_hint: "You joined room {room}",
+      empty_chat: "No messages yet. Auto-sync is running.",
       self_name: "Me",
-      toast_success: "Success",
-      toast_error: "Error",
-      toast_info: "Info",
-      info_open_second: "Second window opened. Login another user there.",
-      info_profile_created: "Agent profile created locally. You can now grant permission.",
-      info_language_changed: "Language switched.",
-      info_tab_switched: "Page switched.",
-      info_status_refreshed: "Status refreshed.",
+      msg_switch_tab: "Page switched",
+      msg_language: "Language switched",
+      msg_open_second: "Second window opened. Login another user there.",
+      msg_status_refreshed: "Status refreshed",
+      msg_sync_ok: "Sync done: {messages} new messages, {invites} new invites.",
+      msg_members_ok: "Room members refreshed: {count}",
+      msg_file_selected: "File selected: {name}",
+      msg_profile_created: "Agent profile created locally.",
+      msg_inbox_cleared: "Message center cleared",
       err_no_session: "No active session. Please register or login.",
       err_need_credentials: "Username and password are required.",
       err_password_short: "Password must be at least 8 characters.",
@@ -163,9 +213,11 @@
       err_need_invite: "Room ID and friend user ID are required.",
       err_need_agent: "Agent ID and purpose are required.",
       err_need_grant: "Grant ID is required.",
+      err_need_file: "Please pick a file first.",
       err_demo_need_creds: "Enter username/password before running demo.",
       err_demo_deny_expected: "Expected 403 deny after revoke, but request was allowed.",
       err_demo_audit_verify: "Audit verification failed.",
+      err_api: "Request failed",
       demo_start: "Running demo: auth -> room -> message -> grant -> summarize -> revoke -> verify.",
       demo_done: "Demo finished successfully.",
       demo_messages: [
@@ -176,10 +228,70 @@
     },
   };
 
-  const SESSION_KEY = "prism_telegram_vue_session_v1";
-  const LANGUAGE_KEY = "prism_telegram_vue_lang_v1";
+  const query = new URLSearchParams(window.location.search);
+  const clientScope = query.get("client") || "default";
+  const SESSION_KEY = `prism_frontend_session_v2_${clientScope}`;
+  const LANGUAGE_KEY = "prism_frontend_lang_v2";
+
+  const AVATAR_PALETTES = [
+    ["#f2e8cf", "#6f4e37", "#a67c52", "#3a2d23"],
+    ["#efe6d9", "#4a5d4d", "#7b8f6a", "#2f3d31"],
+    ["#f4efe6", "#5d4a66", "#8b6fa3", "#2b2233"],
+    ["#f0e9dd", "#36597a", "#6e8ba6", "#1f3448"],
+    ["#f3eadb", "#704e2e", "#b78642", "#3e2d1f"],
+    ["#ede7db", "#46515e", "#7e8c99", "#29323b"],
+  ];
 
   const { createApp } = window.Vue;
+
+  function hashString(value) {
+    let hash = 2166136261;
+    for (let i = 0; i < value.length; i += 1) {
+      hash ^= value.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    return hash >>> 0;
+  }
+
+  function buildPixelAvatar(seed) {
+    const hash = hashString(seed || "guest");
+    const palette = AVATAR_PALETTES[hash % AVATAR_PALETTES.length];
+    const bg = palette[0];
+    const fg1 = palette[1];
+    const fg2 = palette[2];
+    const fg3 = palette[3];
+
+    const cells = [];
+    let state = hash;
+    const size = 10;
+    const grid = 8;
+
+    for (let y = 0; y < grid; y += 1) {
+      for (let x = 0; x < 4; x += 1) {
+        state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
+        const bit = state & 1;
+        if (bit === 0) {
+          continue;
+        }
+        const colorChoice = state % 3;
+        const color = colorChoice === 0 ? fg1 : colorChoice === 1 ? fg2 : fg3;
+        const left = x;
+        const right = grid - 1 - x;
+        cells.push(`<rect x="${left * size}" y="${y * size}" width="${size}" height="${size}" fill="${color}"/>`);
+        if (right !== left) {
+          cells.push(`<rect x="${right * size}" y="${y * size}" width="${size}" height="${size}" fill="${color}"/>`);
+        }
+      }
+    }
+
+    const svg = [
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${grid * size}" height="${grid * size}" viewBox="0 0 ${grid * size} ${grid * size}">`,
+      `<rect width="100%" height="100%" fill="${bg}"/>`,
+      ...cells,
+      "</svg>",
+    ].join("");
+    return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+  }
 
   createApp({
     data() {
@@ -190,6 +302,7 @@
           { id: "auth", label: "tab_auth" },
           { id: "room", label: "tab_room" },
           { id: "invite", label: "tab_invite" },
+          { id: "inbox", label: "tab_inbox" },
           { id: "agent", label: "tab_agent" },
           { id: "chat", label: "tab_chat" },
           { id: "audit", label: "tab_audit" },
@@ -217,19 +330,33 @@
         session: null,
         roomMessages: {},
         roomSet: [],
+        roomMembers: {},
         selectedFile: null,
         sessionOutput: {},
         roomOutput: {},
         inviteOutput: {},
         agentOutput: {},
         auditOutput: {},
-        toasts: [],
-        toastSeq: 1,
+        inboxItems: [],
+        inboxSeen: {},
+        inboxDialogVisible: false,
+        selectedInboxItem: null,
+        syncInFlight: false,
+        autoSyncEnabled: false,
+        syncTimer: null,
+        avatarCache: {},
+        lastSilentSyncErrorTs: 0,
       };
     },
     computed: {
       knownRooms() {
         return [...this.roomSet];
+      },
+      sidebarInboxItems() {
+        return this.inboxItems.slice(0, 8);
+      },
+      normalizedInviteUserId() {
+        return this.normalizeUserId(this.forms.inviteUserId);
       },
       activeRoomMessages() {
         const roomId = this.forms.activeRoomId.trim();
@@ -238,9 +365,25 @@
         }
         return this.roomMessages[roomId] || [];
       },
+      activeRoomMemberCount() {
+        const roomId = this.forms.activeRoomId.trim();
+        if (!roomId) {
+          return 0;
+        }
+        const detail = this.roomMembers[roomId];
+        if (detail && Number.isFinite(detail.count)) {
+          return detail.count;
+        }
+        const senders = new Set((this.roomMessages[roomId] || []).map((msg) => msg.sender));
+        return senders.size;
+      },
     },
     mounted() {
       this.language = this.loadLanguage() || "zh";
+      document.documentElement.lang = this.language === "zh" ? "zh-CN" : "en";
+      if (!this.config.gatewayUrl.trim()) {
+        this.config.gatewayUrl = `${window.location.origin}/api/v1`;
+      }
       const session = this.loadSession();
       if (session) {
         this.session = session;
@@ -248,33 +391,65 @@
           this.config.homeserverUrl = session.homeserver;
         }
       }
-      if (!this.config.gatewayUrl.trim()) {
-        this.config.gatewayUrl = `${window.location.origin}/api/v1`;
-      }
       this.refreshSessionStatus();
+      if (this.session) {
+        this.startAutoSync();
+        this.syncMessages({ silent: true, timeoutMs: 0, showErrors: false }).catch(() => undefined);
+      }
+    },
+    beforeUnmount() {
+      this.stopAutoSync();
     },
     methods: {
       tt(key) {
         const dict = I18N[this.language] || I18N.en;
         return dict[key] || I18N.en[key] || key;
       },
+      ttf(key, vars) {
+        let text = this.tt(key);
+        if (!vars || typeof vars !== "object") {
+          return text;
+        }
+        for (const [name, value] of Object.entries(vars)) {
+          text = text.replaceAll(`{${name}}`, String(value));
+        }
+        return text;
+      },
       pretty(payload) {
         return JSON.stringify(payload || {}, null, 2);
+      },
+      notify(type, message) {
+        const normalized = type === "error" || type === "warning" || type === "success" ? type : "info";
+        window.ElementPlus.ElMessage({
+          type: normalized,
+          message,
+          showClose: true,
+          duration: 2600,
+        });
       },
       setLanguage(lang, withToast = false) {
         if (lang !== "zh" && lang !== "en") {
           return;
         }
         this.language = lang;
-        this.saveLanguage(lang);
         document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+        this.saveLanguage(lang);
         if (withToast) {
-          this.pushToast("info", this.tt("info_language_changed"));
+          this.notify("info", this.tt("msg_language"));
+        }
+      },
+      onTabChanged(tabName) {
+        if (typeof tabName === "string") {
+          this.activeTab = tabName;
+        }
+        this.notify("info", this.tt("msg_switch_tab"));
+        if (this.activeTab === "chat") {
+          this.scrollChatToBottom();
+          this.refreshRoomMembers(undefined, { silent: true }).catch(() => undefined);
         }
       },
       switchTab(tabId) {
         this.activeTab = tabId;
-        this.pushToast("info", this.tt("info_tab_switched"));
       },
       mask(secret) {
         if (!secret) {
@@ -285,23 +460,16 @@
         }
         return `${"*".repeat(secret.length - 6)}${secret.slice(-6)}`;
       },
-      pushToast(type, message) {
-        const id = this.toastSeq++;
-        this.toasts.push({
-          id,
-          type,
-          title: this.tt(
-            type === "success" ? "toast_success" : type === "error" ? "toast_error" : "toast_info"
-          ),
-          message,
-        });
-        window.setTimeout(() => {
-          this.toasts = this.toasts.filter((toast) => toast.id !== id);
-        }, 3600);
+      avatarForUser(userId) {
+        const key = userId && String(userId).trim() ? String(userId).trim() : "guest";
+        if (!this.avatarCache[key]) {
+          this.avatarCache[key] = buildPixelAvatar(key);
+        }
+        return this.avatarCache[key];
       },
       openSecondClient() {
         window.open(`/web/?client=${Date.now()}`, "_blank", "noopener,noreferrer");
-        this.pushToast("info", this.tt("info_open_second"));
+        this.notify("info", this.tt("msg_open_second"));
       },
       saveSession(session) {
         window.sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
@@ -317,7 +485,7 @@
             return null;
           }
           return payload;
-        } catch (_err) {
+        } catch (_error) {
           return null;
         }
       },
@@ -335,7 +503,7 @@
         return null;
       },
       normalizeUsername(raw) {
-        const value = raw.trim();
+        const value = String(raw || "").trim();
         if (!value) {
           return "";
         }
@@ -343,8 +511,21 @@
           return value;
         }
         const stripped = value.slice(1);
-        const index = stripped.indexOf(":");
-        return index >= 0 ? stripped.slice(0, index) : stripped;
+        const split = stripped.indexOf(":");
+        return split >= 0 ? stripped.slice(0, split) : stripped;
+      },
+      normalizeUserId(raw) {
+        const value = String(raw || "").trim();
+        if (!value) {
+          return "";
+        }
+        if (value.startsWith("@")) {
+          return value.includes(":") ? value : `${value}:localhost`;
+        }
+        if (value.includes(":")) {
+          return `@${value}`;
+        }
+        return `@${value}:localhost`;
       },
       ensureSession() {
         if (!this.session) {
@@ -375,6 +556,12 @@
         }
         return String(detail);
       },
+      normalizeError(error) {
+        if (error instanceof Error) {
+          return error.message;
+        }
+        return String(error);
+      },
       async request(path, options = {}) {
         const base = this.config.gatewayUrl.trim().replace(/\/+$/, "");
         if (!base) {
@@ -395,11 +582,12 @@
           headers,
           body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
         });
+
         const text = await response.text();
         let data = {};
         try {
           data = text ? JSON.parse(text) : {};
-        } catch (_err) {
+        } catch (_error) {
           data = { raw: text };
         }
 
@@ -415,6 +603,7 @@
           throw new Error("Gateway URL is required.");
         }
         const session = this.ensureSession();
+
         const formData = new FormData();
         formData.append("file", file, file.name || "upload.bin");
 
@@ -425,11 +614,12 @@
           },
           body: formData,
         });
+
         const text = await response.text();
         let data = {};
         try {
           data = text ? JSON.parse(text) : {};
-        } catch (_err) {
+        } catch (_error) {
           data = { raw: text };
         }
 
@@ -437,7 +627,95 @@
           const detail = this.formatApiDetail(data?.error ?? data?.detail ?? data);
           throw new Error(`${response.status} ${response.statusText}: ${detail}`);
         }
+
         return data;
+      },
+      parseTimestamp(originServerTs) {
+        if (typeof originServerTs !== "number") {
+          return { iso: "-", ms: 0 };
+        }
+        const date = new Date(originServerTs);
+        return {
+          iso: date.toLocaleString(),
+          ms: date.getTime(),
+        };
+      },
+      formatNow() {
+        return new Date().toLocaleString();
+      },
+      extractRoomNameFromInvite(roomData, fallbackRoomId) {
+        const events = roomData?.invite_state?.events || [];
+        for (const event of events) {
+          if (!event || event.type !== "m.room.name") {
+            continue;
+          }
+          const name = event?.content?.name;
+          if (typeof name === "string" && name.trim()) {
+            return name.trim();
+          }
+        }
+        return fallbackRoomId;
+      },
+      extractInviterFromInvite(roomData) {
+        const events = roomData?.invite_state?.events || [];
+        for (const event of events) {
+          if (!event || event.type !== "m.room.member") {
+            continue;
+          }
+          const membership = event?.content?.membership;
+          if (membership === "invite" && typeof event.sender === "string") {
+            return event.sender;
+          }
+        }
+        return "unknown";
+      },
+      addInboxItem(item) {
+        if (!item || !item.id) {
+          return;
+        }
+        if (this.inboxSeen[item.id]) {
+          return;
+        }
+        this.inboxSeen[item.id] = true;
+        this.inboxItems = [item, ...this.inboxItems].slice(0, 500);
+      },
+      clearInbox() {
+        this.inboxItems = [];
+        this.inboxSeen = {};
+        this.notify("info", this.tt("msg_inbox_cleared"));
+      },
+      inboxTypeLabel(type) {
+        if (type === "invite") {
+          return this.tt("inbox_type_invite");
+        }
+        if (type === "message") {
+          return this.tt("inbox_type_message");
+        }
+        return this.tt("inbox_type_system");
+      },
+      displaySender(sender) {
+        if (this.session && sender === this.session.userId) {
+          return this.tt("self_name");
+        }
+        return sender;
+      },
+      isSelfMessage(message) {
+        return Boolean(this.session) && message.sender === this.session.userId;
+      },
+      memberCountText(roomId) {
+        const detail = this.roomMembers[roomId];
+        if (detail && Number.isFinite(detail.count)) {
+          return `${this.tt("label_member_count")}: ${detail.count}`;
+        }
+        return `${this.tt("label_member_count")}: -`;
+      },
+      mergeRoomId(roomId) {
+        if (!roomId) {
+          return;
+        }
+        if (!this.roomSet.includes(roomId)) {
+          this.roomSet = [...this.roomSet, roomId].sort();
+        }
       },
       refreshSessionStatus() {
         if (!this.session) {
@@ -455,11 +733,12 @@
           access_token: this.mask(this.session.accessToken),
           next_batch: this.session.nextBatch || null,
           room_count: this.roomSet.length,
+          inbox_count: this.inboxItems.length,
         };
       },
       refreshStatusAndToast() {
         this.refreshSessionStatus();
-        this.pushToast("info", this.tt("info_status_refreshed"));
+        this.notify("info", this.tt("msg_status_refreshed"));
       },
       setSessionFromPayload(payload) {
         this.session = {
@@ -471,6 +750,38 @@
         };
         this.saveSession(this.session);
         this.refreshSessionStatus();
+        this.startAutoSync();
+      },
+      startAutoSync() {
+        this.stopAutoSync();
+        if (!this.session) {
+          return;
+        }
+        this.autoSyncEnabled = true;
+
+        const loop = async () => {
+          if (!this.autoSyncEnabled || !this.session) {
+            return;
+          }
+          await this.syncMessages({
+            silent: true,
+            timeoutMs: 12000,
+            showErrors: false,
+          });
+          if (!this.autoSyncEnabled) {
+            return;
+          }
+          this.syncTimer = window.setTimeout(loop, 600);
+        };
+
+        loop().catch(() => undefined);
+      },
+      stopAutoSync() {
+        this.autoSyncEnabled = false;
+        if (this.syncTimer) {
+          window.clearTimeout(this.syncTimer);
+          this.syncTimer = null;
+        }
       },
       async registerUser() {
         try {
@@ -488,9 +799,10 @@
             body: { username, password },
           });
           this.setSessionFromPayload(payload);
-          this.pushToast("success", `${this.tt("btn_register")} OK`);
+          this.notify("success", `${this.tt("btn_register")} OK`);
+          await this.syncMessages({ silent: true, timeoutMs: 0, showErrors: false });
         } catch (error) {
-          this.pushToast("error", this.normalizeError(error));
+          this.notify("error", this.normalizeError(error));
           throw error;
         }
       },
@@ -510,101 +822,212 @@
             body: { username, password },
           });
           this.setSessionFromPayload(payload);
-          this.pushToast("success", `${this.tt("btn_login")} OK`);
+          this.notify("success", `${this.tt("btn_login")} OK`);
+          await this.syncMessages({ silent: true, timeoutMs: 0, showErrors: false });
         } catch (error) {
-          this.pushToast("error", this.normalizeError(error));
+          this.notify("error", this.normalizeError(error));
           throw error;
         }
       },
       logoutUser() {
+        this.stopAutoSync();
         this.clearSession();
         this.session = null;
         this.roomMessages = {};
         this.roomSet = [];
+        this.roomMembers = {};
         this.forms.activeRoomId = "";
         this.forms.joinRoomId = "";
+        this.forms.messageBody = "";
+        this.selectedFile = null;
         this.refreshSessionStatus();
-        this.pushToast("info", this.tt("btn_logout"));
-      },
-      mergeRoomId(roomId) {
-        if (!roomId) {
-          return;
-        }
-        if (!this.roomSet.includes(roomId)) {
-          this.roomSet = [...this.roomSet, roomId].sort();
-        }
+        this.notify("info", this.tt("btn_logout"));
       },
       selectRoom(roomId) {
         this.forms.activeRoomId = roomId;
         this.activeTab = "chat";
-      },
-      parseTimestamp(originServerTs) {
-        if (typeof originServerTs !== "number") {
-          return { iso: "-", ms: 0 };
-        }
-        const date = new Date(originServerTs);
-        return {
-          iso: date.toISOString(),
-          ms: date.getTime(),
-        };
+        this.refreshRoomMembers(roomId, { silent: true }).catch(() => undefined);
+        this.scrollChatToBottom();
       },
       ingestSync(syncPayload) {
         const joinedRooms = syncPayload?.rooms?.join || {};
+        const invitedRooms = syncPayload?.rooms?.invite || {};
+
         const nextMessages = { ...this.roomMessages };
+        let newMessages = 0;
+        let newInvites = 0;
+
         for (const [roomId, roomData] of Object.entries(joinedRooms)) {
           this.mergeRoomId(roomId);
+          const existingMap = new Map((nextMessages[roomId] || []).map((item) => [item.eventId, item]));
           const timelineEvents = roomData?.timeline?.events || [];
-          const roomMap = new Map(
-            (nextMessages[roomId] || []).map((item) => [item.eventId, item])
-          );
+
           for (const event of timelineEvents) {
             if (!event || event.type !== "m.room.message") {
               continue;
             }
             const eventId = event.event_id;
-            if (!eventId || roomMap.has(eventId)) {
+            if (!eventId || existingMap.has(eventId)) {
               continue;
             }
-            const body = event?.content?.body ?? "";
-            const sender = event?.sender ?? "unknown";
+
+            const body = typeof event?.content?.body === "string" ? event.content.body : "";
+            const sender = typeof event?.sender === "string" ? event.sender : "unknown";
             const ts = this.parseTimestamp(event?.origin_server_ts);
-            roomMap.set(eventId, {
+
+            const message = {
               eventId,
               roomId,
               sender,
               body,
               timestamp: ts.iso,
               timestampMs: ts.ms,
-            });
+            };
+            existingMap.set(eventId, message);
+            newMessages += 1;
+
+            if (this.session && sender !== this.session.userId) {
+              this.addInboxItem({
+                id: `message:${eventId}`,
+                type: "message",
+                roomId,
+                time: ts.iso,
+                line: this.ttf("inbox_message_line", {
+                  room: roomId,
+                  sender,
+                  preview: body.slice(0, 60) || "(empty)",
+                }),
+                detail: message,
+              });
+            }
           }
-          const list = Array.from(roomMap.values()).sort((a, b) => a.timestampMs - b.timestampMs);
-          nextMessages[roomId] = list;
+
+          nextMessages[roomId] = Array.from(existingMap.values()).sort((a, b) => a.timestampMs - b.timestampMs);
         }
+
+        for (const [roomId, roomData] of Object.entries(invitedRooms)) {
+          this.mergeRoomId(roomId);
+          const inviter = this.extractInviterFromInvite(roomData);
+          const roomName = this.extractRoomNameFromInvite(roomData, roomId);
+          const inviteId = `invite:${roomId}:${inviter}`;
+          if (!this.inboxSeen[inviteId]) {
+            newInvites += 1;
+          }
+          this.addInboxItem({
+            id: inviteId,
+            type: "invite",
+            roomId,
+            time: this.formatNow(),
+            line: this.ttf("inbox_invite_line", {
+              inviter,
+              room: roomName,
+            }),
+            detail: roomData,
+          });
+        }
+
         this.roomMessages = nextMessages;
+        return {
+          newMessages,
+          newInvites,
+        };
+      },
+      async syncMessages(options = {}) {
+        const silent = Boolean(options.silent);
+        const showErrors = options.showErrors !== false;
+        const timeoutMs = Number.isFinite(options.timeoutMs) ? Number(options.timeoutMs) : 3000;
+
+        if (this.syncInFlight) {
+          return null;
+        }
+
+        try {
+          const session = this.ensureSession();
+          this.syncInFlight = true;
+
+          const params = new URLSearchParams();
+          params.set("timeout_ms", String(Math.max(0, timeoutMs)));
+          if (session.nextBatch) {
+            params.set("since", session.nextBatch);
+          }
+
+          const payload = await this.request(`/matrix/sync?${params.toString()}`, {
+            method: "GET",
+          });
+
+          session.nextBatch = payload.next_batch || session.nextBatch;
+          this.saveSession(session);
+
+          const stats = this.ingestSync(payload);
+
+          if (!this.forms.activeRoomId.trim() && this.roomSet.length > 0) {
+            this.forms.activeRoomId = this.roomSet[0];
+          }
+
+          this.roomOutput = {
+            synced_rooms: Object.keys(payload?.rooms?.join || {}).length,
+            invited_rooms: Object.keys(payload?.rooms?.invite || {}).length,
+            next_batch: session.nextBatch || null,
+            stats,
+          };
+
+          this.refreshSessionStatus();
+          if (this.forms.activeRoomId.trim()) {
+            await this.refreshRoomMembers(this.forms.activeRoomId.trim(), { silent: true });
+          }
+          this.scrollChatToBottom();
+
+          if (!silent) {
+            this.notify(
+              "success",
+              this.ttf("msg_sync_ok", {
+                messages: stats.newMessages,
+                invites: stats.newInvites,
+              })
+            );
+          }
+
+          return payload;
+        } catch (error) {
+          if (showErrors) {
+            this.notify("error", this.normalizeError(error));
+          } else {
+            const now = Date.now();
+            if (now - this.lastSilentSyncErrorTs > 10000) {
+              this.lastSilentSyncErrorTs = now;
+              this.notify("warning", this.normalizeError(error));
+            }
+          }
+          return null;
+        } finally {
+          this.syncInFlight = false;
+        }
       },
       async createRoom() {
         try {
           this.ensureSession();
-          const invite = this.forms.inviteOnCreate.trim();
+          const inviteRaw = this.forms.inviteOnCreate.trim();
+          const inviteUserId = inviteRaw ? this.normalizeUserId(inviteRaw) : "";
+
           const body = {
             preset: "private_chat",
-            name: this.forms.roomName.trim() || `tg-room-${Date.now()}`,
+            name: this.forms.roomName.trim() || `room-${Date.now()}`,
+            invite: inviteUserId ? [inviteUserId] : [],
           };
-          if (invite) {
-            body.invite = [invite];
-          }
+
           const payload = await this.request("/matrix/rooms", {
             method: "POST",
             body,
           });
-          const roomId = payload.room_id;
-          this.forms.activeRoomId = roomId;
-          this.mergeRoomId(roomId);
+
+          this.forms.activeRoomId = payload.room_id;
+          this.mergeRoomId(payload.room_id);
           this.roomOutput = payload;
+          await this.refreshRoomMembers(payload.room_id, { silent: true });
           this.refreshSessionStatus();
-          this.pushToast("success", `${this.tt("btn_create_room")} OK`);
+          this.notify("success", `${this.tt("btn_create_room")} OK`);
         } catch (error) {
-          this.pushToast("error", this.normalizeError(error));
+          this.notify("error", this.normalizeError(error));
           throw error;
         }
       },
@@ -615,15 +1038,29 @@
           if (!roomId) {
             throw new Error(this.tt("err_need_room"));
           }
+
           const payload = await this.request(`/matrix/rooms/${encodeURIComponent(roomId)}/join`, {
             method: "POST",
           });
-          this.forms.activeRoomId = payload.room_id || roomId;
-          this.mergeRoomId(this.forms.activeRoomId);
+
+          const joinedRoomId = payload.room_id || roomId;
+          this.forms.activeRoomId = joinedRoomId;
+          this.mergeRoomId(joinedRoomId);
           this.roomOutput = payload;
-          this.pushToast("success", `${this.tt("btn_join_room")} OK`);
+
+          this.addInboxItem({
+            id: `system:join:${joinedRoomId}:${Date.now()}`,
+            type: "system",
+            roomId: joinedRoomId,
+            time: this.formatNow(),
+            line: this.ttf("inbox_join_hint", { room: joinedRoomId }),
+            detail: payload,
+          });
+
+          await this.refreshRoomMembers(joinedRoomId, { silent: true });
+          this.notify("success", `${this.tt("btn_join_room")} OK`);
         } catch (error) {
-          this.pushToast("error", this.normalizeError(error));
+          this.notify("error", this.normalizeError(error));
           throw error;
         }
       },
@@ -631,48 +1068,56 @@
         try {
           this.ensureSession();
           const roomId = this.forms.activeRoomId.trim();
-          const userId = this.forms.inviteUserId.trim();
+          const userId = this.normalizeUserId(this.forms.inviteUserId);
           if (!roomId || !userId) {
             throw new Error(this.tt("err_need_invite"));
           }
+
           const payload = await this.request(`/matrix/rooms/${encodeURIComponent(roomId)}/invite`, {
             method: "POST",
             body: { user_id: userId },
           });
+
           this.inviteOutput = payload;
-          this.pushToast("success", `${this.tt("btn_invite_user")} OK`);
+          this.notify("success", `${this.tt("btn_invite_user")} OK`);
         } catch (error) {
-          this.pushToast("error", this.normalizeError(error));
+          this.notify("error", this.normalizeError(error));
           throw error;
         }
       },
-      async syncMessages() {
+      async refreshRoomMembers(roomIdInput, options = {}) {
+        const silent = Boolean(options.silent);
         try {
-          const session = this.ensureSession();
-          const params = new URLSearchParams();
-          params.set("timeout_ms", "3000");
-          if (session.nextBatch) {
-            params.set("since", session.nextBatch);
+          this.ensureSession();
+          const roomId = (roomIdInput || this.forms.activeRoomId || "").trim();
+          if (!roomId) {
+            if (!silent) {
+              throw new Error(this.tt("err_need_room"));
+            }
+            return null;
           }
-          const payload = await this.request(`/matrix/sync?${params.toString()}`, {
+
+          const payload = await this.request(`/matrix/rooms/${encodeURIComponent(roomId)}/members`, {
             method: "GET",
           });
-          session.nextBatch = payload.next_batch || session.nextBatch;
-          this.saveSession(session);
-          this.ingestSync(payload);
-          if (!this.forms.activeRoomId.trim() && this.roomSet.length > 0) {
-            this.forms.activeRoomId = this.roomSet[0];
-          }
-          this.roomOutput = {
-            synced_rooms: Object.keys(payload?.rooms?.join || {}).length,
-            next_batch: session.nextBatch || null,
+
+          this.roomMembers = {
+            ...this.roomMembers,
+            [roomId]: {
+              count: Number(payload.joined_count) || 0,
+              users: Array.isArray(payload.joined_user_ids) ? payload.joined_user_ids : [],
+            },
           };
-          this.refreshSessionStatus();
-          this.scrollChatToBottom();
-          this.pushToast("success", `${this.tt("btn_sync")} OK`);
+
+          if (!silent) {
+            this.notify("success", this.ttf("msg_members_ok", { count: Number(payload.joined_count) || 0 }));
+          }
+          return payload;
         } catch (error) {
-          this.pushToast("error", this.normalizeError(error));
-          throw error;
+          if (!silent) {
+            this.notify("error", this.normalizeError(error));
+          }
+          return null;
         }
       },
       async sendMessage() {
@@ -683,25 +1128,30 @@
           if (!roomId || !body) {
             throw new Error(this.tt("err_need_room_message"));
           }
-          const payload = await this.request(
-            `/matrix/rooms/${encodeURIComponent(roomId)}/messages`,
-            {
-              method: "POST",
-              body: { body },
-            }
-          );
+
+          const payload = await this.request(`/matrix/rooms/${encodeURIComponent(roomId)}/messages`, {
+            method: "POST",
+            body: { body },
+          });
+
           this.forms.messageBody = "";
-          this.mergeRoomId(roomId);
           this.roomOutput = payload;
-          this.pushToast("success", `${this.tt("btn_send")} OK`);
-          await this.syncMessages();
+          this.notify("success", `${this.tt("btn_send")} OK`);
+          await this.syncMessages({ silent: true, timeoutMs: 0, showErrors: false });
         } catch (error) {
-          this.pushToast("error", this.normalizeError(error));
+          this.notify("error", this.normalizeError(error));
           throw error;
         }
       },
-      onFileSelected(event) {
-        this.selectedFile = event.target.files?.[0] || null;
+      onFilePicked(file) {
+        const picked = file?.raw || file;
+        this.selectedFile = picked || null;
+        if (this.selectedFile) {
+          this.notify("info", this.ttf("msg_file_selected", { name: this.selectedFile.name || "upload.bin" }));
+        }
+      },
+      onFileExceed() {
+        this.notify("warning", this.tt("err_need_file"));
       },
       async uploadFile() {
         try {
@@ -711,27 +1161,25 @@
             throw new Error(this.tt("err_need_room"));
           }
           if (!this.selectedFile) {
-            throw new Error("Please choose a file first.");
+            throw new Error(this.tt("err_need_file"));
           }
-          const payload = await this.upload(
-            `/matrix/rooms/${encodeURIComponent(roomId)}/files`,
-            this.selectedFile
-          );
+
+          const payload = await this.upload(`/matrix/rooms/${encodeURIComponent(roomId)}/files`, this.selectedFile);
           this.roomOutput = payload;
-          this.pushToast("success", `${this.tt("btn_upload")} OK`);
-          await this.syncMessages();
+          this.notify("success", `${this.tt("btn_upload")} OK`);
+          await this.syncMessages({ silent: true, timeoutMs: 0, showErrors: false });
         } catch (error) {
-          this.pushToast("error", this.normalizeError(error));
+          this.notify("error", this.normalizeError(error));
           throw error;
         }
       },
       createAgentProfile() {
-        this.pushToast("info", this.tt("info_profile_created"));
         this.agentOutput = {
           status: "agent_profile_created",
           agent_id: this.forms.agentId.trim(),
           purpose: this.forms.purpose.trim(),
         };
+        this.notify("info", this.tt("msg_profile_created"));
       },
       async grantAgent() {
         try {
@@ -741,6 +1189,7 @@
           if (!agentId || !purpose) {
             throw new Error(this.tt("err_need_agent"));
           }
+
           const payload = await this.request("/policy/grants", {
             method: "POST",
             body: {
@@ -751,13 +1200,14 @@
               rate_limit_per_minute: Math.max(1, Number(this.forms.rateLimit || 60)),
             },
           });
+
           if (payload?.grant_id) {
             this.forms.grantId = payload.grant_id;
           }
           this.agentOutput = payload;
-          this.pushToast("success", `${this.tt("btn_grant")} OK`);
+          this.notify("success", `${this.tt("btn_grant")} OK`);
         } catch (error) {
-          this.pushToast("error", this.normalizeError(error));
+          this.notify("error", this.normalizeError(error));
           throw error;
         }
       },
@@ -768,6 +1218,7 @@
           if (!grantId) {
             throw new Error(this.tt("err_need_grant"));
           }
+
           const payload = await this.request("/policy/revoke", {
             method: "POST",
             body: {
@@ -776,10 +1227,11 @@
               reason: "web_revoke",
             },
           });
+
           this.agentOutput = payload;
-          this.pushToast("success", `${this.tt("btn_revoke")} OK`);
+          this.notify("success", `${this.tt("btn_revoke")} OK`);
         } catch (error) {
-          this.pushToast("error", this.normalizeError(error));
+          this.notify("error", this.normalizeError(error));
           throw error;
         }
       },
@@ -795,6 +1247,7 @@
           if (!agentId || !purpose) {
             throw new Error(this.tt("err_need_agent"));
           }
+
           const payload = await this.request("/agent/summarize", {
             method: "POST",
             body: {
@@ -805,10 +1258,11 @@
               max_items: 10,
             },
           });
+
           this.agentOutput = payload;
-          this.pushToast("success", `${this.tt("btn_summarize")} OK`);
+          this.notify("success", `${this.tt("btn_summarize")} OK`);
         } catch (error) {
-          this.pushToast("error", this.normalizeError(error));
+          this.notify("error", this.normalizeError(error));
           throw error;
         }
       },
@@ -824,6 +1278,7 @@
           if (!agentId || !purpose) {
             throw new Error(this.tt("err_need_agent"));
           }
+
           const payload = await this.request("/agent/summarize-and-send", {
             method: "POST",
             body: {
@@ -834,11 +1289,12 @@
               max_items: 10,
             },
           });
+
           this.agentOutput = payload;
-          this.pushToast("success", `${this.tt("btn_summarize_send")} OK`);
-          await this.syncMessages();
+          this.notify("success", `${this.tt("btn_summarize_send")} OK`);
+          await this.syncMessages({ silent: true, timeoutMs: 0, showErrors: false });
         } catch (error) {
-          this.pushToast("error", this.normalizeError(error));
+          this.notify("error", this.normalizeError(error));
           throw error;
         }
       },
@@ -853,13 +1309,14 @@
           if (this.forms.auditActionType.trim()) {
             params.set("action_type", this.forms.auditActionType.trim());
           }
+
           const payload = await this.request(`/audit/events?${params.toString()}`, {
             method: "GET",
           });
           this.auditOutput = payload;
-          this.pushToast("success", `${this.tt("btn_query_audit")} OK`);
+          this.notify("success", `${this.tt("btn_query_audit")} OK`);
         } catch (error) {
-          this.pushToast("error", this.normalizeError(error));
+          this.notify("error", this.normalizeError(error));
           throw error;
         }
       },
@@ -874,15 +1331,34 @@
           if (this.forms.auditActionType.trim()) {
             params.set("action_type", this.forms.auditActionType.trim());
           }
+
           const payload = await this.request(`/audit/verify?${params.toString()}`, {
             method: "GET",
           });
           this.auditOutput = payload;
-          this.pushToast("success", `${this.tt("btn_verify_audit")} OK`);
+          this.notify("success", `${this.tt("btn_verify_audit")} OK`);
         } catch (error) {
-          this.pushToast("error", this.normalizeError(error));
+          this.notify("error", this.normalizeError(error));
           throw error;
         }
+      },
+      openInboxDetail(row) {
+        this.selectedInboxItem = row;
+        this.inboxDialogVisible = true;
+      },
+      openInboxFromSidebar(row) {
+        this.activeTab = "inbox";
+        this.openInboxDetail(row);
+      },
+      jumpToInboxRoom() {
+        if (!this.selectedInboxItem || !this.selectedInboxItem.roomId) {
+          return;
+        }
+        this.forms.activeRoomId = this.selectedInboxItem.roomId;
+        this.activeTab = "chat";
+        this.inboxDialogVisible = false;
+        this.refreshRoomMembers(this.forms.activeRoomId, { silent: true }).catch(() => undefined);
+        this.scrollChatToBottom();
       },
       async runDemoFlow() {
         try {
@@ -891,23 +1367,24 @@
           if (!username || !password) {
             throw new Error(this.tt("err_demo_need_creds"));
           }
-          this.pushToast("info", this.tt("demo_start"));
+
+          this.notify("info", this.tt("demo_start"));
 
           try {
             await this.registerUser();
-          } catch (_err) {
+          } catch (_error) {
             await this.loginUser();
           }
 
           await this.createRoom();
 
           const messages = I18N[this.language]?.demo_messages || I18N.en.demo_messages;
-          for (const message of messages) {
-            this.forms.messageBody = message;
+          for (const msg of messages) {
+            this.forms.messageBody = msg;
             await this.sendMessage();
           }
 
-          await this.syncMessages();
+          await this.syncMessages({ silent: true, timeoutMs: 0, showErrors: false });
           await this.grantAgent();
           await this.summarizeAndSend();
           await this.revokeAgent();
@@ -922,6 +1399,7 @@
               throw error;
             }
           }
+
           if (!denied) {
             throw new Error(this.tt("err_demo_deny_expected"));
           }
@@ -931,35 +1409,27 @@
           if (this.auditOutput?.verified !== true) {
             throw new Error(this.tt("err_demo_audit_verify"));
           }
-          this.pushToast("success", this.tt("demo_done"));
+
+          this.notify("success", this.tt("demo_done"));
         } catch (error) {
-          this.pushToast("error", this.normalizeError(error));
+          this.notify("error", this.normalizeError(error));
           throw error;
         }
-      },
-      normalizeError(error) {
-        if (error instanceof Error) {
-          return error.message;
-        }
-        return String(error);
-      },
-      isSelfMessage(message) {
-        return Boolean(this.session) && message.sender === this.session.userId;
-      },
-      displaySender(sender) {
-        if (this.session && sender === this.session.userId) {
-          return this.tt("self_name");
-        }
-        return sender;
       },
       scrollChatToBottom() {
         this.$nextTick(() => {
           const feed = this.$refs.chatFeed;
-          if (feed && typeof feed.scrollTop === "number") {
-            feed.scrollTop = feed.scrollHeight;
+          if (!feed) {
+            return;
+          }
+          const wrap = feed.wrapRef || feed.$el?.querySelector?.(".el-scrollbar__wrap") || null;
+          if (wrap && typeof wrap.scrollTop === "number") {
+            wrap.scrollTop = wrap.scrollHeight;
           }
         });
       },
     },
-  }).mount("#app");
+  })
+    .use(window.ElementPlus)
+    .mount("#app");
 })();

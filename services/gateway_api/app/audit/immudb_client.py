@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import time
 from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any, cast
@@ -44,6 +45,7 @@ class ImmudbClient:
 
         self._schema_ready = False
         self._schema_lock = asyncio.Lock()
+        self._append_lock = asyncio.Lock()
         self._valid_event_predicate = (
             "chain_hash <> '' AND ts_ms > 0 AND actor_type <> '' AND decision <> ''"
         )
@@ -81,57 +83,67 @@ class ImmudbClient:
 
     async def append_audit_event(self, request: AuditEventCreate) -> AuditEvent:
         await self._ensure_schema()
+        attempts = max(2, self.retry_attempts)
 
-        ts = datetime.now(UTC)
-        ts_ms = int(ts.timestamp() * 1000)
-        prev_hash = await asyncio.to_thread(self._get_latest_chain_hash_sync)
-        input_hash = request.input_hash or sha256_hex(request.input_data)
-        output_hash = request.output_hash or sha256_hex(request.output_data)
+        async with self._append_lock:
+            for attempt in range(1, attempts + 1):
+                try:
+                    ts = datetime.now(UTC)
+                    ts_ms = int(ts.timestamp() * 1000)
+                    prev_hash = await asyncio.to_thread(self._get_latest_chain_hash_sync)
+                    input_hash = request.input_hash or sha256_hex(request.input_data)
+                    output_hash = request.output_hash or sha256_hex(request.output_data)
 
-        event_id = str(uuid4())
-        payload_for_hash = {
-            "event_id": event_id,
-            "ts_ms": ts_ms,
-            "actor_type": request.actor_type.value,
-            "actor_id": request.actor_id,
-            "action_type": request.action_type,
-            "resource_type": request.resource_type,
-            "resource_id": request.resource_id,
-            "decision": request.decision.value,
-            "reason_code": request.reason_code,
-            "input_hash": input_hash,
-            "output_hash": output_hash,
-            "prev_hash": prev_hash,
-            "signature": request.signature,
-            "user_id": request.user_id,
-            "room_id": request.room_id,
-            "metadata": request.metadata,
-        }
-        chain_hash = compute_chain_hash(payload_for_hash)
+                    event_id = str(uuid4())
+                    payload_for_hash = {
+                        "event_id": event_id,
+                        "ts_ms": ts_ms,
+                        "actor_type": request.actor_type.value,
+                        "actor_id": request.actor_id,
+                        "action_type": request.action_type,
+                        "resource_type": request.resource_type,
+                        "resource_id": request.resource_id,
+                        "decision": request.decision.value,
+                        "reason_code": request.reason_code,
+                        "input_hash": input_hash,
+                        "output_hash": output_hash,
+                        "prev_hash": prev_hash,
+                        "signature": request.signature,
+                        "user_id": request.user_id,
+                        "room_id": request.room_id,
+                        "metadata": request.metadata,
+                    }
+                    chain_hash = compute_chain_hash(payload_for_hash)
 
-        event = AuditEvent(
-            event_id=event_id,
-            ts=ts,
-            ts_ms=ts_ms,
-            actor_type=request.actor_type,
-            actor_id=request.actor_id,
-            action_type=request.action_type,
-            resource_type=request.resource_type,
-            resource_id=request.resource_id,
-            decision=request.decision,
-            reason_code=request.reason_code,
-            input_hash=input_hash,
-            output_hash=output_hash,
-            prev_hash=prev_hash,
-            chain_hash=chain_hash,
-            signature=request.signature,
-            user_id=request.user_id,
-            room_id=request.room_id,
-            metadata=request.metadata,
-        )
+                    event = AuditEvent(
+                        event_id=event_id,
+                        ts=ts,
+                        ts_ms=ts_ms,
+                        actor_type=request.actor_type,
+                        actor_id=request.actor_id,
+                        action_type=request.action_type,
+                        resource_type=request.resource_type,
+                        resource_id=request.resource_id,
+                        decision=request.decision,
+                        reason_code=request.reason_code,
+                        input_hash=input_hash,
+                        output_hash=output_hash,
+                        prev_hash=prev_hash,
+                        chain_hash=chain_hash,
+                        signature=request.signature,
+                        user_id=request.user_id,
+                        room_id=request.room_id,
+                        metadata=request.metadata,
+                    )
 
-        tx_id = await asyncio.to_thread(self._insert_event_sync, event)
-        return event.model_copy(update={"immudb_tx_id": tx_id})
+                    tx_id = await asyncio.to_thread(self._insert_event_sync, event)
+                    return event.model_copy(update={"immudb_tx_id": tx_id})
+                except ImmudbOperationError as exc:
+                    if attempt >= attempts or not self._is_retryable_error(exc):
+                        raise
+                    await asyncio.sleep(self._retry_delay(attempt))
+
+        raise ImmudbOperationError("append_audit_event_failed")
 
     async def query_audit_events(self, query: AuditQuery) -> list[AuditEvent]:
         await self._ensure_schema()
@@ -228,21 +240,33 @@ class ImmudbClient:
             ) from exc
 
         target = f"{self.host}:{self.port}"
-        client = RawImmudbClient(target)
-        try:
-            client.openSession(
-                self.username.encode("utf-8"),
-                self.password.encode("utf-8"),
-                self.database.encode("utf-8"),
-            )
-            return callback(client)
-        except Exception as exc:  # pragma: no cover - depends on immudb runtime
-            raise ImmudbOperationError(str(exc)) from exc
-        finally:
+        attempts = max(2, self.retry_attempts)
+        last_error: Exception | None = None
+
+        for attempt in range(1, attempts + 1):
+            client = RawImmudbClient(target)
             try:
-                client.closeSession()
-            except Exception:
-                pass
+                client.openSession(
+                    self.username.encode("utf-8"),
+                    self.password.encode("utf-8"),
+                    self.database.encode("utf-8"),
+                )
+                return callback(client)
+            except Exception as exc:  # pragma: no cover - depends on immudb runtime
+                last_error = exc
+                retryable = self._is_retryable_error(exc)
+                if attempt >= attempts or not retryable:
+                    raise ImmudbOperationError(str(exc)) from exc
+                time.sleep(self._retry_delay(attempt))
+            finally:
+                try:
+                    client.closeSession()
+                except Exception:
+                    pass
+
+        if last_error is None:
+            raise ImmudbOperationError("immudb_operation_failed")
+        raise ImmudbOperationError(str(last_error))
 
     def _ensure_schema_sync(self) -> None:
         create_stmt = """
@@ -514,3 +538,23 @@ class ImmudbClient:
             room_id=str(room_id_raw) if room_id_raw else None,
             metadata=metadata,
         )
+
+    @staticmethod
+    def _retry_delay(attempt: int) -> float:
+        delay = 0.05 * float(2**(attempt - 1))
+        return 0.8 if delay > 0.8 else delay
+
+    @staticmethod
+    def _is_retryable_error(error: BaseException) -> bool:
+        message = str(error).lower()
+        retryable_markers = (
+            "tx read conflict",
+            "read conflict",
+            "temporarily unavailable",
+            "deadline exceeded",
+            "connection reset",
+            "connection aborted",
+            "connection refused",
+            "timeout",
+        )
+        return any(marker in message for marker in retryable_markers)

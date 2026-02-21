@@ -68,6 +68,59 @@ async def test_matrix_client_retries_429_with_retry_after_ms(
 
 
 @pytest.mark.asyncio
+async def test_matrix_sync_uses_long_poll_timeout_buffer(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    request = httpx.Request("GET", "http://synapse/_matrix/client/v3/sync")
+    captured_timeouts: list[float] = []
+
+    class _FakeAsyncClient:
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            _ = args, kwargs
+
+        async def __aenter__(self) -> _FakeAsyncClient:
+            return self
+
+        async def __aexit__(
+            self,
+            exc_type: type[BaseException] | None,
+            exc: BaseException | None,
+            tb: object,
+        ) -> None:
+            _ = exc_type, exc, tb
+            return None
+
+        async def request(self, *args: object, **kwargs: object) -> httpx.Response:
+            _ = args
+            timeout = kwargs.get("timeout")
+            if isinstance(timeout, (int, float)):
+                captured_timeouts.append(float(timeout))
+            return httpx.Response(
+                status_code=200,
+                json={"next_batch": "s1", "rooms": {"join": {}}},
+                request=request,
+            )
+
+    monkeypatch.setattr(matrix_client_module.httpx, "AsyncClient", _FakeAsyncClient)
+
+    client = MatrixClient(
+        homeserver_url="http://synapse:8008",
+        timeout_seconds=3.0,
+        retry_attempts=1,
+    )
+    payload = await client.sync(
+        access_token="token_alice",
+        since=None,
+        timeout_ms=12000,
+        full_state=False,
+    )
+
+    assert payload["next_batch"] == "s1"
+    assert captured_timeouts
+    assert captured_timeouts[0] >= 14.0
+
+
+@pytest.mark.asyncio
 async def test_agent_bot_manager_register_before_login() -> None:
     calls: list[str] = []
 

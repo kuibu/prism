@@ -65,6 +65,12 @@ class InviteUserResponse(BaseModel):
     user_id: str
 
 
+class RoomMembersResponse(BaseModel):
+    room_id: str
+    joined_count: int
+    joined_user_ids: list[str]
+
+
 class SendMessageRequest(BaseModel):
     body: str = Field(min_length=1, max_length=4000)
 
@@ -91,6 +97,19 @@ async def _write_audit_or_raise(
         await immudb_client.append_audit_event(event)
     except ImmudbOperationError as exc:
         raise HTTPException(status_code=503, detail=f"audit_write_failed: {exc}") from exc
+
+
+def _map_matrix_error_status(exc: MatrixClientError) -> int:
+    status_code = exc.status_code
+    if isinstance(status_code, int):
+        if status_code in {400, 401, 403, 404, 409, 429}:
+            return status_code
+        if 500 <= status_code < 600:
+            return 502
+    lowered = str(exc).lower()
+    if "timed out" in lowered or "timeout" in lowered:
+        return 504
+    return 502
 
 
 @router.post("/register", response_model=MatrixAuthResponse, status_code=201)
@@ -301,6 +320,7 @@ async def matrix_invite_user(
             user_id=payload.user_id,
         )
     except MatrixClientError as exc:
+        mapped_status = _map_matrix_error_status(exc)
         deny_event = AuditEventCreate(
             actor_type=ActorType.USER,
             actor_id=authenticated_user.user_id,
@@ -308,14 +328,30 @@ async def matrix_invite_user(
             resource_type="room",
             resource_id=room_id,
             decision=DecisionType.DENY,
-            reason_code="matrix_invite_user_failed",
+            reason_code="matrix_invite_user_forbidden"
+            if mapped_status == 403
+            else "matrix_invite_user_failed",
             user_id=authenticated_user.user_id,
             room_id=room_id,
             input_data={"invitee_user_id": payload.user_id},
-            metadata={"error": str(exc)},
+            metadata={
+                "error": str(exc),
+                "status_code": mapped_status,
+            },
         )
         await _write_audit_or_raise(immudb_client=immudb_client, event=deny_event)
-        raise HTTPException(status_code=502, detail=f"matrix_invite_user_failed: {exc}") from exc
+        if mapped_status == 403:
+            raise HTTPException(
+                status_code=403,
+                detail=(
+                    "matrix_invite_user_forbidden: inviter must be in room and have invite "
+                    f"permission ({exc})"
+                ),
+            ) from exc
+        raise HTTPException(
+            status_code=mapped_status,
+            detail=f"matrix_invite_user_failed: {exc}",
+        ) from exc
 
     allow_event = AuditEventCreate(
         actor_type=ActorType.USER,
@@ -332,6 +368,63 @@ async def matrix_invite_user(
     await _write_audit_or_raise(immudb_client=immudb_client, event=allow_event)
 
     return InviteUserResponse(room_id=room_id, user_id=payload.user_id)
+
+
+@router.get("/rooms/{room_id}/members", response_model=RoomMembersResponse)
+async def matrix_room_members(
+    http_request: Request,
+    room_id: str = Path(min_length=1, max_length=255),
+    authenticated_user: AuthenticatedUser = Depends(get_authenticated_user),
+) -> RoomMembersResponse:
+    matrix_client = http_request.app.state.matrix_client
+    immudb_client = http_request.app.state.immudb_client
+
+    try:
+        payload = await matrix_client.get_joined_members(
+            access_token=authenticated_user.access_token,
+            room_id=room_id,
+        )
+    except MatrixClientError as exc:
+        deny_event = AuditEventCreate(
+            actor_type=ActorType.USER,
+            actor_id=authenticated_user.user_id,
+            action_type="matrix_get_joined_members",
+            resource_type="room",
+            resource_id=room_id,
+            decision=DecisionType.DENY,
+            reason_code="matrix_get_joined_members_failed",
+            user_id=authenticated_user.user_id,
+            room_id=room_id,
+            metadata={"error": str(exc)},
+        )
+        await _write_audit_or_raise(immudb_client=immudb_client, event=deny_event)
+        raise HTTPException(status_code=502, detail=f"matrix_get_joined_members_failed: {exc}") from exc
+
+    joined = payload.get("joined")
+    if not isinstance(joined, dict):
+        joined = {}
+    joined_user_ids = [user_id for user_id in joined.keys() if isinstance(user_id, str) and user_id != ""]
+    joined_user_ids.sort()
+
+    allow_event = AuditEventCreate(
+        actor_type=ActorType.USER,
+        actor_id=authenticated_user.user_id,
+        action_type="matrix_get_joined_members",
+        resource_type="room",
+        resource_id=room_id,
+        decision=DecisionType.ALLOW,
+        reason_code="get_joined_members_ok",
+        user_id=authenticated_user.user_id,
+        room_id=room_id,
+        metadata={"joined_count": len(joined_user_ids)},
+    )
+    await _write_audit_or_raise(immudb_client=immudb_client, event=allow_event)
+
+    return RoomMembersResponse(
+        room_id=room_id,
+        joined_count=len(joined_user_ids),
+        joined_user_ids=joined_user_ids,
+    )
 
 
 @router.post("/rooms/{room_id}/messages", response_model=SendMessageResponse, status_code=201)
@@ -535,6 +628,7 @@ async def matrix_sync(
             full_state=full_state,
         )
     except MatrixClientError as exc:
+        mapped_status = _map_matrix_error_status(exc)
         deny_event = AuditEventCreate(
             actor_type=ActorType.USER,
             actor_id=authenticated_user.user_id,
@@ -542,14 +636,27 @@ async def matrix_sync(
             resource_type="room",
             resource_id=room_id or "all_rooms",
             decision=DecisionType.DENY,
-            reason_code="matrix_sync_failed",
+            reason_code="matrix_sync_timeout" if mapped_status == 504 else "matrix_sync_failed",
             user_id=authenticated_user.user_id,
             room_id=room_id,
-            metadata={"since": since, "timeout_ms": timeout_ms},
+            metadata={
+                "since": since,
+                "timeout_ms": timeout_ms,
+                "status_code": mapped_status,
+                "error": str(exc),
+            },
         )
         await _write_audit_or_raise(immudb_client=immudb_client, event=deny_event)
 
-        raise HTTPException(status_code=502, detail=f"matrix_sync_failed: {exc}") from exc
+        if mapped_status == 504:
+            raise HTTPException(
+                status_code=504,
+                detail=(
+                    "matrix_sync_timeout: homeserver sync request timed out, "
+                    f"please retry ({exc})"
+                ),
+            ) from exc
+        raise HTTPException(status_code=mapped_status, detail=f"matrix_sync_failed: {exc}") from exc
 
     allow_event = AuditEventCreate(
         actor_type=ActorType.USER,
