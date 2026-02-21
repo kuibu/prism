@@ -5,6 +5,7 @@
       sidebar_account: "当前会话",
       sidebar_inbox: "消息中心",
       sidebar_rooms: "房间列表",
+      sidebar_compose: "快捷发送区",
       tab_auth: "注册 / 登录",
       tab_room: "创建房间",
       tab_invite: "邀请好友",
@@ -13,6 +14,7 @@
       tab_chat: "聊天页面",
       tab_audit: "审计页面",
       status_logged_out: "未登录（建议打开两个窗口分别登录两个用户进行联调）。",
+      status_logged_out_short: "未登录",
       empty_rooms: "暂无已知房间。创建或加入房间后会显示。",
       empty_inbox: "暂无消息。",
       label_homeserver: "Homeserver URL",
@@ -32,6 +34,12 @@
       label_actor_id: "Actor ID",
       label_action_type: "动作类型",
       label_member_count: "房间成员",
+      label_member_ids: "成员 ID",
+      label_creator: "创建人",
+      label_target_room_name: "发送目标房间",
+      label_target_room_id: "发送目标房间 ID",
+      label_sender_id: "发送者 ID",
+      label_selected_file: "已选文件",
       placeholder_username: "例如 tg_user_a",
       placeholder_password: "至少8位，例如 Passw0rd!",
       placeholder_room_name: "例如 Team Chat",
@@ -45,6 +53,8 @@
       placeholder_action: "agent_summarize",
       hint_invite_auto: "可直接输入用户名（如 alice），系统会自动补全为 @alice:localhost",
       hint_invite_preview: "将发送邀请给：",
+      hint_chat_room_required: "请先在房间列表选择一个房间，再发送消息或上传文件。",
+      hint_need_login: "请先登录，再使用发送区发消息或上传文件。",
       btn_open_second: "打开第二个客户端窗口",
       btn_register: "注册",
       btn_login: "登录",
@@ -58,6 +68,7 @@
       btn_view_detail: "查看详情",
       btn_close: "关闭",
       btn_go_room: "进入房间",
+      btn_accept_invite: "接受邀请并加入",
       btn_create_agent: "创建 Agent 资料",
       btn_grant: "授权 Agent",
       btn_revoke: "撤销授权",
@@ -66,6 +77,7 @@
       btn_send: "发送消息",
       btn_pick_file: "选择文件",
       btn_upload: "上传文件",
+      btn_download: "下载文件",
       btn_query_audit: "查询审计",
       btn_verify_audit: "验证审计链",
       btn_run_demo: "一键双人联调演示",
@@ -78,8 +90,10 @@
       inbox_type_invite: "邀请",
       inbox_type_message: "新消息",
       inbox_type_system: "系统",
+      inbox_type_file: "文件",
       inbox_invite_line: "收到邀请：{inviter} 邀请你加入 {room}",
       inbox_message_line: "{room} 有新消息：{sender} 说「{preview}」",
+      inbox_file_line: "{room} 有新文件：{sender} 上传了「{preview}」",
       inbox_join_hint: "你已加入房间 {room}",
       empty_chat: "暂无消息，系统正在自动同步。",
       self_name: "我",
@@ -89,14 +103,18 @@
       msg_status_refreshed: "状态已刷新",
       msg_sync_ok: "同步成功：新增消息 {messages} 条，新增邀请 {invites} 条。",
       msg_members_ok: "房间成员已刷新，共 {count} 人。",
+      msg_download_started: "开始下载文件：{name}",
+      msg_download_failed: "下载文件失败",
       msg_file_selected: "已选择文件：{name}",
       msg_profile_created: "Agent 资料已创建（本地），可继续授权。",
       msg_inbox_cleared: "消息中心已清空",
+      msg_joined_from_invite: "已加入房间，可以发送消息与文件。",
       err_no_session: "当前未登录，请先注册或登录。",
       err_need_credentials: "请输入用户名和密码。",
       err_password_short: "密码至少 8 位。",
       err_need_room: "请先填写房间 ID。",
       err_need_room_message: "请先填写房间 ID 和消息内容。",
+      err_members_need_join: "你还没有加入这个房间，请先在“创建房间”页点击“加入房间”。",
       err_need_invite: "请填写房间 ID 和好友用户 ID。",
       err_need_agent: "请填写 Agent ID 和 Purpose。",
       err_need_grant: "请填写授权 ID。",
@@ -118,6 +136,7 @@
       sidebar_account: "Current Session",
       sidebar_inbox: "Message Center",
       sidebar_rooms: "Rooms",
+      sidebar_compose: "Quick Composer",
       tab_auth: "Register / Login",
       tab_room: "Create Room",
       tab_invite: "Invite Friend",
@@ -126,6 +145,7 @@
       tab_chat: "Chat",
       tab_audit: "Audit",
       status_logged_out: "Logged out. Use two windows with two users for end-to-end chat tests.",
+      status_logged_out_short: "Logged out",
       empty_rooms: "No known rooms yet. Create or join a room first.",
       empty_inbox: "No messages yet.",
       label_homeserver: "Homeserver URL",
@@ -145,6 +165,12 @@
       label_actor_id: "Actor ID",
       label_action_type: "Action Type",
       label_member_count: "Members",
+      label_member_ids: "Member IDs",
+      label_creator: "Creator",
+      label_target_room_name: "Target Room Name",
+      label_target_room_id: "Target Room ID",
+      label_sender_id: "Sender ID",
+      label_selected_file: "Selected File",
       placeholder_username: "e.g. tg_user_a",
       placeholder_password: "at least 8 chars, e.g. Passw0rd!",
       placeholder_room_name: "e.g. Team Chat",
@@ -158,6 +184,8 @@
       placeholder_action: "agent_summarize",
       hint_invite_auto: "You can type only username (alice). It auto-completes to @alice:localhost",
       hint_invite_preview: "Invite target:",
+      hint_chat_room_required: "Select a room first, then send messages or upload files.",
+      hint_need_login: "Login first to send messages or upload files from the composer.",
       btn_open_second: "Open Second Client Window",
       btn_register: "Register",
       btn_login: "Login",
@@ -171,6 +199,7 @@
       btn_view_detail: "View",
       btn_close: "Close",
       btn_go_room: "Go to Room",
+      btn_accept_invite: "Accept and Join",
       btn_create_agent: "Create Agent Profile",
       btn_grant: "Grant Agent",
       btn_revoke: "Revoke Grant",
@@ -179,6 +208,7 @@
       btn_send: "Send",
       btn_pick_file: "Pick File",
       btn_upload: "Upload File",
+      btn_download: "Download File",
       btn_query_audit: "Query Audit",
       btn_verify_audit: "Verify Chain",
       btn_run_demo: "Run Demo Flow",
@@ -191,8 +221,10 @@
       inbox_type_invite: "Invite",
       inbox_type_message: "New Message",
       inbox_type_system: "System",
+      inbox_type_file: "File",
       inbox_invite_line: "Invitation received: {inviter} invited you to {room}",
       inbox_message_line: "{room} has a new message: {sender} said \"{preview}\"",
+      inbox_file_line: "{room} has a new file: {sender} uploaded \"{preview}\"",
       inbox_join_hint: "You joined room {room}",
       empty_chat: "No messages yet. Auto-sync is running.",
       self_name: "Me",
@@ -202,14 +234,18 @@
       msg_status_refreshed: "Status refreshed",
       msg_sync_ok: "Sync done: {messages} new messages, {invites} new invites.",
       msg_members_ok: "Room members refreshed: {count}",
+      msg_download_started: "Downloading file: {name}",
+      msg_download_failed: "File download failed",
       msg_file_selected: "File selected: {name}",
       msg_profile_created: "Agent profile created locally.",
       msg_inbox_cleared: "Message center cleared",
+      msg_joined_from_invite: "Joined room. You can now send messages and files.",
       err_no_session: "No active session. Please register or login.",
       err_need_credentials: "Username and password are required.",
       err_password_short: "Password must be at least 8 characters.",
       err_need_room: "Room ID is required.",
       err_need_room_message: "Room ID and message are required.",
+      err_members_need_join: "You are not in this room yet. Join the room first.",
       err_need_invite: "Room ID and friend user ID are required.",
       err_need_agent: "Agent ID and purpose are required.",
       err_need_grant: "Grant ID is required.",
@@ -232,6 +268,7 @@
   const clientScope = query.get("client") || "default";
   const SESSION_KEY = `prism_frontend_session_v2_${clientScope}`;
   const LANGUAGE_KEY = "prism_frontend_lang_v2";
+  const HISTORY_KEY_PREFIX = "prism_frontend_history_v1";
 
   const AVATAR_PALETTES = [
     ["#f2e8cf", "#6f4e37", "#a67c52", "#3a2d23"],
@@ -331,6 +368,7 @@
         roomMessages: {},
         roomSet: [],
         roomMembers: {},
+        roomDetails: {},
         selectedFile: null,
         sessionOutput: {},
         roomOutput: {},
@@ -344,6 +382,7 @@
         syncInFlight: false,
         autoSyncEnabled: false,
         syncTimer: null,
+        historyPersistTimer: null,
         avatarCache: {},
         lastSilentSyncErrorTs: 0,
       };
@@ -365,10 +404,21 @@
         }
         return this.roomMessages[roomId] || [];
       },
+      activeRoomDisplayName() {
+        const roomId = this.forms.activeRoomId.trim();
+        if (!roomId) {
+          return "-";
+        }
+        return this.roomDisplayName(roomId);
+      },
       activeRoomMemberCount() {
         const roomId = this.forms.activeRoomId.trim();
         if (!roomId) {
           return 0;
+        }
+        const roomDetail = this.roomDetails[roomId];
+        if (roomDetail && Number.isFinite(roomDetail.joinedCount)) {
+          return roomDetail.joinedCount;
         }
         const detail = this.roomMembers[roomId];
         if (detail && Number.isFinite(detail.count)) {
@@ -376,6 +426,21 @@
         }
         const senders = new Set((this.roomMessages[roomId] || []).map((msg) => msg.sender));
         return senders.size;
+      },
+      activeRoomMemberIds() {
+        const roomId = this.forms.activeRoomId.trim();
+        if (!roomId) {
+          return [];
+        }
+        const roomDetail = this.roomDetails[roomId];
+        if (roomDetail && Array.isArray(roomDetail.joinedUserIds)) {
+          return [...roomDetail.joinedUserIds];
+        }
+        const detail = this.roomMembers[roomId];
+        if (detail && Array.isArray(detail.users)) {
+          return [...detail.users];
+        }
+        return [];
       },
     },
     mounted() {
@@ -390,6 +455,7 @@
         if (session.homeserver) {
           this.config.homeserverUrl = session.homeserver;
         }
+        this.restoreHistoryCache(session.userId);
       }
       this.refreshSessionStatus();
       if (this.session) {
@@ -399,6 +465,10 @@
     },
     beforeUnmount() {
       this.stopAutoSync();
+      if (this.historyPersistTimer) {
+        window.clearTimeout(this.historyPersistTimer);
+        this.historyPersistTimer = null;
+      }
     },
     methods: {
       tt(key) {
@@ -444,8 +514,9 @@
         }
         this.notify("info", this.tt("msg_switch_tab"));
         if (this.activeTab === "chat") {
+          this.scrollMainContentTop();
           this.scrollChatToBottom();
-          this.refreshRoomMembers(undefined, { silent: true }).catch(() => undefined);
+          this.refreshRoomSummary(undefined, { silent: true }).catch(() => undefined);
         }
       },
       switchTab(tabId) {
@@ -501,6 +572,130 @@
           return lang;
         }
         return null;
+      },
+      historyStorageKey(userId) {
+        const normalized = String(userId || "").trim();
+        if (!normalized) {
+          return null;
+        }
+        return `${HISTORY_KEY_PREFIX}_${encodeURIComponent(normalized)}`;
+      },
+      normalizeHistoryMessages(rawMap, perRoomLimit = 200) {
+        const normalized = {};
+        if (!rawMap || typeof rawMap !== "object") {
+          return normalized;
+        }
+        for (const [roomId, messages] of Object.entries(rawMap)) {
+          if (typeof roomId !== "string" || !Array.isArray(messages)) {
+            continue;
+          }
+          const validMessages = messages
+            .filter((item) => item && typeof item === "object" && typeof item.eventId === "string")
+            .slice(-perRoomLimit);
+          normalized[roomId] = validMessages;
+        }
+        return normalized;
+      },
+      scheduleHistoryPersist() {
+        if (!this.session || !this.session.userId) {
+          return;
+        }
+        if (this.historyPersistTimer) {
+          window.clearTimeout(this.historyPersistTimer);
+        }
+        this.historyPersistTimer = window.setTimeout(() => {
+          this.historyPersistTimer = null;
+          this.saveHistoryCache();
+        }, 120);
+      },
+      saveHistoryCache() {
+        if (!this.session || !this.session.userId) {
+          return;
+        }
+        const key = this.historyStorageKey(this.session.userId);
+        if (!key) {
+          return;
+        }
+        const payload = {
+          user_id: this.session.userId,
+          updated_at: Date.now(),
+          active_room_id: this.forms.activeRoomId.trim() || null,
+          room_set: this.roomSet.slice(0, 300),
+          room_messages: this.normalizeHistoryMessages(this.roomMessages, 200),
+          room_members: this.roomMembers || {},
+          room_details: this.roomDetails || {},
+          inbox_items: Array.isArray(this.inboxItems) ? this.inboxItems.slice(0, 500) : [],
+          inbox_seen: this.inboxSeen || {},
+        };
+        try {
+          window.localStorage.setItem(key, JSON.stringify(payload));
+        } catch (_error) {
+          return;
+        }
+      },
+      loadHistoryCache(userId) {
+        const key = this.historyStorageKey(userId);
+        if (!key) {
+          return null;
+        }
+        const raw = window.localStorage.getItem(key);
+        if (!raw) {
+          return null;
+        }
+        try {
+          const payload = JSON.parse(raw);
+          if (!payload || typeof payload !== "object") {
+            return null;
+          }
+          return payload;
+        } catch (_error) {
+          return null;
+        }
+      },
+      restoreHistoryCache(userId) {
+        const payload = this.loadHistoryCache(userId);
+        if (!payload) {
+          return;
+        }
+        const roomSet = Array.isArray(payload.room_set)
+          ? payload.room_set.filter((roomId) => typeof roomId === "string" && roomId.trim() !== "")
+          : [];
+        const roomMessages = this.normalizeHistoryMessages(payload.room_messages, 200);
+        const roomMembers =
+          payload.room_members && typeof payload.room_members === "object" ? payload.room_members : {};
+        const roomDetails =
+          payload.room_details && typeof payload.room_details === "object" ? payload.room_details : {};
+        const inboxItems = Array.isArray(payload.inbox_items)
+          ? payload.inbox_items.filter((item) => item && typeof item === "object").slice(0, 500)
+          : [];
+        const inboxSeen =
+          payload.inbox_seen && typeof payload.inbox_seen === "object" ? payload.inbox_seen : {};
+        const activeRoomId =
+          typeof payload.active_room_id === "string" && payload.active_room_id.trim() !== ""
+            ? payload.active_room_id.trim()
+            : "";
+
+        this.roomSet = roomSet;
+        this.roomMessages = roomMessages;
+        this.roomMembers = roomMembers;
+        this.roomDetails = roomDetails;
+        this.inboxItems = inboxItems;
+        this.inboxSeen = inboxSeen;
+        if (activeRoomId) {
+          this.forms.activeRoomId = activeRoomId;
+        }
+      },
+      resetInMemoryState() {
+        this.roomMessages = {};
+        this.roomSet = [];
+        this.roomMembers = {};
+        this.roomDetails = {};
+        this.inboxItems = [];
+        this.inboxSeen = {};
+        this.forms.activeRoomId = "";
+        this.forms.joinRoomId = "";
+        this.forms.messageBody = "";
+        this.selectedFile = null;
       },
       normalizeUsername(raw) {
         const value = String(raw || "").trim();
@@ -678,15 +873,20 @@
         }
         this.inboxSeen[item.id] = true;
         this.inboxItems = [item, ...this.inboxItems].slice(0, 500);
+        this.scheduleHistoryPersist();
       },
       clearInbox() {
         this.inboxItems = [];
         this.inboxSeen = {};
+        this.scheduleHistoryPersist();
         this.notify("info", this.tt("msg_inbox_cleared"));
       },
       inboxTypeLabel(type) {
         if (type === "invite") {
           return this.tt("inbox_type_invite");
+        }
+        if (type === "file") {
+          return this.tt("inbox_type_file");
         }
         if (type === "message") {
           return this.tt("inbox_type_message");
@@ -702,10 +902,38 @@
       isSelfMessage(message) {
         return Boolean(this.session) && message.sender === this.session.userId;
       },
+      isFileMessage(message) {
+        if (!message || typeof message !== "object") {
+          return false;
+        }
+        return message.msgtype === "m.file" || Boolean(message.fileMxcUri);
+      },
+      roomDisplayName(roomId) {
+        const detail = this.roomDetails[roomId];
+        if (detail && typeof detail.roomName === "string" && detail.roomName.trim() !== "") {
+          return detail.roomName.trim();
+        }
+        return roomId;
+      },
+      roomMemberPreview(roomId) {
+        const detail = this.roomDetails[roomId];
+        const members =
+          detail && Array.isArray(detail.joinedUserIds) ? detail.joinedUserIds.filter((id) => Boolean(id)) : [];
+        if (members.length === 0) {
+          return `${this.tt("label_member_count")}: -`;
+        }
+        const preview = members.slice(0, 3).join(", ");
+        const extra = members.length > 3 ? ` +${members.length - 3}` : "";
+        return `${this.tt("label_member_count")}: ${preview}${extra}`;
+      },
       memberCountText(roomId) {
-        const detail = this.roomMembers[roomId];
-        if (detail && Number.isFinite(detail.count)) {
-          return `${this.tt("label_member_count")}: ${detail.count}`;
+        const detail = this.roomDetails[roomId];
+        if (detail && Number.isFinite(detail.joinedCount)) {
+          return `${this.tt("label_member_count")}: ${detail.joinedCount}`;
+        }
+        const memberLegacy = this.roomMembers[roomId];
+        if (memberLegacy && Number.isFinite(memberLegacy.count)) {
+          return `${this.tt("label_member_count")}: ${memberLegacy.count}`;
         }
         return `${this.tt("label_member_count")}: -`;
       },
@@ -715,6 +943,7 @@
         }
         if (!this.roomSet.includes(roomId)) {
           this.roomSet = [...this.roomSet, roomId].sort();
+          this.scheduleHistoryPersist();
         }
       },
       refreshSessionStatus() {
@@ -741,15 +970,25 @@
         this.notify("info", this.tt("msg_status_refreshed"));
       },
       setSessionFromPayload(payload) {
+        const nextUserId = typeof payload?.user_id === "string" ? payload.user_id : "";
+        if (!nextUserId) {
+          throw new Error("invalid_session_payload");
+        }
+        const currentUserId = this.session && typeof this.session.userId === "string" ? this.session.userId : "";
+        if (!currentUserId || currentUserId !== nextUserId) {
+          this.resetInMemoryState();
+        }
         this.session = {
           homeserver: this.config.homeserverUrl.trim(),
-          userId: payload.user_id,
+          userId: nextUserId,
           deviceId: payload.device_id || null,
           accessToken: payload.access_token,
           nextBatch: null,
         };
+        this.restoreHistoryCache(nextUserId);
         this.saveSession(this.session);
         this.refreshSessionStatus();
+        this.scheduleHistoryPersist();
         this.startAutoSync();
       },
       startAutoSync() {
@@ -831,22 +1070,28 @@
       },
       logoutUser() {
         this.stopAutoSync();
+        this.saveHistoryCache();
         this.clearSession();
         this.session = null;
-        this.roomMessages = {};
-        this.roomSet = [];
-        this.roomMembers = {};
-        this.forms.activeRoomId = "";
-        this.forms.joinRoomId = "";
-        this.forms.messageBody = "";
-        this.selectedFile = null;
+        this.resetInMemoryState();
         this.refreshSessionStatus();
         this.notify("info", this.tt("btn_logout"));
       },
       selectRoom(roomId) {
         this.forms.activeRoomId = roomId;
+        this.scheduleHistoryPersist();
         this.activeTab = "chat";
-        this.refreshRoomMembers(roomId, { silent: true }).catch(() => undefined);
+        this.scrollMainContentTop();
+        this.refreshRoomSummary(roomId, { silent: true }).catch(() => undefined);
+        this.syncMessages({ silent: true, timeoutMs: 0, showErrors: false }).catch(() => undefined);
+        this.scrollChatToBottom();
+      },
+      onChatRoomChanged(roomId) {
+        this.forms.activeRoomId = String(roomId || "").trim();
+        this.scheduleHistoryPersist();
+        this.scrollMainContentTop();
+        this.refreshRoomSummary(this.forms.activeRoomId, { silent: true }).catch(() => undefined);
+        this.syncMessages({ silent: true, timeoutMs: 0, showErrors: false }).catch(() => undefined);
         this.scrollChatToBottom();
       },
       ingestSync(syncPayload) {
@@ -871,9 +1116,14 @@
               continue;
             }
 
-            const body = typeof event?.content?.body === "string" ? event.content.body : "";
+            const content = event?.content || {};
+            const msgtype = typeof content.msgtype === "string" ? content.msgtype : "m.text";
+            const body = typeof content.body === "string" ? content.body : "";
             const sender = typeof event?.sender === "string" ? event.sender : "unknown";
             const ts = this.parseTimestamp(event?.origin_server_ts);
+            const isFile = msgtype === "m.file";
+            const fileMxcUri = typeof content.url === "string" ? content.url : "";
+            const messagePreview = body.trim() || (isFile ? "file" : "(empty)");
 
             const message = {
               eventId,
@@ -882,31 +1132,45 @@
               body,
               timestamp: ts.iso,
               timestampMs: ts.ms,
+              msgtype,
+              fileMxcUri,
+              fileName: body || "download.bin",
+              fileSize: Number(content?.info?.size) || 0,
+              mimeType:
+                typeof content?.info?.mimetype === "string"
+                  ? content.info.mimetype
+                  : "application/octet-stream",
             };
             existingMap.set(eventId, message);
             newMessages += 1;
 
             if (this.session && sender !== this.session.userId) {
               this.addInboxItem({
-                id: `message:${eventId}`,
-                type: "message",
+                id: `${isFile ? "file" : "message"}:${eventId}`,
+                type: isFile ? "file" : "message",
                 roomId,
                 time: ts.iso,
-                line: this.ttf("inbox_message_line", {
-                  room: roomId,
-                  sender,
-                  preview: body.slice(0, 60) || "(empty)",
-                }),
+                line: isFile
+                  ? this.ttf("inbox_file_line", {
+                      room: this.roomDisplayName(roomId),
+                      sender,
+                      preview: messagePreview.slice(0, 60),
+                    })
+                  : this.ttf("inbox_message_line", {
+                      room: this.roomDisplayName(roomId),
+                      sender,
+                      preview: messagePreview.slice(0, 60),
+                    }),
                 detail: message,
               });
             }
           }
 
           nextMessages[roomId] = Array.from(existingMap.values()).sort((a, b) => a.timestampMs - b.timestampMs);
+          this.refreshRoomSummary(roomId, { silent: true }).catch(() => undefined);
         }
 
         for (const [roomId, roomData] of Object.entries(invitedRooms)) {
-          this.mergeRoomId(roomId);
           const inviter = this.extractInviterFromInvite(roomData);
           const roomName = this.extractRoomNameFromInvite(roomData, roomId);
           const inviteId = `invite:${roomId}:${inviter}`;
@@ -927,6 +1191,7 @@
         }
 
         this.roomMessages = nextMessages;
+        this.scheduleHistoryPersist();
         return {
           newMessages,
           newInvites,
@@ -962,6 +1227,7 @@
 
           if (!this.forms.activeRoomId.trim() && this.roomSet.length > 0) {
             this.forms.activeRoomId = this.roomSet[0];
+            this.scheduleHistoryPersist();
           }
 
           this.roomOutput = {
@@ -973,7 +1239,7 @@
 
           this.refreshSessionStatus();
           if (this.forms.activeRoomId.trim()) {
-            await this.refreshRoomMembers(this.forms.activeRoomId.trim(), { silent: true });
+            await this.refreshRoomSummary(this.forms.activeRoomId.trim(), { silent: true });
           }
           this.scrollChatToBottom();
 
@@ -1021,6 +1287,7 @@
           });
 
           this.forms.activeRoomId = payload.room_id;
+          this.scheduleHistoryPersist();
           this.mergeRoomId(payload.room_id);
           this.roomOutput = payload;
           await this.refreshRoomMembers(payload.room_id, { silent: true });
@@ -1045,6 +1312,7 @@
 
           const joinedRoomId = payload.room_id || roomId;
           this.forms.activeRoomId = joinedRoomId;
+          this.scheduleHistoryPersist();
           this.mergeRoomId(joinedRoomId);
           this.roomOutput = payload;
 
@@ -1085,7 +1353,39 @@
           throw error;
         }
       },
-      async refreshRoomMembers(roomIdInput, options = {}) {
+      applyRoomSummary(roomId, payload) {
+        const joinedUserIds = Array.isArray(payload?.joined_user_ids)
+          ? payload.joined_user_ids.filter((item) => typeof item === "string" && item.trim() !== "")
+          : [];
+        const roomName =
+          typeof payload?.room_name === "string" && payload.room_name.trim() !== ""
+            ? payload.room_name.trim()
+            : null;
+        const creatorUserId =
+          typeof payload?.creator_user_id === "string" && payload.creator_user_id.trim() !== ""
+            ? payload.creator_user_id.trim()
+            : null;
+
+        this.roomDetails = {
+          ...this.roomDetails,
+          [roomId]: {
+            roomId,
+            roomName,
+            creatorUserId,
+            joinedCount: Number(payload?.joined_count) || joinedUserIds.length,
+            joinedUserIds,
+          },
+        };
+        this.roomMembers = {
+          ...this.roomMembers,
+          [roomId]: {
+            count: Number(payload?.joined_count) || joinedUserIds.length,
+            users: joinedUserIds,
+          },
+        };
+        this.scheduleHistoryPersist();
+      },
+      async refreshRoomSummary(roomIdInput, options = {}) {
         const silent = Boolean(options.silent);
         try {
           this.ensureSession();
@@ -1097,35 +1397,82 @@
             return null;
           }
 
-          const payload = await this.request(`/matrix/rooms/${encodeURIComponent(roomId)}/members`, {
+          const payload = await this.request(`/matrix/rooms/${encodeURIComponent(roomId)}/summary`, {
             method: "GET",
           });
 
-          this.roomMembers = {
-            ...this.roomMembers,
-            [roomId]: {
-              count: Number(payload.joined_count) || 0,
-              users: Array.isArray(payload.joined_user_ids) ? payload.joined_user_ids : [],
-            },
-          };
+          this.applyRoomSummary(roomId, payload);
 
           if (!silent) {
             this.notify("success", this.ttf("msg_members_ok", { count: Number(payload.joined_count) || 0 }));
           }
           return payload;
         } catch (error) {
+          const message = this.normalizeError(error);
+          if (message.includes("matrix_get_room_summary_forbidden")) {
+            if (!silent) {
+              this.notify("warning", this.tt("err_members_need_join"));
+            }
+            return null;
+          }
           if (!silent) {
-            this.notify("error", this.normalizeError(error));
+            this.notify("error", message);
           }
           return null;
         }
       },
+      async refreshRoomMembers(roomIdInput, options = {}) {
+        return this.refreshRoomSummary(roomIdInput, options);
+      },
+      async ensureRoomReady(roomIdInput, options = {}) {
+        this.ensureSession();
+        const autoJoin = options.autoJoin !== false;
+        const roomId = (roomIdInput || this.forms.activeRoomId || "").trim();
+        if (!roomId) {
+          throw new Error(this.tt("err_need_room"));
+        }
+
+        const sessionUserId = this.session && typeof this.session.userId === "string" ? this.session.userId : "";
+        let joined = false;
+        const summary = await this.refreshRoomSummary(roomId, { silent: true });
+        if (summary && Array.isArray(summary.joined_user_ids) && sessionUserId) {
+          joined = summary.joined_user_ids.includes(sessionUserId);
+        } else if (
+          this.roomDetails[roomId] &&
+          Array.isArray(this.roomDetails[roomId].joinedUserIds) &&
+          sessionUserId
+        ) {
+          joined = this.roomDetails[roomId].joinedUserIds.includes(sessionUserId);
+        }
+
+        if (joined) {
+          this.mergeRoomId(roomId);
+          if (this.forms.activeRoomId.trim() !== roomId) {
+            this.forms.activeRoomId = roomId;
+            this.scheduleHistoryPersist();
+          }
+          return roomId;
+        }
+
+        if (!autoJoin) {
+          throw new Error(this.tt("err_members_need_join"));
+        }
+
+        await this.request(`/matrix/rooms/${encodeURIComponent(roomId)}/join`, {
+          method: "POST",
+        });
+        this.mergeRoomId(roomId);
+        this.forms.activeRoomId = roomId;
+        this.scheduleHistoryPersist();
+        await this.refreshRoomSummary(roomId, { silent: true });
+        this.notify("success", this.tt("msg_joined_from_invite"));
+        return roomId;
+      },
       async sendMessage() {
         try {
-          this.ensureSession();
-          const roomId = this.forms.activeRoomId.trim();
+          const roomId = await this.ensureRoomReady(this.forms.activeRoomId, { autoJoin: true });
           const body = this.forms.messageBody.trim();
-          if (!roomId || !body) {
+          if (!body) {
             throw new Error(this.tt("err_need_room_message"));
           }
 
@@ -1155,11 +1502,7 @@
       },
       async uploadFile() {
         try {
-          this.ensureSession();
-          const roomId = this.forms.activeRoomId.trim();
-          if (!roomId) {
-            throw new Error(this.tt("err_need_room"));
-          }
+          const roomId = await this.ensureRoomReady(this.forms.activeRoomId, { autoJoin: true });
           if (!this.selectedFile) {
             throw new Error(this.tt("err_need_file"));
           }
@@ -1170,6 +1513,60 @@
           await this.syncMessages({ silent: true, timeoutMs: 0, showErrors: false });
         } catch (error) {
           this.notify("error", this.normalizeError(error));
+          throw error;
+        }
+      },
+      async downloadMessageFile(message) {
+        try {
+          const session = this.ensureSession();
+          const mxcUri = typeof message?.fileMxcUri === "string" ? message.fileMxcUri.trim() : "";
+          if (!mxcUri) {
+            throw new Error("missing_file_uri");
+          }
+
+          const filename =
+            typeof message?.fileName === "string" && message.fileName.trim() !== ""
+              ? message.fileName.trim()
+              : "matrix-file.bin";
+          this.notify("info", this.ttf("msg_download_started", { name: filename }));
+
+          const base = this.config.gatewayUrl.trim().replace(/\/+$/, "");
+          const params = new URLSearchParams({
+            mxc_uri: mxcUri,
+            filename,
+          });
+          const response = await fetch(`${base}/matrix/media/download?${params.toString()}`, {
+            method: "GET",
+            headers: {
+              authorization: `Bearer ${session.accessToken}`,
+            },
+          });
+
+          if (!response.ok) {
+            const text = await response.text();
+            let detail = text;
+            try {
+              const parsed = text ? JSON.parse(text) : {};
+              detail = this.formatApiDetail(parsed?.error ?? parsed?.detail ?? parsed);
+            } catch (_error) {
+              detail = text || `${response.status} ${response.statusText}`;
+            }
+            throw new Error(`${response.status} ${response.statusText}: ${detail}`);
+          }
+
+          const blob = await response.blob();
+          const objectUrl = window.URL.createObjectURL(blob);
+          const anchor = document.createElement("a");
+          anchor.href = objectUrl;
+          anchor.download = filename;
+          anchor.style.display = "none";
+          document.body.appendChild(anchor);
+          anchor.click();
+          anchor.remove();
+          window.URL.revokeObjectURL(objectUrl);
+        } catch (error) {
+          const reason = this.normalizeError(error);
+          this.notify("error", `${this.tt("msg_download_failed")}: ${reason}`);
           throw error;
         }
       },
@@ -1355,10 +1752,32 @@
           return;
         }
         this.forms.activeRoomId = this.selectedInboxItem.roomId;
+        this.scheduleHistoryPersist();
         this.activeTab = "chat";
         this.inboxDialogVisible = false;
+        this.scrollMainContentTop();
         this.refreshRoomMembers(this.forms.activeRoomId, { silent: true }).catch(() => undefined);
         this.scrollChatToBottom();
+      },
+      async acceptInviteFromInbox() {
+        try {
+          this.ensureSession();
+          const roomId =
+            this.selectedInboxItem && typeof this.selectedInboxItem.roomId === "string"
+              ? this.selectedInboxItem.roomId.trim()
+              : "";
+          if (!roomId) {
+            throw new Error(this.tt("err_need_room"));
+          }
+          await this.ensureRoomReady(roomId, { autoJoin: true });
+          this.activeTab = "chat";
+          this.inboxDialogVisible = false;
+          await this.syncMessages({ silent: true, timeoutMs: 0, showErrors: false });
+          this.scrollChatToBottom();
+        } catch (error) {
+          this.notify("error", this.normalizeError(error));
+          throw error;
+        }
       },
       async runDemoFlow() {
         try {
@@ -1415,6 +1834,14 @@
           this.notify("error", this.normalizeError(error));
           throw error;
         }
+      },
+      scrollMainContentTop() {
+        this.$nextTick(() => {
+          const mainContent = this.$el?.querySelector?.(".main-tabs .el-tabs__content") || null;
+          if (mainContent && typeof mainContent.scrollTop === "number") {
+            mainContent.scrollTop = 0;
+          }
+        });
       },
       scrollChatToBottom() {
         this.$nextTick(() => {

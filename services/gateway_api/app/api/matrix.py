@@ -10,6 +10,7 @@ from fastapi import (
     Path,
     Query,
     Request,
+    Response,
     UploadFile,
 )
 from pydantic import BaseModel, Field
@@ -71,6 +72,14 @@ class RoomMembersResponse(BaseModel):
     joined_user_ids: list[str]
 
 
+class RoomSummaryResponse(BaseModel):
+    room_id: str
+    room_name: str | None = None
+    creator_user_id: str | None = None
+    joined_count: int
+    joined_user_ids: list[str]
+
+
 class SendMessageRequest(BaseModel):
     body: str = Field(min_length=1, max_length=4000)
 
@@ -110,6 +119,20 @@ def _map_matrix_error_status(exc: MatrixClientError) -> int:
     if "timed out" in lowered or "timeout" in lowered:
         return 504
     return 502
+
+
+def _ordered_members(
+    *,
+    joined_user_ids: list[str],
+    creator_user_id: str | None,
+) -> list[str]:
+    deduplicated = sorted({user_id for user_id in joined_user_ids if user_id != ""})
+    if creator_user_id is None or creator_user_id == "":
+        return deduplicated
+    if creator_user_id in deduplicated:
+        others = [item for item in deduplicated if item != creator_user_id]
+        return [creator_user_id, *others]
+    return deduplicated
 
 
 @router.post("/register", response_model=MatrixAuthResponse, status_code=201)
@@ -385,6 +408,7 @@ async def matrix_room_members(
             room_id=room_id,
         )
     except MatrixClientError as exc:
+        mapped_status = _map_matrix_error_status(exc)
         deny_event = AuditEventCreate(
             actor_type=ActorType.USER,
             actor_id=authenticated_user.user_id,
@@ -392,13 +416,29 @@ async def matrix_room_members(
             resource_type="room",
             resource_id=room_id,
             decision=DecisionType.DENY,
-            reason_code="matrix_get_joined_members_failed",
+            reason_code="matrix_get_joined_members_forbidden"
+            if mapped_status == 403
+            else "matrix_get_joined_members_failed",
             user_id=authenticated_user.user_id,
             room_id=room_id,
-            metadata={"error": str(exc)},
+            metadata={
+                "error": str(exc),
+                "status_code": mapped_status,
+            },
         )
         await _write_audit_or_raise(immudb_client=immudb_client, event=deny_event)
-        raise HTTPException(status_code=502, detail=f"matrix_get_joined_members_failed: {exc}") from exc
+        if mapped_status == 403:
+            raise HTTPException(
+                status_code=403,
+                detail=(
+                    "matrix_get_joined_members_forbidden: join the room before viewing members "
+                    f"({exc})"
+                ),
+            ) from exc
+        raise HTTPException(
+            status_code=mapped_status,
+            detail=f"matrix_get_joined_members_failed: {exc}",
+        ) from exc
 
     joined = payload.get("joined")
     if not isinstance(joined, dict):
@@ -424,6 +464,152 @@ async def matrix_room_members(
         room_id=room_id,
         joined_count=len(joined_user_ids),
         joined_user_ids=joined_user_ids,
+    )
+
+
+@router.get("/rooms/{room_id}/summary", response_model=RoomSummaryResponse)
+async def matrix_room_summary(
+    http_request: Request,
+    room_id: str = Path(min_length=1, max_length=255),
+    authenticated_user: AuthenticatedUser = Depends(get_authenticated_user),
+) -> RoomSummaryResponse:
+    matrix_client = http_request.app.state.matrix_client
+    immudb_client = http_request.app.state.immudb_client
+
+    try:
+        members_payload = await matrix_client.get_joined_members(
+            access_token=authenticated_user.access_token,
+            room_id=room_id,
+        )
+    except MatrixClientError as exc:
+        mapped_status = _map_matrix_error_status(exc)
+        deny_event = AuditEventCreate(
+            actor_type=ActorType.USER,
+            actor_id=authenticated_user.user_id,
+            action_type="matrix_get_room_summary",
+            resource_type="room",
+            resource_id=room_id,
+            decision=DecisionType.DENY,
+            reason_code="matrix_get_room_summary_failed",
+            user_id=authenticated_user.user_id,
+            room_id=room_id,
+            metadata={
+                "error": str(exc),
+                "status_code": mapped_status,
+            },
+        )
+        await _write_audit_or_raise(immudb_client=immudb_client, event=deny_event)
+        if mapped_status == 403:
+            raise HTTPException(
+                status_code=403,
+                detail=(
+                    "matrix_get_room_summary_forbidden: join the room before viewing summary "
+                    f"({exc})"
+                ),
+            ) from exc
+        raise HTTPException(
+            status_code=mapped_status,
+            detail=f"matrix_get_room_summary_failed: {exc}",
+        ) from exc
+
+    joined_raw = members_payload.get("joined")
+    joined_user_ids = (
+        [user_id for user_id in joined_raw.keys() if isinstance(user_id, str)]
+        if isinstance(joined_raw, dict)
+        else []
+    )
+
+    room_name: str | None = None
+    creator_user_id: str | None = None
+    try:
+        name_payload = await matrix_client.get_room_state_event(
+            access_token=authenticated_user.access_token,
+            room_id=room_id,
+            event_type="m.room.name",
+        )
+        name_value = name_payload.get("name")
+        if isinstance(name_value, str) and name_value.strip() != "":
+            room_name = name_value.strip()
+    except MatrixClientError as exc:
+        if exc.status_code not in {404}:
+            mapped_status = _map_matrix_error_status(exc)
+            deny_event = AuditEventCreate(
+                actor_type=ActorType.USER,
+                actor_id=authenticated_user.user_id,
+                action_type="matrix_get_room_summary",
+                resource_type="room",
+                resource_id=room_id,
+                decision=DecisionType.DENY,
+                reason_code="matrix_get_room_summary_failed",
+                user_id=authenticated_user.user_id,
+                room_id=room_id,
+                metadata={"error": str(exc), "status_code": mapped_status},
+            )
+            await _write_audit_or_raise(immudb_client=immudb_client, event=deny_event)
+            raise HTTPException(
+                status_code=mapped_status,
+                detail=f"matrix_get_room_summary_failed: {exc}",
+            ) from exc
+
+    try:
+        create_payload = await matrix_client.get_room_state_event(
+            access_token=authenticated_user.access_token,
+            room_id=room_id,
+            event_type="m.room.create",
+        )
+        creator_value = create_payload.get("creator")
+        if isinstance(creator_value, str) and creator_value.strip() != "":
+            creator_user_id = creator_value.strip()
+    except MatrixClientError as exc:
+        if exc.status_code not in {404}:
+            mapped_status = _map_matrix_error_status(exc)
+            deny_event = AuditEventCreate(
+                actor_type=ActorType.USER,
+                actor_id=authenticated_user.user_id,
+                action_type="matrix_get_room_summary",
+                resource_type="room",
+                resource_id=room_id,
+                decision=DecisionType.DENY,
+                reason_code="matrix_get_room_summary_failed",
+                user_id=authenticated_user.user_id,
+                room_id=room_id,
+                metadata={"error": str(exc), "status_code": mapped_status},
+            )
+            await _write_audit_or_raise(immudb_client=immudb_client, event=deny_event)
+            raise HTTPException(
+                status_code=mapped_status,
+                detail=f"matrix_get_room_summary_failed: {exc}",
+            ) from exc
+
+    ordered_user_ids = _ordered_members(
+        joined_user_ids=joined_user_ids,
+        creator_user_id=creator_user_id,
+    )
+
+    allow_event = AuditEventCreate(
+        actor_type=ActorType.USER,
+        actor_id=authenticated_user.user_id,
+        action_type="matrix_get_room_summary",
+        resource_type="room",
+        resource_id=room_id,
+        decision=DecisionType.ALLOW,
+        reason_code="get_room_summary_ok",
+        user_id=authenticated_user.user_id,
+        room_id=room_id,
+        metadata={
+            "joined_count": len(ordered_user_ids),
+            "room_name": room_name,
+            "creator_user_id": creator_user_id,
+        },
+    )
+    await _write_audit_or_raise(immudb_client=immudb_client, event=allow_event)
+
+    return RoomSummaryResponse(
+        room_id=room_id,
+        room_name=room_name,
+        creator_user_id=creator_user_id,
+        joined_count=len(ordered_user_ids),
+        joined_user_ids=ordered_user_ids,
     )
 
 
@@ -605,6 +791,65 @@ async def matrix_send_file(
         content_uri=content_uri,
         filename=filename,
         size_bytes=size_bytes,
+    )
+
+
+@router.get("/media/download")
+async def matrix_download_media(
+    request: Request,
+    mxc_uri: str = Query(min_length=8, max_length=1024),
+    filename: str | None = Query(default=None, max_length=255),
+    authenticated_user: AuthenticatedUser = Depends(get_authenticated_user),
+) -> Response:
+    matrix_client = request.app.state.matrix_client
+    immudb_client = request.app.state.immudb_client
+
+    safe_filename = (filename or "matrix-file.bin").strip() or "matrix-file.bin"
+    safe_filename = safe_filename.replace("\"", "_").replace("\\", "_").replace("\n", "_")
+
+    try:
+        content, header_map = await matrix_client.download_media(
+            access_token=authenticated_user.access_token,
+            mxc_uri=mxc_uri,
+        )
+    except MatrixClientError as exc:
+        mapped_status = _map_matrix_error_status(exc)
+        deny_event = AuditEventCreate(
+            actor_type=ActorType.USER,
+            actor_id=authenticated_user.user_id,
+            action_type="matrix_download_media",
+            resource_type="media",
+            resource_id=mxc_uri,
+            decision=DecisionType.DENY,
+            reason_code="matrix_download_media_failed",
+            user_id=authenticated_user.user_id,
+            input_data={"mxc_uri": mxc_uri},
+            metadata={"error": str(exc), "status_code": mapped_status},
+        )
+        await _write_audit_or_raise(immudb_client=immudb_client, event=deny_event)
+        raise HTTPException(
+            status_code=mapped_status,
+            detail=f"matrix_download_media_failed: {exc}",
+        ) from exc
+
+    media_type = header_map.get("content-type") or "application/octet-stream"
+    allow_event = AuditEventCreate(
+        actor_type=ActorType.USER,
+        actor_id=authenticated_user.user_id,
+        action_type="matrix_download_media",
+        resource_type="media",
+        resource_id=mxc_uri,
+        decision=DecisionType.ALLOW,
+        reason_code="download_media_ok",
+        user_id=authenticated_user.user_id,
+        metadata={"size_bytes": len(content), "media_type": media_type},
+    )
+    await _write_audit_or_raise(immudb_client=immudb_client, event=allow_event)
+
+    return Response(
+        content=content,
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{safe_filename}"'},
     )
 
 

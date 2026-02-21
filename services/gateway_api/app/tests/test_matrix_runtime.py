@@ -121,6 +121,115 @@ async def test_matrix_sync_uses_long_poll_timeout_buffer(
 
 
 @pytest.mark.asyncio
+async def test_matrix_download_media_falls_back_to_legacy_paths(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    attempted_urls: list[str] = []
+
+    class _FakeAsyncClient:
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            _ = args, kwargs
+
+        async def __aenter__(self) -> _FakeAsyncClient:
+            return self
+
+        async def __aexit__(
+            self,
+            exc_type: type[BaseException] | None,
+            exc: BaseException | None,
+            tb: object,
+        ) -> None:
+            _ = exc_type, exc, tb
+            return None
+
+        async def request(self, *args: object, **kwargs: object) -> httpx.Response:
+            _ = args
+            url = str(kwargs.get("url", ""))
+            attempted_urls.append(url)
+            request = httpx.Request("GET", url)
+            if url.endswith("/_matrix/client/v1/media/download/localhost/media123"):
+                return httpx.Response(
+                    status_code=404,
+                    json={"errcode": "M_NOT_FOUND", "error": "not found"},
+                    request=request,
+                )
+            if url.endswith("/_matrix/media/v3/download/localhost/media123"):
+                return httpx.Response(
+                    status_code=200,
+                    content=b"media-bytes",
+                    headers={"content-type": "text/plain"},
+                    request=request,
+                )
+            raise AssertionError(f"unexpected url: {url}")
+
+    monkeypatch.setattr(matrix_client_module.httpx, "AsyncClient", _FakeAsyncClient)
+
+    client = MatrixClient(
+        homeserver_url="http://synapse:8008",
+        timeout_seconds=2.0,
+        retry_attempts=1,
+    )
+    content, headers = await client.download_media(
+        access_token="token_alice",
+        mxc_uri="mxc://localhost/media123",
+    )
+
+    assert content == b"media-bytes"
+    assert headers.get("content-type") == "text/plain"
+    assert attempted_urls == [
+        "http://synapse:8008/_matrix/client/v1/media/download/localhost/media123",
+        "http://synapse:8008/_matrix/media/v3/download/localhost/media123",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_matrix_download_media_returns_not_found_when_all_paths_fail(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class _FakeAsyncClient:
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            _ = args, kwargs
+
+        async def __aenter__(self) -> _FakeAsyncClient:
+            return self
+
+        async def __aexit__(
+            self,
+            exc_type: type[BaseException] | None,
+            exc: BaseException | None,
+            tb: object,
+        ) -> None:
+            _ = exc_type, exc, tb
+            return None
+
+        async def request(self, *args: object, **kwargs: object) -> httpx.Response:
+            _ = args
+            url = str(kwargs.get("url", ""))
+            request = httpx.Request("GET", url)
+            return httpx.Response(
+                status_code=404,
+                json={"errcode": "M_NOT_FOUND", "error": "not found"},
+                request=request,
+            )
+
+    monkeypatch.setattr(matrix_client_module.httpx, "AsyncClient", _FakeAsyncClient)
+
+    client = MatrixClient(
+        homeserver_url="http://synapse:8008",
+        timeout_seconds=2.0,
+        retry_attempts=1,
+    )
+
+    with pytest.raises(MatrixClientError) as exc_info:
+        await client.download_media(
+            access_token="token_alice",
+            mxc_uri="mxc://localhost/media123",
+        )
+
+    assert exc_info.value.status_code == 404
+
+
+@pytest.mark.asyncio
 async def test_agent_bot_manager_register_before_login() -> None:
     calls: list[str] = []
 

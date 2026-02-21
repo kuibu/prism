@@ -376,7 +376,37 @@ class _StubMatrixClient:
         user_id = self._token_to_user.get(access_token)
         if user_id is None:
             raise MatrixClientError("invalid_token")
-        return {"joined": {user_id: {"display_name": user_id}}}
+        joined: dict[str, dict[str, str]] = {
+            "@bob:localhost": {"display_name": "@bob:localhost"},
+            "@alice:localhost": {"display_name": "@alice:localhost"},
+        }
+        if user_id not in joined:
+            joined[user_id] = {"display_name": user_id}
+        return {"joined": joined}
+
+    async def get_room_state_event(
+        self,
+        *,
+        access_token: str,
+        room_id: str,
+        event_type: str,
+        state_key: str | None = None,
+    ) -> dict[str, object]:
+        _ = access_token, room_id, state_key
+        if event_type == "m.room.name":
+            return {"name": "Stub Room"}
+        if event_type == "m.room.create":
+            return {"creator": "@alice:localhost"}
+        return {}
+
+    async def download_media(
+        self,
+        *,
+        access_token: str,
+        mxc_uri: str,
+    ) -> tuple[bytes, dict[str, str]]:
+        _ = access_token, mxc_uri
+        return b"stub-media", {"content-type": "application/octet-stream"}
 
     async def send_text_message(
         self,
@@ -744,6 +774,72 @@ def test_matrix_sync_timeout_maps_to_504() -> None:
 
     assert response.status_code == 504
     assert "matrix_sync_timeout" in response.json()["detail"]
+
+
+def test_matrix_members_forbidden_maps_to_403() -> None:
+    class _MembersForbiddenMatrix(_StubMatrixClient):
+        async def get_joined_members(
+            self,
+            *,
+            access_token: str,
+            room_id: str,
+        ) -> dict[str, object]:
+            _ = access_token, room_id
+            raise MatrixClientError(
+                "User not in room, and room previews are disabled",
+                status_code=403,
+                errcode="M_FORBIDDEN",
+            )
+
+    with TestClient(app) as client:
+        _install_stubs(client)
+        matrix_stub = _MembersForbiddenMatrix()
+        client.app.state.matrix_client = matrix_stub
+        client.app.state.agent_bot_manager = AgentBotManager(
+            matrix_client=matrix_stub,
+            username_prefix="agent_stub",
+            password_secret="secret_stub",
+        )
+
+        response = client.get(
+            "/api/v1/matrix/rooms/!room:localhost/members",
+            headers=_auth_headers(),
+        )
+
+    assert response.status_code == 403
+    assert "matrix_get_joined_members_forbidden" in response.json()["detail"]
+
+
+def test_matrix_room_summary_returns_name_creator_and_members() -> None:
+    with TestClient(app) as client:
+        _install_stubs(client)
+        response = client.get(
+            "/api/v1/matrix/rooms/!room:localhost/summary",
+            headers=_auth_headers(),
+        )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["room_id"] == "!room:localhost"
+    assert payload["room_name"] == "Stub Room"
+    assert payload["creator_user_id"] == "@alice:localhost"
+    assert payload["joined_count"] >= 2
+    assert payload["joined_user_ids"][0] == "@alice:localhost"
+    assert "@bob:localhost" in payload["joined_user_ids"]
+
+
+def test_matrix_download_media_proxy() -> None:
+    with TestClient(app) as client:
+        _install_stubs(client)
+        response = client.get(
+            "/api/v1/matrix/media/download",
+            params={"mxc_uri": "mxc://localhost/abc123", "filename": "demo.bin"},
+            headers=_auth_headers(),
+        )
+
+    assert response.status_code == 200
+    assert response.content == b"stub-media"
+    assert "attachment; filename=\"demo.bin\"" in response.headers.get("content-disposition", "")
 
 
 def test_matrix_proxy_login_create_send_audited() -> None:

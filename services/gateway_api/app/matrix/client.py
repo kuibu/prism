@@ -118,6 +118,64 @@ class MatrixClient:
             headers=headers,
         )
 
+    async def get_room_state_event(
+        self,
+        *,
+        access_token: str,
+        room_id: str,
+        event_type: str,
+        state_key: str | None = None,
+    ) -> dict[str, Any]:
+        headers = {"Authorization": f"Bearer {access_token}"}
+        encoded_room_id = quote(room_id, safe="")
+        encoded_event_type = quote(event_type, safe="")
+        if state_key is None:
+            path = f"/_matrix/client/v3/rooms/{encoded_room_id}/state/{encoded_event_type}"
+        else:
+            encoded_state_key = quote(state_key, safe="")
+            path = (
+                f"/_matrix/client/v3/rooms/{encoded_room_id}/state/"
+                f"{encoded_event_type}/{encoded_state_key}"
+            )
+        return await self._request_json(method="GET", path=path, headers=headers)
+
+    async def download_media(
+        self,
+        *,
+        access_token: str,
+        mxc_uri: str,
+    ) -> tuple[bytes, dict[str, str]]:
+        if not mxc_uri.startswith("mxc://"):
+            raise MatrixClientError("invalid_mxc_uri")
+        mxc_path = mxc_uri[6:]
+        if "/" not in mxc_path:
+            raise MatrixClientError("invalid_mxc_uri")
+
+        server_name, media_id = mxc_path.split("/", 1)
+        if server_name.strip() == "" or media_id.strip() == "":
+            raise MatrixClientError("invalid_mxc_uri")
+
+        headers = {"Authorization": f"Bearer {access_token}"}
+        encoded_server = quote(server_name, safe="")
+        encoded_media_id = quote(media_id, safe="")
+        candidate_paths = [
+            f"/_matrix/client/v1/media/download/{encoded_server}/{encoded_media_id}",
+            f"/_matrix/media/v3/download/{encoded_server}/{encoded_media_id}",
+            f"/_matrix/media/r0/download/{encoded_server}/{encoded_media_id}",
+        ]
+        last_error: MatrixClientError | None = None
+        for index, path in enumerate(candidate_paths):
+            try:
+                return await self._request_bytes(method="GET", path=path, headers=headers)
+            except MatrixClientError as exc:
+                last_error = exc
+                is_last_candidate = index == len(candidate_paths) - 1
+                if exc.status_code == 404 and not is_last_candidate:
+                    continue
+                raise
+
+        raise last_error or MatrixClientError("matrix_download_media_failed")
+
     async def send_text_message(
         self,
         *,
@@ -309,6 +367,63 @@ class MatrixClient:
                     break
                 except ValueError as exc:
                     last_error = str(exc)
+                    break
+
+                if attempt + 1 < self.retry_attempts:
+                    await asyncio.sleep(self._default_backoff_delay(attempt))
+
+        raise MatrixClientError(
+            last_error or "matrix_request_failed",
+            status_code=last_status_code,
+            errcode=last_errcode,
+        )
+
+    async def _request_bytes(
+        self,
+        *,
+        method: str,
+        path: str,
+        params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+        request_timeout_seconds: float | None = None,
+    ) -> tuple[bytes, dict[str, str]]:
+        last_error: str | None = None
+        last_status_code: int | None = None
+        last_errcode: str | None = None
+        async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
+            for attempt in range(self.retry_attempts):
+                try:
+                    response = await client.request(
+                        method=method,
+                        url=f"{self.homeserver_url}{path}",
+                        params=params,
+                        headers=headers,
+                        timeout=request_timeout_seconds or self.timeout_seconds,
+                    )
+                    response.raise_for_status()
+                    return response.content, dict(response.headers)
+                except httpx.RequestError as exc:
+                    last_error = str(exc)
+                    last_status_code = None
+                    last_errcode = None
+                except httpx.HTTPStatusError as exc:
+                    status = exc.response.status_code
+                    last_status_code = status
+                    try:
+                        payload = exc.response.json()
+                    except ValueError:
+                        payload = {}
+                    errcode_raw = payload.get("errcode")
+                    error_raw = payload.get("error")
+                    last_errcode = str(errcode_raw) if isinstance(errcode_raw, str) else None
+                    detail = str(error_raw) if isinstance(error_raw, str) else str(exc)
+                    last_error = detail
+                    if status == 429 and attempt + 1 < self.retry_attempts:
+                        await asyncio.sleep(self._retry_delay_from_response(exc.response, attempt))
+                        continue
+                    if 500 <= status < 600 and attempt + 1 < self.retry_attempts:
+                        await asyncio.sleep(self._default_backoff_delay(attempt))
+                        continue
                     break
 
                 if attempt + 1 < self.retry_attempts:

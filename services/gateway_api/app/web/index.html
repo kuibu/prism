@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Prism Web Console - 前端测试页面</title>
     <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.css?v=20260222e" />
   </head>
   <body>
     <div id="app" class="frontend-test-page">
@@ -102,8 +102,9 @@
                   @click="selectRoom(roomId)"
                 >
                   <div class="room-main">
+                    <span class="room-name">{{ roomDisplayName(roomId) }}</span>
+                    <span class="muted room-meta">{{ roomMemberPreview(roomId) }}</span>
                     <span class="mono-row room-id">{{ roomId }}</span>
-                    <span class="muted room-meta">{{ memberCountText(roomId) }}</span>
                   </div>
                 </button>
               </el-scrollbar>
@@ -272,7 +273,19 @@
                   <div class="chat-header">
                     <div class="chat-title-wrap">
                       <span class="chat-title">{{ tt("tab_chat") }}</span>
-                      <el-tag>{{ forms.activeRoomId || "-" }}</el-tag>
+                      <el-select
+                        v-model="forms.activeRoomId"
+                        class="chat-room-select"
+                        :placeholder="tt('placeholder_room_id')"
+                        @change="onChatRoomChanged"
+                      >
+                        <el-option
+                          v-for="roomId in knownRooms"
+                          :key="roomId"
+                          :label="roomDisplayName(roomId)"
+                          :value="roomId"
+                        />
+                      </el-select>
                       <el-tag type="success">{{ tt("label_member_count") }}: {{ activeRoomMemberCount }}</el-tag>
                     </div>
                     <div class="chat-actions">
@@ -280,6 +293,18 @@
                         {{ tt("btn_refresh_members") }}
                       </el-button>
                     </div>
+                  </div>
+
+                  <div class="member-chips">
+                    <span class="member-label">{{ tt("label_member_ids") }}</span>
+                    <el-tag
+                      v-for="memberId in activeRoomMemberIds"
+                      :key="memberId"
+                      size="small"
+                      type="info"
+                    >
+                      {{ memberId }}
+                    </el-tag>
                   </div>
 
                   <el-scrollbar class="chat-feed" ref="chatFeed">
@@ -298,37 +323,14 @@
                       <div class="chat-bubble" :class="{ self: isSelfMessage(msg) }">
                         <p class="chat-meta">{{ displaySender(msg.sender) }} · {{ msg.timestamp }}</p>
                         <p class="chat-body">{{ msg.body }}</p>
+                        <div class="file-actions" v-if="isFileMessage(msg)">
+                          <el-button size="small" type="primary" link @click="downloadMessageFile(msg)">
+                            {{ tt("btn_download") }}
+                          </el-button>
+                        </div>
                       </div>
                     </article>
                   </el-scrollbar>
-
-                  <div class="chat-composer">
-                    <el-form label-position="top">
-                      <el-form-item :label="tt('label_message')">
-                        <el-input
-                          v-model="forms.messageBody"
-                          type="textarea"
-                          :rows="3"
-                          :placeholder="tt('placeholder_message')"
-                        />
-                      </el-form-item>
-                    </el-form>
-
-                    <div class="action-row">
-                      <el-button type="primary" @click="sendMessage">{{ tt("btn_send") }}</el-button>
-                      <el-upload
-                        class="upload-inline"
-                        :auto-upload="false"
-                        :show-file-list="true"
-                        :limit="1"
-                        :on-change="onFilePicked"
-                        :on-exceed="onFileExceed"
-                      >
-                        <el-button>{{ tt("btn_pick_file") }}</el-button>
-                      </el-upload>
-                      <el-button @click="uploadFile">{{ tt("btn_upload") }}</el-button>
-                    </div>
-                  </div>
                 </el-card>
               </el-tab-pane>
 
@@ -357,6 +359,112 @@
               </el-tab-pane>
             </el-tabs>
           </el-main>
+
+          <el-aside width="360px" class="composer-aside">
+            <el-card shadow="hover" class="panel-card composer-card">
+              <template #header>
+                <div class="card-header">
+                  <span>{{ tt("sidebar_compose") }}</span>
+                  <el-tag size="small" type="success">
+                    {{ tt("label_member_count") }}: {{ activeRoomMemberCount }}
+                  </el-tag>
+                </div>
+              </template>
+
+              <div class="composer-panel">
+                <el-form label-position="top">
+                  <el-form-item :label="tt('label_active_room')">
+                    <el-select
+                      v-model="forms.activeRoomId"
+                      class="chat-room-select"
+                      :placeholder="tt('placeholder_room_id')"
+                      @change="onChatRoomChanged"
+                    >
+                      <el-option
+                        v-for="roomId in knownRooms"
+                        :key="roomId"
+                        :label="roomDisplayName(roomId)"
+                        :value="roomId"
+                      />
+                    </el-select>
+                  </el-form-item>
+                </el-form>
+
+                <div class="composer-meta">
+                  <div class="composer-meta-row">
+                    <span class="composer-meta-label">{{ tt("label_target_room_name") }}</span>
+                    <span class="composer-meta-value">{{ activeRoomDisplayName }}</span>
+                  </div>
+                  <div class="composer-meta-row">
+                    <span class="composer-meta-label">{{ tt("label_target_room_id") }}</span>
+                    <span class="composer-meta-value mono-row">{{ forms.activeRoomId.trim() || "-" }}</span>
+                  </div>
+                  <div class="composer-meta-row">
+                    <span class="composer-meta-label">{{ tt("label_sender_id") }}</span>
+                    <span class="composer-meta-value mono-row">{{ session ? session.userId : tt("status_logged_out_short") }}</span>
+                  </div>
+                  <div class="composer-meta-row">
+                    <span class="composer-meta-label">{{ tt("label_selected_file") }}</span>
+                    <span class="composer-meta-value">{{ selectedFile ? selectedFile.name : "-" }}</span>
+                  </div>
+                </div>
+
+                <el-alert
+                  v-if="!session"
+                  class="chat-hint"
+                  type="warning"
+                  :closable="false"
+                  :title="tt('hint_need_login')"
+                ></el-alert>
+                <el-alert
+                  v-else-if="!forms.activeRoomId.trim()"
+                  class="chat-hint"
+                  type="info"
+                  :closable="false"
+                  :title="tt('hint_chat_room_required')"
+                ></el-alert>
+
+                <el-form label-position="top">
+                  <el-form-item :label="tt('label_message')">
+                    <el-input
+                      v-model="forms.messageBody"
+                      type="textarea"
+                      :rows="4"
+                      :disabled="!session || !forms.activeRoomId.trim()"
+                      :placeholder="tt('placeholder_message')"
+                    />
+                  </el-form-item>
+                </el-form>
+
+                <div class="action-row composer-actions">
+                  <el-button
+                    type="primary"
+                    :disabled="!session || !forms.activeRoomId.trim()"
+                    @click="sendMessage"
+                  >
+                    {{ tt("btn_send") }}
+                  </el-button>
+                  <el-upload
+                    class="upload-inline"
+                    :auto-upload="false"
+                    :show-file-list="true"
+                    :limit="1"
+                    :disabled="!session || !forms.activeRoomId.trim()"
+                    :on-change="onFilePicked"
+                    :on-exceed="onFileExceed"
+                  >
+                    <el-button>{{ tt("btn_pick_file") }}</el-button>
+                  </el-upload>
+                  <el-button
+                    :disabled="!session || !forms.activeRoomId.trim() || !selectedFile"
+                    @click="uploadFile"
+                  >
+                    {{ tt("btn_upload") }}
+                  </el-button>
+                </div>
+              </div>
+            </el-card>
+          </el-aside>
         </el-container>
       </el-container>
 
@@ -381,6 +489,14 @@
           />
         </template>
         <template #footer>
+          <el-button
+            v-if="selectedInboxItem && selectedInboxItem.type === 'invite'"
+            type="success"
+            :disabled="!selectedInboxItem || !selectedInboxItem.roomId"
+            @click="acceptInviteFromInbox"
+          >
+            {{ tt("btn_accept_invite") }}
+          </el-button>
           <el-button @click="inboxDialogVisible = false">{{ tt("btn_close") }}</el-button>
           <el-button
             type="primary"
@@ -395,6 +511,6 @@
 
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <script src="https://unpkg.com/element-plus/dist/index.full.min.js"></script>
-    <script src="./app.js"></script>
+    <script src="./app.js?v=20260222d"></script>
   </body>
 </html>
