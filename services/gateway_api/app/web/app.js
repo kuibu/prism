@@ -269,14 +269,19 @@
   const SESSION_KEY = `prism_frontend_session_v2_${clientScope}`;
   const LANGUAGE_KEY = "prism_frontend_lang_v2";
   const HISTORY_KEY_PREFIX = "prism_frontend_history_v1";
-
-  const AVATAR_PALETTES = [
-    ["#f2e8cf", "#6f4e37", "#a67c52", "#3a2d23"],
-    ["#efe6d9", "#4a5d4d", "#7b8f6a", "#2f3d31"],
-    ["#f4efe6", "#5d4a66", "#8b6fa3", "#2b2233"],
-    ["#f0e9dd", "#36597a", "#6e8ba6", "#1f3448"],
-    ["#f3eadb", "#704e2e", "#b78642", "#3e2d1f"],
-    ["#ede7db", "#46515e", "#7e8c99", "#29323b"],
+  const ANIMAL_AVATAR_COUNT = 100;
+  const ANIMAL_AVATAR_VERSION = "20260222a";
+  const ANIMAL_AVATAR_SLUGS = [
+    "cat", "tiger", "leopard", "lynx", "cheetah", "dog", "wolf", "husky", "coyote", "dingo",
+    "rabbit", "hare", "pika", "jackrabbit", "angora", "brown_bear", "black_bear", "polar_bear", "panda", "koala",
+    "red_fox", "fennec", "arctic_fox", "raccoon", "red_panda", "lion", "cougar", "jaguar", "hyena", "boar",
+    "sparrow", "robin", "swallow", "eagle", "falcon", "owl", "snowy_owl", "barn_owl", "crow", "raven",
+    "penguin", "puffin", "auk", "seagull", "albatross", "duck", "goose", "swan", "flamingo", "parrot",
+    "goldfish", "clownfish", "tuna", "salmon", "shark", "frog", "toad", "newt", "salamander", "gecko",
+    "turtle", "tortoise", "crocodile", "alligator", "lizard", "elephant", "mammoth", "rhino", "hippo", "tapir",
+    "monkey", "gorilla", "chimpanzee", "orangutan", "lemur", "pig", "wild_boar", "peccary", "hamster", "guinea_pig",
+    "cow", "yak", "buffalo", "bison", "goat", "deer", "elk", "moose", "reindeer", "antelope",
+    "horse", "zebra", "donkey", "mule", "camel", "seal", "walrus", "otter", "beaver", "platypus",
   ];
 
   const { createApp } = window.Vue;
@@ -288,46 +293,6 @@
       hash = Math.imul(hash, 16777619);
     }
     return hash >>> 0;
-  }
-
-  function buildPixelAvatar(seed) {
-    const hash = hashString(seed || "guest");
-    const palette = AVATAR_PALETTES[hash % AVATAR_PALETTES.length];
-    const bg = palette[0];
-    const fg1 = palette[1];
-    const fg2 = palette[2];
-    const fg3 = palette[3];
-
-    const cells = [];
-    let state = hash;
-    const size = 10;
-    const grid = 8;
-
-    for (let y = 0; y < grid; y += 1) {
-      for (let x = 0; x < 4; x += 1) {
-        state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
-        const bit = state & 1;
-        if (bit === 0) {
-          continue;
-        }
-        const colorChoice = state % 3;
-        const color = colorChoice === 0 ? fg1 : colorChoice === 1 ? fg2 : fg3;
-        const left = x;
-        const right = grid - 1 - x;
-        cells.push(`<rect x="${left * size}" y="${y * size}" width="${size}" height="${size}" fill="${color}"/>`);
-        if (right !== left) {
-          cells.push(`<rect x="${right * size}" y="${y * size}" width="${size}" height="${size}" fill="${color}"/>`);
-        }
-      }
-    }
-
-    const svg = [
-      `<svg xmlns="http://www.w3.org/2000/svg" width="${grid * size}" height="${grid * size}" viewBox="0 0 ${grid * size} ${grid * size}">`,
-      `<rect width="100%" height="100%" fill="${bg}"/>`,
-      ...cells,
-      "</svg>",
-    ].join("");
-    return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
   }
 
   createApp({
@@ -534,7 +499,11 @@
       avatarForUser(userId) {
         const key = userId && String(userId).trim() ? String(userId).trim() : "guest";
         if (!this.avatarCache[key]) {
-          this.avatarCache[key] = buildPixelAvatar(key);
+          const hash = hashString(key);
+          const index = (hash % ANIMAL_AVATAR_COUNT) + 1;
+          const indexText = String(index).padStart(3, "0");
+          const slug = ANIMAL_AVATAR_SLUGS[index - 1] || ANIMAL_AVATAR_SLUGS[0];
+          this.avatarCache[key] = `/web/animal_avatars/avatar_${indexText}_${slug}.svg?v=${ANIMAL_AVATAR_VERSION}`;
         }
         return this.avatarCache[key];
       },

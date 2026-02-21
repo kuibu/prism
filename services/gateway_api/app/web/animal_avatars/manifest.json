@@ -1,0 +1,802 @@
+[
+  {
+    "index": 1,
+    "group": "cat",
+    "animal": "cat",
+    "template": "cat",
+    "color": "#d97706",
+    "file": "avatar_001_cat.svg"
+  },
+  {
+    "index": 2,
+    "group": "cat",
+    "animal": "tiger",
+    "template": "cat",
+    "color": "#ea580c",
+    "file": "avatar_002_tiger.svg"
+  },
+  {
+    "index": 3,
+    "group": "cat",
+    "animal": "leopard",
+    "template": "cat",
+    "color": "#b45309",
+    "file": "avatar_003_leopard.svg"
+  },
+  {
+    "index": 4,
+    "group": "cat",
+    "animal": "lynx",
+    "template": "cat",
+    "color": "#a16207",
+    "file": "avatar_004_lynx.svg"
+  },
+  {
+    "index": 5,
+    "group": "cat",
+    "animal": "cheetah",
+    "template": "cat",
+    "color": "#c2410c",
+    "file": "avatar_005_cheetah.svg"
+  },
+  {
+    "index": 6,
+    "group": "dog",
+    "animal": "dog",
+    "template": "dog",
+    "color": "#8b5e34",
+    "file": "avatar_006_dog.svg"
+  },
+  {
+    "index": 7,
+    "group": "dog",
+    "animal": "wolf",
+    "template": "dog",
+    "color": "#6b7280",
+    "file": "avatar_007_wolf.svg"
+  },
+  {
+    "index": 8,
+    "group": "dog",
+    "animal": "husky",
+    "template": "dog",
+    "color": "#64748b",
+    "file": "avatar_008_husky.svg"
+  },
+  {
+    "index": 9,
+    "group": "dog",
+    "animal": "coyote",
+    "template": "dog",
+    "color": "#9a6b3c",
+    "file": "avatar_009_coyote.svg"
+  },
+  {
+    "index": 10,
+    "group": "dog",
+    "animal": "dingo",
+    "template": "dog",
+    "color": "#c08552",
+    "file": "avatar_010_dingo.svg"
+  },
+  {
+    "index": 11,
+    "group": "rabbit",
+    "animal": "rabbit",
+    "template": "rabbit",
+    "color": "#9ca3af",
+    "file": "avatar_011_rabbit.svg"
+  },
+  {
+    "index": 12,
+    "group": "rabbit",
+    "animal": "hare",
+    "template": "rabbit",
+    "color": "#b08968",
+    "file": "avatar_012_hare.svg"
+  },
+  {
+    "index": 13,
+    "group": "rabbit",
+    "animal": "pika",
+    "template": "rabbit",
+    "color": "#8b7f72",
+    "file": "avatar_013_pika.svg"
+  },
+  {
+    "index": 14,
+    "group": "rabbit",
+    "animal": "jackrabbit",
+    "template": "rabbit",
+    "color": "#a16207",
+    "file": "avatar_014_jackrabbit.svg"
+  },
+  {
+    "index": 15,
+    "group": "rabbit",
+    "animal": "angora",
+    "template": "rabbit",
+    "color": "#94a3b8",
+    "file": "avatar_015_angora.svg"
+  },
+  {
+    "index": 16,
+    "group": "bear",
+    "animal": "brown_bear",
+    "template": "bear",
+    "color": "#7c4a21",
+    "file": "avatar_016_brown_bear.svg"
+  },
+  {
+    "index": 17,
+    "group": "bear",
+    "animal": "black_bear",
+    "template": "bear",
+    "color": "#1f2937",
+    "file": "avatar_017_black_bear.svg"
+  },
+  {
+    "index": 18,
+    "group": "bear",
+    "animal": "polar_bear",
+    "template": "bear",
+    "color": "#94a3b8",
+    "file": "avatar_018_polar_bear.svg"
+  },
+  {
+    "index": 19,
+    "group": "bear",
+    "animal": "panda",
+    "template": "bear",
+    "color": "#111827",
+    "file": "avatar_019_panda.svg"
+  },
+  {
+    "index": 20,
+    "group": "bear",
+    "animal": "koala",
+    "template": "bear",
+    "color": "#6b7280",
+    "file": "avatar_020_koala.svg"
+  },
+  {
+    "index": 21,
+    "group": "fox",
+    "animal": "red_fox",
+    "template": "fox",
+    "color": "#ea580c",
+    "file": "avatar_021_red_fox.svg"
+  },
+  {
+    "index": 22,
+    "group": "fox",
+    "animal": "fennec",
+    "template": "fox",
+    "color": "#d4a373",
+    "file": "avatar_022_fennec.svg"
+  },
+  {
+    "index": 23,
+    "group": "fox",
+    "animal": "arctic_fox",
+    "template": "fox",
+    "color": "#94a3b8",
+    "file": "avatar_023_arctic_fox.svg"
+  },
+  {
+    "index": 24,
+    "group": "fox",
+    "animal": "raccoon",
+    "template": "fox",
+    "color": "#4b5563",
+    "file": "avatar_024_raccoon.svg"
+  },
+  {
+    "index": 25,
+    "group": "fox",
+    "animal": "red_panda",
+    "template": "fox",
+    "color": "#c2410c",
+    "file": "avatar_025_red_panda.svg"
+  },
+  {
+    "index": 26,
+    "group": "lion",
+    "animal": "lion",
+    "template": "lion",
+    "color": "#b7791f",
+    "file": "avatar_026_lion.svg"
+  },
+  {
+    "index": 27,
+    "group": "lion",
+    "animal": "cougar",
+    "template": "lion",
+    "color": "#a16207",
+    "file": "avatar_027_cougar.svg"
+  },
+  {
+    "index": 28,
+    "group": "lion",
+    "animal": "jaguar",
+    "template": "lion",
+    "color": "#92400e",
+    "file": "avatar_028_jaguar.svg"
+  },
+  {
+    "index": 29,
+    "group": "lion",
+    "animal": "hyena",
+    "template": "lion",
+    "color": "#9a6b3c",
+    "file": "avatar_029_hyena.svg"
+  },
+  {
+    "index": 30,
+    "group": "lion",
+    "animal": "boar",
+    "template": "lion",
+    "color": "#7c5a3a",
+    "file": "avatar_030_boar.svg"
+  },
+  {
+    "index": 31,
+    "group": "bird",
+    "animal": "sparrow",
+    "template": "bird",
+    "color": "#8b6f47",
+    "file": "avatar_031_sparrow.svg"
+  },
+  {
+    "index": 32,
+    "group": "bird",
+    "animal": "robin",
+    "template": "bird",
+    "color": "#b45309",
+    "file": "avatar_032_robin.svg"
+  },
+  {
+    "index": 33,
+    "group": "bird",
+    "animal": "swallow",
+    "template": "bird",
+    "color": "#334155",
+    "file": "avatar_033_swallow.svg"
+  },
+  {
+    "index": 34,
+    "group": "bird",
+    "animal": "eagle",
+    "template": "bird",
+    "color": "#6b7280",
+    "file": "avatar_034_eagle.svg"
+  },
+  {
+    "index": 35,
+    "group": "bird",
+    "animal": "falcon",
+    "template": "bird",
+    "color": "#4b5563",
+    "file": "avatar_035_falcon.svg"
+  },
+  {
+    "index": 36,
+    "group": "owl",
+    "animal": "owl",
+    "template": "owl",
+    "color": "#6b4f3a",
+    "file": "avatar_036_owl.svg"
+  },
+  {
+    "index": 37,
+    "group": "owl",
+    "animal": "snowy_owl",
+    "template": "owl",
+    "color": "#94a3b8",
+    "file": "avatar_037_snowy_owl.svg"
+  },
+  {
+    "index": 38,
+    "group": "owl",
+    "animal": "barn_owl",
+    "template": "owl",
+    "color": "#a16207",
+    "file": "avatar_038_barn_owl.svg"
+  },
+  {
+    "index": 39,
+    "group": "owl",
+    "animal": "crow",
+    "template": "owl",
+    "color": "#1f2937",
+    "file": "avatar_039_crow.svg"
+  },
+  {
+    "index": 40,
+    "group": "owl",
+    "animal": "raven",
+    "template": "owl",
+    "color": "#111827",
+    "file": "avatar_040_raven.svg"
+  },
+  {
+    "index": 41,
+    "group": "penguin",
+    "animal": "penguin",
+    "template": "penguin",
+    "color": "#1f2937",
+    "file": "avatar_041_penguin.svg"
+  },
+  {
+    "index": 42,
+    "group": "penguin",
+    "animal": "puffin",
+    "template": "penguin",
+    "color": "#334155",
+    "file": "avatar_042_puffin.svg"
+  },
+  {
+    "index": 43,
+    "group": "penguin",
+    "animal": "auk",
+    "template": "penguin",
+    "color": "#475569",
+    "file": "avatar_043_auk.svg"
+  },
+  {
+    "index": 44,
+    "group": "penguin",
+    "animal": "seagull",
+    "template": "penguin",
+    "color": "#64748b",
+    "file": "avatar_044_seagull.svg"
+  },
+  {
+    "index": 45,
+    "group": "penguin",
+    "animal": "albatross",
+    "template": "penguin",
+    "color": "#94a3b8",
+    "file": "avatar_045_albatross.svg"
+  },
+  {
+    "index": 46,
+    "group": "duck",
+    "animal": "duck",
+    "template": "duck",
+    "color": "#b45309",
+    "file": "avatar_046_duck.svg"
+  },
+  {
+    "index": 47,
+    "group": "duck",
+    "animal": "goose",
+    "template": "duck",
+    "color": "#9ca3af",
+    "file": "avatar_047_goose.svg"
+  },
+  {
+    "index": 48,
+    "group": "duck",
+    "animal": "swan",
+    "template": "duck",
+    "color": "#94a3b8",
+    "file": "avatar_048_swan.svg"
+  },
+  {
+    "index": 49,
+    "group": "duck",
+    "animal": "flamingo",
+    "template": "duck",
+    "color": "#db2777",
+    "file": "avatar_049_flamingo.svg"
+  },
+  {
+    "index": 50,
+    "group": "duck",
+    "animal": "parrot",
+    "template": "duck",
+    "color": "#16a34a",
+    "file": "avatar_050_parrot.svg"
+  },
+  {
+    "index": 51,
+    "group": "fish",
+    "animal": "goldfish",
+    "template": "fish",
+    "color": "#f59e0b",
+    "file": "avatar_051_goldfish.svg"
+  },
+  {
+    "index": 52,
+    "group": "fish",
+    "animal": "clownfish",
+    "template": "fish",
+    "color": "#f97316",
+    "file": "avatar_052_clownfish.svg"
+  },
+  {
+    "index": 53,
+    "group": "fish",
+    "animal": "tuna",
+    "template": "fish",
+    "color": "#64748b",
+    "file": "avatar_053_tuna.svg"
+  },
+  {
+    "index": 54,
+    "group": "fish",
+    "animal": "salmon",
+    "template": "fish",
+    "color": "#fb7185",
+    "file": "avatar_054_salmon.svg"
+  },
+  {
+    "index": 55,
+    "group": "fish",
+    "animal": "shark",
+    "template": "fish",
+    "color": "#6b7280",
+    "file": "avatar_055_shark.svg"
+  },
+  {
+    "index": 56,
+    "group": "frog",
+    "animal": "frog",
+    "template": "frog",
+    "color": "#16a34a",
+    "file": "avatar_056_frog.svg"
+  },
+  {
+    "index": 57,
+    "group": "frog",
+    "animal": "toad",
+    "template": "frog",
+    "color": "#65a30d",
+    "file": "avatar_057_toad.svg"
+  },
+  {
+    "index": 58,
+    "group": "frog",
+    "animal": "newt",
+    "template": "frog",
+    "color": "#b45309",
+    "file": "avatar_058_newt.svg"
+  },
+  {
+    "index": 59,
+    "group": "frog",
+    "animal": "salamander",
+    "template": "frog",
+    "color": "#ea580c",
+    "file": "avatar_059_salamander.svg"
+  },
+  {
+    "index": 60,
+    "group": "frog",
+    "animal": "gecko",
+    "template": "frog",
+    "color": "#22c55e",
+    "file": "avatar_060_gecko.svg"
+  },
+  {
+    "index": 61,
+    "group": "turtle",
+    "animal": "turtle",
+    "template": "turtle",
+    "color": "#15803d",
+    "file": "avatar_061_turtle.svg"
+  },
+  {
+    "index": 62,
+    "group": "turtle",
+    "animal": "tortoise",
+    "template": "turtle",
+    "color": "#8b5a2b",
+    "file": "avatar_062_tortoise.svg"
+  },
+  {
+    "index": 63,
+    "group": "turtle",
+    "animal": "crocodile",
+    "template": "turtle",
+    "color": "#3f6212",
+    "file": "avatar_063_crocodile.svg"
+  },
+  {
+    "index": 64,
+    "group": "turtle",
+    "animal": "alligator",
+    "template": "turtle",
+    "color": "#4d7c0f",
+    "file": "avatar_064_alligator.svg"
+  },
+  {
+    "index": 65,
+    "group": "turtle",
+    "animal": "lizard",
+    "template": "turtle",
+    "color": "#65a30d",
+    "file": "avatar_065_lizard.svg"
+  },
+  {
+    "index": 66,
+    "group": "elephant",
+    "animal": "elephant",
+    "template": "elephant",
+    "color": "#64748b",
+    "file": "avatar_066_elephant.svg"
+  },
+  {
+    "index": 67,
+    "group": "elephant",
+    "animal": "mammoth",
+    "template": "elephant",
+    "color": "#7c5a4b",
+    "file": "avatar_067_mammoth.svg"
+  },
+  {
+    "index": 68,
+    "group": "elephant",
+    "animal": "rhino",
+    "template": "elephant",
+    "color": "#6b7280",
+    "file": "avatar_068_rhino.svg"
+  },
+  {
+    "index": 69,
+    "group": "elephant",
+    "animal": "hippo",
+    "template": "elephant",
+    "color": "#52525b",
+    "file": "avatar_069_hippo.svg"
+  },
+  {
+    "index": 70,
+    "group": "elephant",
+    "animal": "tapir",
+    "template": "elephant",
+    "color": "#3f3f46",
+    "file": "avatar_070_tapir.svg"
+  },
+  {
+    "index": 71,
+    "group": "monkey",
+    "animal": "monkey",
+    "template": "monkey",
+    "color": "#8b5a2b",
+    "file": "avatar_071_monkey.svg"
+  },
+  {
+    "index": 72,
+    "group": "monkey",
+    "animal": "gorilla",
+    "template": "monkey",
+    "color": "#374151",
+    "file": "avatar_072_gorilla.svg"
+  },
+  {
+    "index": 73,
+    "group": "monkey",
+    "animal": "chimpanzee",
+    "template": "monkey",
+    "color": "#6b4f3a",
+    "file": "avatar_073_chimpanzee.svg"
+  },
+  {
+    "index": 74,
+    "group": "monkey",
+    "animal": "orangutan",
+    "template": "monkey",
+    "color": "#c2410c",
+    "file": "avatar_074_orangutan.svg"
+  },
+  {
+    "index": 75,
+    "group": "monkey",
+    "animal": "lemur",
+    "template": "monkey",
+    "color": "#6b7280",
+    "file": "avatar_075_lemur.svg"
+  },
+  {
+    "index": 76,
+    "group": "pig",
+    "animal": "pig",
+    "template": "pig",
+    "color": "#ec4899",
+    "file": "avatar_076_pig.svg"
+  },
+  {
+    "index": 77,
+    "group": "pig",
+    "animal": "wild_boar",
+    "template": "pig",
+    "color": "#7c5a3a",
+    "file": "avatar_077_wild_boar.svg"
+  },
+  {
+    "index": 78,
+    "group": "pig",
+    "animal": "peccary",
+    "template": "pig",
+    "color": "#8b6f47",
+    "file": "avatar_078_peccary.svg"
+  },
+  {
+    "index": 79,
+    "group": "pig",
+    "animal": "hamster",
+    "template": "pig",
+    "color": "#d4a373",
+    "file": "avatar_079_hamster.svg"
+  },
+  {
+    "index": 80,
+    "group": "pig",
+    "animal": "guinea_pig",
+    "template": "pig",
+    "color": "#a16207",
+    "file": "avatar_080_guinea_pig.svg"
+  },
+  {
+    "index": 81,
+    "group": "cow",
+    "animal": "cow",
+    "template": "cow",
+    "color": "#4b5563",
+    "file": "avatar_081_cow.svg"
+  },
+  {
+    "index": 82,
+    "group": "cow",
+    "animal": "yak",
+    "template": "cow",
+    "color": "#374151",
+    "file": "avatar_082_yak.svg"
+  },
+  {
+    "index": 83,
+    "group": "cow",
+    "animal": "buffalo",
+    "template": "cow",
+    "color": "#6b4f3a",
+    "file": "avatar_083_buffalo.svg"
+  },
+  {
+    "index": 84,
+    "group": "cow",
+    "animal": "bison",
+    "template": "cow",
+    "color": "#7c4a21",
+    "file": "avatar_084_bison.svg"
+  },
+  {
+    "index": 85,
+    "group": "cow",
+    "animal": "goat",
+    "template": "cow",
+    "color": "#9ca3af",
+    "file": "avatar_085_goat.svg"
+  },
+  {
+    "index": 86,
+    "group": "deer",
+    "animal": "deer",
+    "template": "deer",
+    "color": "#8b5a2b",
+    "file": "avatar_086_deer.svg"
+  },
+  {
+    "index": 87,
+    "group": "deer",
+    "animal": "elk",
+    "template": "deer",
+    "color": "#7c4a21",
+    "file": "avatar_087_elk.svg"
+  },
+  {
+    "index": 88,
+    "group": "deer",
+    "animal": "moose",
+    "template": "deer",
+    "color": "#6b3f1d",
+    "file": "avatar_088_moose.svg"
+  },
+  {
+    "index": 89,
+    "group": "deer",
+    "animal": "reindeer",
+    "template": "deer",
+    "color": "#9a6b3c",
+    "file": "avatar_089_reindeer.svg"
+  },
+  {
+    "index": 90,
+    "group": "deer",
+    "animal": "antelope",
+    "template": "deer",
+    "color": "#b08968",
+    "file": "avatar_090_antelope.svg"
+  },
+  {
+    "index": 91,
+    "group": "horse",
+    "animal": "horse",
+    "template": "horse",
+    "color": "#7c4a21",
+    "file": "avatar_091_horse.svg"
+  },
+  {
+    "index": 92,
+    "group": "horse",
+    "animal": "zebra",
+    "template": "horse",
+    "color": "#1f2937",
+    "file": "avatar_092_zebra.svg"
+  },
+  {
+    "index": 93,
+    "group": "horse",
+    "animal": "donkey",
+    "template": "horse",
+    "color": "#6b7280",
+    "file": "avatar_093_donkey.svg"
+  },
+  {
+    "index": 94,
+    "group": "horse",
+    "animal": "mule",
+    "template": "horse",
+    "color": "#7c6a58",
+    "file": "avatar_094_mule.svg"
+  },
+  {
+    "index": 95,
+    "group": "horse",
+    "animal": "camel",
+    "template": "horse",
+    "color": "#b08968",
+    "file": "avatar_095_camel.svg"
+  },
+  {
+    "index": 96,
+    "group": "seal",
+    "animal": "seal",
+    "template": "seal",
+    "color": "#64748b",
+    "file": "avatar_096_seal.svg"
+  },
+  {
+    "index": 97,
+    "group": "seal",
+    "animal": "walrus",
+    "template": "seal",
+    "color": "#6b7280",
+    "file": "avatar_097_walrus.svg"
+  },
+  {
+    "index": 98,
+    "group": "seal",
+    "animal": "otter",
+    "template": "seal",
+    "color": "#8b5a2b",
+    "file": "avatar_098_otter.svg"
+  },
+  {
+    "index": 99,
+    "group": "seal",
+    "animal": "beaver",
+    "template": "seal",
+    "color": "#6b4f3a",
+    "file": "avatar_099_beaver.svg"
+  },
+  {
+    "index": 100,
+    "group": "seal",
+    "animal": "platypus",
+    "template": "seal",
+    "color": "#7c6a58",
+    "file": "avatar_100_platypus.svg"
+  }
+]
