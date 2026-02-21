@@ -56,6 +56,15 @@ class JoinRoomResponse(BaseModel):
     room_id: str
 
 
+class InviteUserRequest(BaseModel):
+    user_id: str = Field(min_length=1, max_length=255)
+
+
+class InviteUserResponse(BaseModel):
+    room_id: str
+    user_id: str
+
+
 class SendMessageRequest(BaseModel):
     body: str = Field(min_length=1, max_length=4000)
 
@@ -273,6 +282,56 @@ async def matrix_join_room(
     )
     await _write_audit_or_raise(immudb_client=immudb_client, event=allow_event)
     return JoinRoomResponse(room_id=joined_room_id)
+
+
+@router.post("/rooms/{room_id}/invite", response_model=InviteUserResponse)
+async def matrix_invite_user(
+    payload: InviteUserRequest,
+    http_request: Request,
+    room_id: str = Path(min_length=1, max_length=255),
+    authenticated_user: AuthenticatedUser = Depends(get_authenticated_user),
+) -> InviteUserResponse:
+    matrix_client = http_request.app.state.matrix_client
+    immudb_client = http_request.app.state.immudb_client
+
+    try:
+        await matrix_client.invite_user(
+            access_token=authenticated_user.access_token,
+            room_id=room_id,
+            user_id=payload.user_id,
+        )
+    except MatrixClientError as exc:
+        deny_event = AuditEventCreate(
+            actor_type=ActorType.USER,
+            actor_id=authenticated_user.user_id,
+            action_type="matrix_invite_user",
+            resource_type="room",
+            resource_id=room_id,
+            decision=DecisionType.DENY,
+            reason_code="matrix_invite_user_failed",
+            user_id=authenticated_user.user_id,
+            room_id=room_id,
+            input_data={"invitee_user_id": payload.user_id},
+            metadata={"error": str(exc)},
+        )
+        await _write_audit_or_raise(immudb_client=immudb_client, event=deny_event)
+        raise HTTPException(status_code=502, detail=f"matrix_invite_user_failed: {exc}") from exc
+
+    allow_event = AuditEventCreate(
+        actor_type=ActorType.USER,
+        actor_id=authenticated_user.user_id,
+        action_type="matrix_invite_user",
+        resource_type="room",
+        resource_id=room_id,
+        decision=DecisionType.ALLOW,
+        reason_code="invite_user_ok",
+        user_id=authenticated_user.user_id,
+        room_id=room_id,
+        input_data={"invitee_user_id": payload.user_id},
+    )
+    await _write_audit_or_raise(immudb_client=immudb_client, event=allow_event)
+
+    return InviteUserResponse(room_id=room_id, user_id=payload.user_id)
 
 
 @router.post("/rooms/{room_id}/messages", response_model=SendMessageResponse, status_code=201)

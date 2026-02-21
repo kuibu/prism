@@ -7,197 +7,313 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <main class="wx-app">
-      <header class="wx-topbar">
-        <div class="brand-wrap">
-          <div class="brand-mark">P</div>
+    <div id="app" class="tg-app">
+      <header class="topbar">
+        <div class="brand">
+          <div class="logo">P</div>
           <div>
-            <p class="brand-eyebrow">Prism Web Console</p>
-            <h1 data-i18n="app_title">Prism Chat Pilot</h1>
+            <p class="eyebrow">Prism Web Console</p>
+            <h1>{{ tt("app_title") }}</h1>
           </div>
         </div>
-        <div class="topbar-actions">
-          <button id="langZhBtn" class="lang-btn">中文</button>
-          <button id="langEnBtn" class="lang-btn">EN</button>
+        <div class="top-actions">
+          <button
+            class="lang-btn"
+            :class="{ active: language === 'zh' }"
+            @click="setLanguage('zh', true)"
+          >
+            中文
+          </button>
+          <button
+            class="lang-btn"
+            :class="{ active: language === 'en' }"
+            @click="setLanguage('en', true)"
+          >
+            EN
+          </button>
         </div>
       </header>
 
-      <section class="wx-shell">
-        <aside class="panel side-left">
-          <article class="card">
-            <h2 data-i18n="account_title">Account</h2>
-            <div class="form-grid">
+      <div class="layout">
+        <aside class="left-pane">
+          <section class="panel user-card">
+            <h2>{{ tt("sidebar_account") }}</h2>
+            <p class="muted" v-if="!session">{{ tt("status_logged_out") }}</p>
+            <template v-else>
+              <p class="user-id">{{ session.userId }}</p>
+              <p class="muted">token: {{ mask(session.accessToken) }}</p>
+            </template>
+            <button class="btn ghost full" @click="openSecondClient">
+              {{ tt("btn_open_second") }}
+            </button>
+          </section>
+
+          <section class="panel tabs-panel">
+            <h2>{{ tt("sidebar_tabs") }}</h2>
+            <div class="tabs-list">
+              <button
+                v-for="tab in tabs"
+                :key="tab.id"
+                class="tab-btn"
+                :class="{ active: activeTab === tab.id }"
+                @click="switchTab(tab.id)"
+              >
+                {{ tt(tab.label) }}
+              </button>
+            </div>
+          </section>
+
+          <section class="panel rooms-panel">
+            <div class="rooms-head">
+              <h2>{{ tt("sidebar_rooms") }}</h2>
+              <button class="mini-btn" @click="syncMessages">{{ tt("btn_sync") }}</button>
+            </div>
+            <div class="rooms-list">
+              <button
+                v-for="roomId in knownRooms"
+                :key="roomId"
+                class="room-pill"
+                :class="{ active: roomId === forms.activeRoomId }"
+                @click="selectRoom(roomId)"
+              >
+                {{ roomId }}
+              </button>
+            </div>
+          </section>
+        </aside>
+
+        <main class="main-pane">
+          <section class="panel page-panel" v-if="activeTab === 'auth'">
+            <h2>{{ tt("tab_auth") }}</h2>
+            <div class="grid two">
               <label>
-                <span data-i18n="label_homeserver">Homeserver URL</span>
-                <input id="homeserverUrl" type="text" value="http://localhost:8008" />
+                <span>{{ tt("label_homeserver") }}</span>
+                <input v-model.trim="config.homeserverUrl" type="text" />
               </label>
               <label>
-                <span data-i18n="label_gateway">Gateway API URL</span>
-                <input id="gatewayUrl" type="text" value="http://localhost:8080/api/v1" />
+                <span>{{ tt("label_gateway") }}</span>
+                <input v-model.trim="config.gatewayUrl" type="text" />
               </label>
               <label>
-                <span data-i18n="label_username">Username</span>
+                <span>{{ tt("label_username") }}</span>
                 <input
-                  id="username"
+                  v-model.trim="forms.username"
                   type="text"
-                  data-i18n-placeholder="placeholder_username"
-                  placeholder="grandma_demo"
+                  :placeholder="tt('placeholder_username')"
                 />
               </label>
               <label>
-                <span data-i18n="label_password">Password</span>
+                <span>{{ tt("label_password") }}</span>
                 <input
-                  id="password"
+                  v-model="forms.password"
                   type="password"
-                  data-i18n-placeholder="placeholder_password"
-                  placeholder="Passw0rd!"
+                  :placeholder="tt('placeholder_password')"
                 />
               </label>
             </div>
             <div class="actions">
-              <button id="registerBtn" class="btn primary" data-i18n="btn_register">Register</button>
-              <button id="loginBtn" class="btn primary" data-i18n="btn_login">Login</button>
-              <button id="logoutBtn" class="btn ghost" data-i18n="btn_logout">Logout</button>
-              <button id="statusBtn" class="btn ghost" data-i18n="btn_refresh">Refresh</button>
+              <button class="btn primary" @click="registerUser">{{ tt("btn_register") }}</button>
+              <button class="btn primary" @click="loginUser">{{ tt("btn_login") }}</button>
+              <button class="btn ghost" @click="logoutUser">{{ tt("btn_logout") }}</button>
+              <button class="btn ghost" @click="refreshStatusAndToast">
+                {{ tt("btn_refresh") }}
+              </button>
             </div>
-            <pre id="sessionStatus" class="output"></pre>
-          </article>
+            <pre class="output">{{ pretty(sessionOutput) }}</pre>
+          </section>
 
-          <article class="card">
-            <h2 data-i18n="rooms_title">Rooms</h2>
-            <div class="form-grid">
+          <section class="panel page-panel" v-if="activeTab === 'room'">
+            <h2>{{ tt("tab_room") }}</h2>
+            <div class="grid two">
               <label>
-                <span data-i18n="label_invite">Invite User (optional)</span>
+                <span>{{ tt("label_room_name") }}</span>
                 <input
-                  id="inviteUserId"
+                  v-model.trim="forms.roomName"
                   type="text"
-                  data-i18n-placeholder="placeholder_invite"
-                  placeholder="@bob:localhost"
+                  :placeholder="tt('placeholder_room_name')"
                 />
               </label>
               <label>
-                <span data-i18n="label_room_id">Active Room ID</span>
+                <span>{{ tt("label_invite_on_create") }}</span>
                 <input
-                  id="roomId"
+                  v-model.trim="forms.inviteOnCreate"
                   type="text"
-                  data-i18n-placeholder="placeholder_room"
-                  placeholder="!room:localhost"
+                  :placeholder="tt('placeholder_invite')"
+                />
+              </label>
+              <label>
+                <span>{{ tt("label_active_room") }}</span>
+                <input
+                  v-model.trim="forms.activeRoomId"
+                  type="text"
+                  :placeholder="tt('placeholder_room_id')"
+                />
+              </label>
+              <label>
+                <span>{{ tt("label_join_room_id") }}</span>
+                <input
+                  v-model.trim="forms.joinRoomId"
+                  type="text"
+                  :placeholder="tt('placeholder_room_id')"
                 />
               </label>
             </div>
             <div class="actions">
-              <button id="createRoomBtn" class="btn primary" data-i18n="btn_create_room">
-                Create Room
-              </button>
-              <button id="syncBtn" class="btn ghost" data-i18n="btn_sync">Sync</button>
+              <button class="btn primary" @click="createRoom">{{ tt("btn_create_room") }}</button>
+              <button class="btn ghost" @click="joinRoom">{{ tt("btn_join_room") }}</button>
+              <button class="btn ghost" @click="syncMessages">{{ tt("btn_sync") }}</button>
             </div>
-            <div id="roomPills" class="room-list"></div>
-          </article>
-        </aside>
+            <pre class="output">{{ pretty(roomOutput) }}</pre>
+          </section>
 
-        <section class="panel chat-center">
-          <div class="chat-head">
-            <h2 data-i18n="chat_title">Conversation</h2>
-            <span id="activeRoomDisplay" class="room-chip">-</span>
-          </div>
-          <div id="messageFeed" class="message-feed"></div>
-          <div class="composer">
-            <label>
-              <span data-i18n="label_message">Message</span>
-              <textarea
-                id="messageBody"
-                rows="3"
-                data-i18n-placeholder="placeholder_message"
-                placeholder="Hello from Prism"
-              ></textarea>
-            </label>
-            <div class="actions">
-              <button id="sendBtn" class="btn primary" data-i18n="btn_send">Send</button>
-              <label class="file-label">
-                <span data-i18n="label_upload">Upload File</span>
-                <input id="fileInput" type="file" />
+          <section class="panel page-panel" v-if="activeTab === 'invite'">
+            <h2>{{ tt("tab_invite") }}</h2>
+            <div class="grid two">
+              <label>
+                <span>{{ tt("label_active_room") }}</span>
+                <input
+                  v-model.trim="forms.activeRoomId"
+                  type="text"
+                  :placeholder="tt('placeholder_room_id')"
+                />
               </label>
-              <button id="uploadBtn" class="btn ghost" data-i18n="btn_upload">Upload</button>
+              <label>
+                <span>{{ tt("label_invite_user_id") }}</span>
+                <input
+                  v-model.trim="forms.inviteUserId"
+                  type="text"
+                  :placeholder="tt('placeholder_invite')"
+                />
+              </label>
             </div>
-          </div>
-        </section>
+            <div class="actions">
+              <button class="btn primary" @click="inviteFriend">{{ tt("btn_invite_user") }}</button>
+            </div>
+            <pre class="output">{{ pretty(inviteOutput) }}</pre>
+          </section>
 
-        <aside class="panel side-right">
-          <article class="card">
-            <h2 data-i18n="agent_title">Agent + Policy</h2>
-            <div class="form-grid">
+          <section class="panel page-panel" v-if="activeTab === 'agent'">
+            <h2>{{ tt("tab_agent") }}</h2>
+            <div class="grid two">
               <label>
-                <span data-i18n="label_agent_id">Agent ID</span>
-                <input id="agentId" type="text" value="agent.summary.web" />
-              </label>
-              <label>
-                <span data-i18n="label_purpose">Purpose</span>
-                <input id="purpose" type="text" value="daily_summary" />
-              </label>
-              <label>
-                <span data-i18n="label_rate_limit">Rate Limit / Minute</span>
-                <input id="rateLimit" type="number" value="60" min="1" max="10000" />
-              </label>
-              <label>
-                <span data-i18n="label_grant_id">Grant ID</span>
+                <span>{{ tt("label_agent_id") }}</span>
                 <input
-                  id="revokeGrantId"
+                  v-model.trim="forms.agentId"
                   type="text"
-                  data-i18n-placeholder="placeholder_grant"
-                  placeholder="grant_xxx"
+                  :placeholder="tt('placeholder_agent_id')"
+                />
+              </label>
+              <label>
+                <span>{{ tt("label_purpose") }}</span>
+                <input
+                  v-model.trim="forms.purpose"
+                  type="text"
+                  :placeholder="tt('placeholder_purpose')"
+                />
+              </label>
+              <label>
+                <span>{{ tt("label_rate_limit") }}</span>
+                <input v-model.number="forms.rateLimit" type="number" min="1" max="10000" />
+              </label>
+              <label>
+                <span>{{ tt("label_grant_id") }}</span>
+                <input
+                  v-model.trim="forms.grantId"
+                  type="text"
+                  :placeholder="tt('placeholder_grant')"
                 />
               </label>
             </div>
             <div class="actions">
-              <button id="grantBtn" class="btn primary" data-i18n="btn_grant">Grant</button>
-              <button id="listGrantBtn" class="btn ghost" data-i18n="btn_list_grants">List</button>
-              <button id="revokeBtn" class="btn warn" data-i18n="btn_revoke">Revoke</button>
-              <button id="summarizeBtn" class="btn ghost" data-i18n="btn_summarize">
-                Summarize
-              </button>
-              <button id="summarizeSendBtn" class="btn primary" data-i18n="btn_summarize_send">
-                Summarize + Send
+              <button class="btn primary" @click="createAgentProfile">{{ tt("btn_create_agent") }}</button>
+              <button class="btn primary" @click="grantAgent">{{ tt("btn_grant") }}</button>
+              <button class="btn warn" @click="revokeAgent">{{ tt("btn_revoke") }}</button>
+              <button class="btn ghost" @click="summarizeOnly">{{ tt("btn_summarize") }}</button>
+              <button class="btn primary" @click="summarizeAndSend">
+                {{ tt("btn_summarize_send") }}
               </button>
             </div>
-            <pre id="agentOutput" class="output"></pre>
-          </article>
+            <pre class="output">{{ pretty(agentOutput) }}</pre>
+          </section>
 
-          <article class="card">
-            <h2 data-i18n="audit_title">Audit</h2>
-            <div class="form-grid">
+          <section class="panel chat-panel" v-if="activeTab === 'chat'">
+            <div class="chat-head">
+              <h2>{{ tt("tab_chat") }}</h2>
+              <span class="active-chip">{{ forms.activeRoomId || "-" }}</span>
+            </div>
+
+            <div class="chat-feed" ref="chatFeed">
+              <p v-if="activeRoomMessages.length === 0" class="empty-tip">{{ tt("empty_chat") }}</p>
+              <article
+                v-for="msg in activeRoomMessages"
+                :key="msg.eventId"
+                class="bubble-row"
+                :class="{ self: isSelfMessage(msg) }"
+              >
+                <div class="bubble" :class="{ self: isSelfMessage(msg), other: !isSelfMessage(msg) }">
+                  <p class="meta">{{ displaySender(msg.sender) }} · {{ msg.timestamp }}</p>
+                  <p class="body">{{ msg.body }}</p>
+                </div>
+              </article>
+            </div>
+
+            <div class="composer">
               <label>
-                <span data-i18n="label_audit_actor">Actor ID</span>
+                <span>{{ tt("label_message") }}</span>
+                <textarea
+                  v-model="forms.messageBody"
+                  rows="3"
+                  :placeholder="tt('placeholder_message')"
+                ></textarea>
+              </label>
+              <div class="actions">
+                <button class="btn primary" @click="sendMessage">{{ tt("btn_send") }}</button>
+                <input type="file" @change="onFileSelected" />
+                <button class="btn ghost" @click="uploadFile">{{ tt("btn_upload") }}</button>
+                <button class="btn ghost" @click="syncMessages">{{ tt("btn_sync") }}</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel page-panel" v-if="activeTab === 'audit'">
+            <h2>{{ tt("tab_audit") }}</h2>
+            <div class="grid two">
+              <label>
+                <span>{{ tt("label_actor_id") }}</span>
                 <input
-                  id="auditActorId"
+                  v-model.trim="forms.auditActorId"
                   type="text"
-                  data-i18n-placeholder="placeholder_audit_actor"
-                  placeholder="agent.summary.web"
+                  :placeholder="tt('placeholder_actor')"
                 />
               </label>
               <label>
-                <span data-i18n="label_audit_action">Action Type</span>
+                <span>{{ tt("label_action_type") }}</span>
                 <input
-                  id="auditActionType"
+                  v-model.trim="forms.auditActionType"
                   type="text"
-                  data-i18n-placeholder="placeholder_audit_action"
-                  placeholder="agent_summarize"
+                  :placeholder="tt('placeholder_action')"
                 />
               </label>
             </div>
             <div class="actions">
-              <button id="auditQueryBtn" class="btn ghost" data-i18n="btn_audit_query">
-                Query
-              </button>
-              <button id="auditVerifyBtn" class="btn ghost" data-i18n="btn_audit_verify">
-                Verify
-              </button>
-              <button id="runDemoBtn" class="btn primary" data-i18n="btn_run_demo">Run Demo</button>
+              <button class="btn ghost" @click="queryAudit">{{ tt("btn_query_audit") }}</button>
+              <button class="btn ghost" @click="verifyAudit">{{ tt("btn_verify_audit") }}</button>
+              <button class="btn primary" @click="runDemoFlow">{{ tt("btn_run_demo") }}</button>
             </div>
-            <pre id="auditOutput" class="output"></pre>
-          </article>
-        </aside>
-      </section>
-    </main>
-    <script src="./app.js" type="module"></script>
+            <pre class="output">{{ pretty(auditOutput) }}</pre>
+          </section>
+        </main>
+      </div>
+
+      <div class="toast-wrap">
+        <article v-for="toast in toasts" :key="toast.id" class="toast" :class="toast.type">
+          <p class="toast-title">{{ toast.title }}</p>
+          <p class="toast-body">{{ toast.message }}</p>
+        </article>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="./app.js"></script>
   </body>
 </html>
