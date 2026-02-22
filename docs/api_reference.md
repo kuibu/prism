@@ -132,6 +132,66 @@ Same as `/agent/summarize`, plus:
 2. Send summary back to room as bot account
 3. Audit send allow/deny (`agent_send_summary_message`)
 
+## Agent Studio (Secretary + Specialists)
+
+### `GET /agents/skills`
+List built-in skill catalog.
+
+### `POST /agents/bootstrap`
+Ensure one secretary agent exists for the authenticated user.
+
+### `GET /agents`
+List current user's agents.
+
+Query:
+- `ensure_secretary` (default `true`)
+- `include_disabled` (default `false`)
+
+### `POST /agents`
+Create/update an agent profile (secretary or specialist).
+
+### `PATCH /agents/{agent_id}`
+Update an existing agent profile.
+
+### `POST /agents/{agent_id}/memory/notes`
+Write manual note into agent memory.
+
+### `GET /agents/{agent_id}/memory`
+Search or list recent memory entries.
+
+Query:
+- `q` optional query
+- `limit` default 20
+
+### `POST /agents/{agent_id}/memory/collect`
+Collect Matrix room messages into agent memory (OPA-gated, audited).
+
+Request:
+```json
+{
+  "room_ids": [],
+  "limit_per_room": 50,
+  "include_self_messages": false,
+  "purpose": "secretary_collect"
+}
+```
+
+### `POST /agents/{agent_id}/skills/run`
+Run skill with memory context and optional room context (OPA-gated, audited).
+
+Request:
+```json
+{
+  "skill_id": "specialist.todo_extractor",
+  "query": "extract todo list",
+  "purpose": "todo_followup",
+  "room_id": "!room:localhost",
+  "room_message_limit": 30,
+  "memory_limit": 20,
+  "send_to_room": false
+}
+```
+
 ## Audit
 
 ### `POST /audit/events`

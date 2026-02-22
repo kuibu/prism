@@ -4,6 +4,7 @@
 
 - `synapse`: Matrix homeserver
 - `gateway_api`: FastAPI control plane (auth binding, matrix proxy, policy, audit, agent runtime)
+  - includes `Agent Studio` domain: per-user secretary/specialist registry, memory store, skill runtime
 - `opa`: policy decision point (Rego + data API)
 - `immudb`: immutable audit storage
 - `minio`: object storage (media evolution path)
@@ -40,6 +41,14 @@
 4. Gateway summarizes and writes tool/data-access audits
 5. On deny, gateway returns `403` and still writes deny audit
 
+### Secretary + Specialist Flow
+1. Client bootstraps `/api/v1/agents/bootstrap`
+2. Gateway ensures one secretary profile per user (OPA data document)
+3. User creates specialist profiles (`/api/v1/agents`)
+4. Secretary collects room updates (`/api/v1/agents/{id}/memory/collect`) with OPA allow checks
+5. Specialist runs skills (`/api/v1/agents/{id}/skills/run`) with memory + optional room context
+6. Gateway audits policy checks, memory writes, skill start/finish, and optional room send actions
+
 ### Audit Verify Flow
 1. Client calls `/api/v1/audit/verify`
 2. Gateway loads ordered events from immudb
@@ -55,5 +64,7 @@
 ## Extensibility Notes
 
 - Agent tools are pluggable in `app/agent`
+- Skill runtime follows `SkillRegistry + SkillRouter + SkillExecutor` pipeline in `app/agent/skills`
+- Agent profiles and memory use OPA data API for MVP persistence (`data.prism.agent_registry`, `data.prism.agent_memory`)
 - Matrix client wrappers are centralized in `app/matrix/client.py`
 - Current summarizer is rule-based placeholder; LLM provider can be added behind same policy/audit gates

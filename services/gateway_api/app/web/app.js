@@ -30,6 +30,26 @@
       label_purpose: "用途 Purpose",
       label_rate_limit: "每分钟限流",
       label_grant_id: "授权 ID",
+      label_secretary_id: "数字秘书 ID",
+      label_secretary_purpose: "秘书执行 Purpose",
+      label_secretary_collect_purpose: "秘书采集 Purpose",
+      label_llm_enabled: "启用大模型",
+      label_llm_provider: "模型服务商",
+      label_llm_model: "模型名称",
+      label_llm_api_key: "API Key",
+      label_llm_base_url: "API Base URL（可选）",
+      label_llm_api_path: "API Path",
+      label_specialist_name: "专用Agent名称",
+      label_specialist_purpose: "专用Agent Purpose",
+      label_specialist_skill: "专用Agent技能",
+      label_specialist_rooms: "房间范围（逗号分隔，可选）",
+      label_memory_agent: "记忆所属Agent",
+      label_memory_query: "记忆检索词",
+      label_memory_note: "新增记忆笔记",
+      label_memory_limit: "记忆返回条数",
+      label_run_skill_id: "运行技能 ID",
+      label_run_query: "技能输入",
+      label_run_send_room: "将结果发回房间",
       label_message: "消息内容",
       label_actor_id: "Actor ID",
       label_action_type: "动作类型",
@@ -40,6 +60,8 @@
       label_target_room_id: "发送目标房间 ID",
       label_sender_id: "发送者 ID",
       label_selected_file: "已选文件",
+      label_secretary_mode: "秘书回复模式",
+      label_assist_result: "秘书最近一次处理结果",
       placeholder_username: "例如 tg_user_a",
       placeholder_password: "至少8位，例如 Passw0rd!",
       placeholder_room_name: "例如 Team Chat",
@@ -47,7 +69,18 @@
       placeholder_room_id: "!room:localhost",
       placeholder_agent_id: "agent.summary.demo",
       placeholder_purpose: "daily_summary",
+      placeholder_secretary_collect: "secretary_collect",
+      placeholder_llm_model: "例如：qwen/qwen-plus 或 openai/gpt-4o-mini",
+      placeholder_llm_api_key: "输入服务商 API Key（将仅用于后端调用）",
+      placeholder_llm_base_url: "可选，兼容 OpenAI 的 http(s) 地址",
+      placeholder_llm_api_path: "/chat/completions",
       placeholder_grant: "grant_xxx",
+      placeholder_specialist_name: "例如：待办专员",
+      placeholder_specialist_purpose: "todo_followup",
+      placeholder_specialist_rooms: "!room1:localhost,!room2:localhost",
+      placeholder_memory_query: "例如：待办、决策、风险",
+      placeholder_memory_note: "手动记录一条重要记忆",
+      placeholder_run_query: "例如：请提取今天待办并生成优先级",
       placeholder_message: "输入消息后点击发送，消息会自动实时刷新",
       placeholder_actor: "agent.summary.demo",
       placeholder_action: "agent_summarize",
@@ -70,6 +103,19 @@
       btn_go_room: "进入房间",
       btn_accept_invite: "接受邀请并加入",
       btn_create_agent: "创建 Agent 资料",
+      btn_bootstrap_agents: "初始化秘书与Agent体系",
+      btn_load_agents: "加载我的Agent",
+      btn_load_skills: "加载技能目录",
+      btn_save_secretary: "保存数字秘书资料",
+      btn_grant_secretary: "给数字秘书授权",
+      btn_collect_secretary_memory: "采集消息到秘书记忆",
+      btn_run_secretary_digest: "运行秘书日报",
+      btn_create_specialist: "创建专用Agent",
+      btn_collect_memory: "采集记忆",
+      btn_search_memory: "检索记忆",
+      btn_recent_memory: "查看最近记忆",
+      btn_add_memory_note: "新增记忆笔记",
+      btn_run_skill: "运行技能",
       btn_grant: "授权 Agent",
       btn_revoke: "撤销授权",
       btn_summarize: "摘要（仅返回）",
@@ -82,11 +128,29 @@
       btn_verify_audit: "验证审计链",
       btn_run_demo: "一键双人联调演示",
       btn_refresh_members: "刷新成员",
+      btn_save_secretary_mode: "保存秘书模式",
+      btn_refresh_secretary_panel: "刷新秘书面板",
+      btn_secretary_assist: "秘书处理最新消息",
+      btn_approve_send: "批准并发送",
+      btn_approve_only: "仅批准不发送",
+      btn_reject_suggestion: "拒绝建议",
       col_time: "时间",
       col_type: "类型",
       col_line: "消息",
       col_action: "操作",
+      col_agent_id: "Agent ID",
+      col_agent_name: "名称",
+      col_agent_purpose: "Purpose",
+      col_agent_manager: "管理秘书",
       dialog_inbox_title: "消息中心详情",
+      section_secretary: "数字秘书 Agent",
+      section_llm_config: "大模型接入配置",
+      section_specialists: "专用 Agent",
+      section_memory: "Agent 记忆",
+      section_skill_run: "技能运行与兼容能力",
+      section_secretary_assist: "数字秘书联动",
+      section_secretary_suggestions: "半自动回复建议",
+      section_secretary_insights: "秘书分析侧栏",
       inbox_type_invite: "邀请",
       inbox_type_message: "新消息",
       inbox_type_system: "系统",
@@ -96,7 +160,19 @@
       inbox_file_line: "{room} 有新文件：{sender} 上传了「{preview}」",
       inbox_join_hint: "你已加入房间 {room}",
       empty_chat: "暂无消息，系统正在自动同步。",
+      empty_secretary_suggestions: "当前没有待处理建议。",
+      empty_secretary_insights: "当前没有秘书分析记录。",
       self_name: "我",
+      mode_auto: "全自动回复",
+      mode_semi: "半自动建议",
+      mode_off: "不进行回复辅助",
+      llm_provider_openrouter: "OpenRouter",
+      llm_provider_qwen: "千问（Qwen）",
+      llm_provider_compatible: "兼容 OpenAI 接口",
+      channel_realtime_analysis: "实时分析",
+      channel_deep_thinking: "深度思考",
+      channel_implied_meaning: "言外之意",
+      channel_roast: "吐槽",
       msg_switch_tab: "已切换页面",
       msg_language: "语言已切换",
       msg_open_second: "已打开新窗口，可在新窗口登录另一个用户。",
@@ -107,6 +183,18 @@
       msg_download_failed: "下载文件失败",
       msg_file_selected: "已选择文件：{name}",
       msg_profile_created: "Agent 资料已创建（本地），可继续授权。",
+      msg_agents_loaded: "Agent 列表已刷新。",
+      msg_skills_loaded: "技能目录已刷新。",
+      msg_secretary_saved: "数字秘书资料已保存。",
+      msg_specialist_created: "专用Agent已创建。",
+      msg_memory_collected: "消息采集完成。",
+      msg_memory_loaded: "记忆加载完成。",
+      msg_skill_done: "技能运行完成。",
+      msg_secretary_mode_saved: "秘书模式已保存。",
+      msg_secretary_generated: "秘书建议已生成。",
+      msg_secretary_prefilled: "已将秘书建议填入快捷发送区，可直接发送或继续编辑。",
+      msg_secretary_approved: "建议已批准。",
+      msg_secretary_rejected: "建议已拒绝。",
       msg_inbox_cleared: "消息中心已清空",
       msg_joined_from_invite: "已加入房间，可以发送消息与文件。",
       err_no_session: "当前未登录，请先注册或登录。",
@@ -117,6 +205,11 @@
       err_members_need_join: "你还没有加入这个房间，请先在“创建房间”页点击“加入房间”。",
       err_need_invite: "请填写房间 ID 和好友用户 ID。",
       err_need_agent: "请填写 Agent ID 和 Purpose。",
+      err_need_secretary: "请先初始化或填写数字秘书ID。",
+      err_need_specialist_name: "请填写专用Agent名称与Purpose。",
+      err_need_memory_agent: "请先选择记忆所属Agent。",
+      err_need_memory_note: "请先输入记忆笔记内容。",
+      err_need_skill_run: "请填写要运行的Agent ID。",
       err_need_grant: "请填写授权 ID。",
       err_need_file: "请先选择文件。",
       err_demo_need_creds: "先填写用户名和密码，再执行演示。",
@@ -161,6 +254,26 @@
       label_purpose: "Purpose",
       label_rate_limit: "Rate Limit / Minute",
       label_grant_id: "Grant ID",
+      label_secretary_id: "Secretary Agent ID",
+      label_secretary_purpose: "Secretary Purpose",
+      label_secretary_collect_purpose: "Collection Purpose",
+      label_llm_enabled: "Enable LLM",
+      label_llm_provider: "Provider",
+      label_llm_model: "Model",
+      label_llm_api_key: "API Key",
+      label_llm_base_url: "API Base URL (optional)",
+      label_llm_api_path: "API Path",
+      label_specialist_name: "Specialist Name",
+      label_specialist_purpose: "Specialist Purpose",
+      label_specialist_skill: "Specialist Skill",
+      label_specialist_rooms: "Room Scope (comma-separated)",
+      label_memory_agent: "Memory Agent",
+      label_memory_query: "Memory Query",
+      label_memory_note: "New Memory Note",
+      label_memory_limit: "Memory Limit",
+      label_run_skill_id: "Run Skill ID",
+      label_run_query: "Skill Input",
+      label_run_send_room: "Send result to room",
       label_message: "Message",
       label_actor_id: "Actor ID",
       label_action_type: "Action Type",
@@ -171,6 +284,8 @@
       label_target_room_id: "Target Room ID",
       label_sender_id: "Sender ID",
       label_selected_file: "Selected File",
+      label_secretary_mode: "Secretary Reply Mode",
+      label_assist_result: "Latest Secretary Result",
       placeholder_username: "e.g. tg_user_a",
       placeholder_password: "at least 8 chars, e.g. Passw0rd!",
       placeholder_room_name: "e.g. Team Chat",
@@ -178,7 +293,18 @@
       placeholder_room_id: "!room:localhost",
       placeholder_agent_id: "agent.summary.demo",
       placeholder_purpose: "daily_summary",
+      placeholder_secretary_collect: "secretary_collect",
+      placeholder_llm_model: "e.g. qwen/qwen-plus or openai/gpt-4o-mini",
+      placeholder_llm_api_key: "Provider API key for backend calls",
+      placeholder_llm_base_url: "optional OpenAI-compatible http(s) endpoint",
+      placeholder_llm_api_path: "/chat/completions",
       placeholder_grant: "grant_xxx",
+      placeholder_specialist_name: "e.g. Todo Specialist",
+      placeholder_specialist_purpose: "todo_followup",
+      placeholder_specialist_rooms: "!room1:localhost,!room2:localhost",
+      placeholder_memory_query: "e.g. todo, decisions, risks",
+      placeholder_memory_note: "Record one important memory note",
+      placeholder_run_query: "e.g. extract todos and rank by priority",
       placeholder_message: "Type and send. New messages appear automatically.",
       placeholder_actor: "agent.summary.demo",
       placeholder_action: "agent_summarize",
@@ -201,6 +327,19 @@
       btn_go_room: "Go to Room",
       btn_accept_invite: "Accept and Join",
       btn_create_agent: "Create Agent Profile",
+      btn_bootstrap_agents: "Bootstrap Assistant System",
+      btn_load_agents: "Load My Agents",
+      btn_load_skills: "Load Skill Catalog",
+      btn_save_secretary: "Save Secretary Profile",
+      btn_grant_secretary: "Grant Secretary",
+      btn_collect_secretary_memory: "Collect Messages to Secretary Memory",
+      btn_run_secretary_digest: "Run Secretary Digest",
+      btn_create_specialist: "Create Specialist Agent",
+      btn_collect_memory: "Collect Memory",
+      btn_search_memory: "Search Memory",
+      btn_recent_memory: "Recent Memory",
+      btn_add_memory_note: "Add Memory Note",
+      btn_run_skill: "Run Skill",
       btn_grant: "Grant Agent",
       btn_revoke: "Revoke Grant",
       btn_summarize: "Summarize",
@@ -213,11 +352,29 @@
       btn_verify_audit: "Verify Chain",
       btn_run_demo: "Run Demo Flow",
       btn_refresh_members: "Refresh Members",
+      btn_save_secretary_mode: "Save Mode",
+      btn_refresh_secretary_panel: "Refresh Secretary Panel",
+      btn_secretary_assist: "Process Latest Message",
+      btn_approve_send: "Approve and Send",
+      btn_approve_only: "Approve Only",
+      btn_reject_suggestion: "Reject",
       col_time: "Time",
       col_type: "Type",
       col_line: "Message",
       col_action: "Action",
+      col_agent_id: "Agent ID",
+      col_agent_name: "Name",
+      col_agent_purpose: "Purpose",
+      col_agent_manager: "Manager Secretary",
       dialog_inbox_title: "Message Center Details",
+      section_secretary: "Digital Secretary Agent",
+      section_llm_config: "LLM Integration Config",
+      section_specialists: "Specialist Agents",
+      section_memory: "Agent Memory",
+      section_skill_run: "Skill Runtime and Legacy Controls",
+      section_secretary_assist: "Secretary Assistant Linkage",
+      section_secretary_suggestions: "Semi-Auto Suggestions",
+      section_secretary_insights: "Secretary Insight Sidebar",
       inbox_type_invite: "Invite",
       inbox_type_message: "New Message",
       inbox_type_system: "System",
@@ -227,7 +384,19 @@
       inbox_file_line: "{room} has a new file: {sender} uploaded \"{preview}\"",
       inbox_join_hint: "You joined room {room}",
       empty_chat: "No messages yet. Auto-sync is running.",
+      empty_secretary_suggestions: "No pending suggestions.",
+      empty_secretary_insights: "No secretary insights yet.",
       self_name: "Me",
+      mode_auto: "Auto Reply",
+      mode_semi: "Semi-Auto Suggest",
+      mode_off: "No Assist",
+      llm_provider_openrouter: "OpenRouter",
+      llm_provider_qwen: "Qwen",
+      llm_provider_compatible: "OpenAI-Compatible",
+      channel_realtime_analysis: "Realtime Analysis",
+      channel_deep_thinking: "Deep Thinking",
+      channel_implied_meaning: "Implied Meaning",
+      channel_roast: "Roast",
       msg_switch_tab: "Page switched",
       msg_language: "Language switched",
       msg_open_second: "Second window opened. Login another user there.",
@@ -238,6 +407,18 @@
       msg_download_failed: "File download failed",
       msg_file_selected: "File selected: {name}",
       msg_profile_created: "Agent profile created locally.",
+      msg_agents_loaded: "Agent list refreshed.",
+      msg_skills_loaded: "Skill catalog refreshed.",
+      msg_secretary_saved: "Secretary profile saved.",
+      msg_specialist_created: "Specialist agent created.",
+      msg_memory_collected: "Memory collection completed.",
+      msg_memory_loaded: "Memory loaded.",
+      msg_skill_done: "Skill run completed.",
+      msg_secretary_mode_saved: "Secretary mode saved.",
+      msg_secretary_generated: "Secretary suggestion generated.",
+      msg_secretary_prefilled: "Suggestion copied to quick composer. Send directly or edit it.",
+      msg_secretary_approved: "Suggestion approved.",
+      msg_secretary_rejected: "Suggestion rejected.",
       msg_inbox_cleared: "Message center cleared",
       msg_joined_from_invite: "Joined room. You can now send messages and files.",
       err_no_session: "No active session. Please register or login.",
@@ -248,6 +429,11 @@
       err_members_need_join: "You are not in this room yet. Join the room first.",
       err_need_invite: "Room ID and friend user ID are required.",
       err_need_agent: "Agent ID and purpose are required.",
+      err_need_secretary: "Please bootstrap or provide secretary agent id.",
+      err_need_specialist_name: "Specialist name and purpose are required.",
+      err_need_memory_agent: "Please choose an agent for memory actions.",
+      err_need_memory_note: "Please enter a memory note.",
+      err_need_skill_run: "Agent ID is required to run skill.",
       err_need_grant: "Grant ID is required.",
       err_need_file: "Please pick a file first.",
       err_demo_need_creds: "Enter username/password before running demo.",
@@ -325,6 +511,33 @@
           purpose: "daily_summary",
           rateLimit: 60,
           grantId: "",
+          secretaryAgentId: "",
+          secretaryPurpose: "secretary_collect",
+          secretaryCollectPurpose: "secretary_collect",
+          secretaryLlmEnabled: false,
+          secretaryLlmProvider: "openrouter",
+          secretaryLlmModel: "qwen/qwen-plus",
+          secretaryLlmApiKey: "",
+          secretaryLlmBaseUrl: "",
+          secretaryLlmApiPath: "/chat/completions",
+          specialistDisplayName: "",
+          specialistPurpose: "",
+          specialistSkillId: "specialist.todo_extractor",
+          specialistRoomScope: "",
+          specialistLlmEnabled: false,
+          specialistLlmProvider: "openrouter",
+          specialistLlmModel: "qwen/qwen-plus",
+          specialistLlmApiKey: "",
+          specialistLlmBaseUrl: "",
+          specialistLlmApiPath: "/chat/completions",
+          memoryAgentId: "",
+          memoryQuery: "",
+          memoryNote: "",
+          memoryLimit: 20,
+          skillRunId: "secretary.daily_digest",
+          skillRunQuery: "",
+          skillSendToRoom: false,
+          secretaryRoomMode: "off",
           messageBody: "",
           auditActorId: "",
           auditActionType: "",
@@ -339,7 +552,15 @@
         roomOutput: {},
         inviteOutput: {},
         agentOutput: {},
+        assistantPanelOutput: {},
         auditOutput: {},
+        agentProfiles: [],
+        skillCatalog: [],
+        memoryHits: [],
+        secretaryModes: {},
+        secretarySuggestions: [],
+        secretaryInsights: [],
+        secretaryProcessedByRoom: {},
         inboxItems: [],
         inboxSeen: {},
         inboxDialogVisible: false,
@@ -407,6 +628,23 @@
         }
         return [];
       },
+      secretaryAgent() {
+        const row = this.agentProfiles.find((item) => item && item.kind === "secretary");
+        return row || null;
+      },
+      specialistAgents() {
+        return this.agentProfiles.filter((item) => item && item.kind === "specialist");
+      },
+      activeRoomSecretaryMode() {
+        const roomId = this.forms.activeRoomId.trim();
+        if (!roomId) {
+          return this.forms.secretaryRoomMode || "off";
+        }
+        return this.secretaryModes[roomId] || this.forms.secretaryRoomMode || "off";
+      },
+      pendingSecretarySuggestionCount() {
+        return this.secretarySuggestions.filter((item) => item?.status === "pending").length;
+      },
     },
     mounted() {
       this.language = this.loadLanguage() || "zh";
@@ -426,6 +664,9 @@
       if (this.session) {
         this.startAutoSync();
         this.syncMessages({ silent: true, timeoutMs: 0, showErrors: false }).catch(() => undefined);
+        this.loadSkillCatalog({ silent: true }).catch(() => undefined);
+        this.loadAgents({ silent: true }).catch(() => undefined);
+        this.refreshSecretaryPanel({ silent: true }).catch(() => undefined);
       }
     },
     beforeUnmount() {
@@ -482,6 +723,11 @@
           this.scrollMainContentTop();
           this.scrollChatToBottom();
           this.refreshRoomSummary(undefined, { silent: true }).catch(() => undefined);
+          this.refreshSecretaryPanel({ silent: true }).catch(() => undefined);
+        }
+        if (this.activeTab === "agent" && this.session) {
+          this.loadSkillCatalog({ silent: true }).catch(() => undefined);
+          this.loadAgents({ silent: true }).catch(() => undefined);
         }
       },
       switchTab(tabId) {
@@ -495,6 +741,62 @@
           return "*".repeat(secret.length);
         }
         return `${"*".repeat(secret.length - 6)}${secret.slice(-6)}`;
+      },
+      normalizeOptional(value) {
+        if (typeof value !== "string") {
+          return "";
+        }
+        return value.trim();
+      },
+      buildLlmPayload(prefix) {
+        const enabled = Boolean(this.forms[`${prefix}LlmEnabled`]);
+        const provider = this.normalizeOptional(this.forms[`${prefix}LlmProvider`]) || "openrouter";
+        const model = this.normalizeOptional(this.forms[`${prefix}LlmModel`]) || "qwen/qwen-plus";
+        const apiKey = this.normalizeOptional(this.forms[`${prefix}LlmApiKey`]);
+        const baseUrl = this.normalizeOptional(this.forms[`${prefix}LlmBaseUrl`]);
+        const apiPath = this.normalizeOptional(this.forms[`${prefix}LlmApiPath`]) || "/chat/completions";
+        return {
+          enabled,
+          provider,
+          model,
+          api_key: apiKey || undefined,
+          base_url: baseUrl || undefined,
+          api_path: apiPath,
+          temperature: 0.3,
+          max_tokens: 500,
+        };
+      },
+      applyLlmToForm(prefix, llm) {
+        const cfg = llm && typeof llm === "object" ? llm : {};
+        this.forms[`${prefix}LlmEnabled`] = Boolean(cfg.enabled);
+        this.forms[`${prefix}LlmProvider`] =
+          typeof cfg.provider === "string" && cfg.provider.trim() !== ""
+            ? cfg.provider.trim()
+            : "openrouter";
+        this.forms[`${prefix}LlmModel`] =
+          typeof cfg.model === "string" && cfg.model.trim() !== ""
+            ? cfg.model.trim()
+            : "qwen/qwen-plus";
+        this.forms[`${prefix}LlmApiKey`] =
+          typeof cfg.api_key === "string" ? cfg.api_key : this.forms[`${prefix}LlmApiKey`] || "";
+        this.forms[`${prefix}LlmBaseUrl`] =
+          typeof cfg.base_url === "string" ? cfg.base_url : this.forms[`${prefix}LlmBaseUrl`] || "";
+        this.forms[`${prefix}LlmApiPath`] =
+          typeof cfg.api_path === "string" && cfg.api_path.trim() !== ""
+            ? cfg.api_path.trim()
+            : "/chat/completions";
+      },
+      isAssistantGeneratedBody(body) {
+        const normalized = typeof body === "string" ? body.trim() : "";
+        if (!normalized) {
+          return false;
+        }
+        return (
+          normalized.startsWith("[Secretary:") ||
+          normalized.startsWith("[Agent:") ||
+          normalized.includes("数字秘书自动回复") ||
+          normalized.includes("Auto-replied by Digital Secretary")
+        );
       },
       avatarForUser(userId) {
         const key = userId && String(userId).trim() ? String(userId).trim() : "guest";
@@ -661,7 +963,9 @@
         this.roomDetails = {};
         this.inboxItems = [];
         this.inboxSeen = {};
+        this.secretaryProcessedByRoom = {};
         this.forms.activeRoomId = "";
+        this.forms.secretaryRoomMode = "off";
         this.forms.joinRoomId = "";
         this.forms.messageBody = "";
         this.selectedFile = null;
@@ -690,6 +994,40 @@
           return `@${value}`;
         }
         return `@${value}:localhost`;
+      },
+      roomModeLabel(mode) {
+        if (mode === "auto") {
+          return this.tt("mode_auto");
+        }
+        if (mode === "semi") {
+          return this.tt("mode_semi");
+        }
+        return this.tt("mode_off");
+      },
+      insightChannelLabel(channel) {
+        if (channel === "realtime_analysis") {
+          return this.tt("channel_realtime_analysis");
+        }
+        if (channel === "deep_thinking") {
+          return this.tt("channel_deep_thinking");
+        }
+        if (channel === "implied_meaning") {
+          return this.tt("channel_implied_meaning");
+        }
+        if (channel === "roast") {
+          return this.tt("channel_roast");
+        }
+        return channel || "-";
+      },
+      resolveSecretaryAgentId() {
+        const formId = this.forms.secretaryAgentId.trim();
+        if (formId) {
+          return formId;
+        }
+        if (this.secretaryAgent && this.secretaryAgent.agent_id) {
+          return String(this.secretaryAgent.agent_id);
+        }
+        return "";
       },
       ensureSession() {
         if (!this.session) {
@@ -959,6 +1297,8 @@
         this.refreshSessionStatus();
         this.scheduleHistoryPersist();
         this.startAutoSync();
+        this.loadSkillCatalog({ silent: true }).catch(() => undefined);
+        this.loadAgents({ silent: true }).catch(() => undefined);
       },
       startAutoSync() {
         this.stopAutoSync();
@@ -1043,23 +1383,40 @@
         this.clearSession();
         this.session = null;
         this.resetInMemoryState();
+        this.agentProfiles = [];
+        this.memoryHits = [];
+        this.secretaryModes = {};
+        this.secretarySuggestions = [];
+        this.secretaryInsights = [];
+        this.secretaryProcessedByRoom = {};
+        this.assistantPanelOutput = {};
         this.refreshSessionStatus();
         this.notify("info", this.tt("btn_logout"));
       },
       selectRoom(roomId) {
         this.forms.activeRoomId = roomId;
+        if (this.forms.activeRoomId && this.secretaryModes[this.forms.activeRoomId]) {
+          this.forms.secretaryRoomMode = this.secretaryModes[this.forms.activeRoomId];
+        }
         this.scheduleHistoryPersist();
         this.activeTab = "chat";
         this.scrollMainContentTop();
         this.refreshRoomSummary(roomId, { silent: true }).catch(() => undefined);
+        this.refreshSecretaryPanel({ silent: true }).catch(() => undefined);
         this.syncMessages({ silent: true, timeoutMs: 0, showErrors: false }).catch(() => undefined);
         this.scrollChatToBottom();
       },
       onChatRoomChanged(roomId) {
         this.forms.activeRoomId = String(roomId || "").trim();
+        if (this.forms.activeRoomId && this.secretaryModes[this.forms.activeRoomId]) {
+          this.forms.secretaryRoomMode = this.secretaryModes[this.forms.activeRoomId];
+        } else if (!this.forms.activeRoomId) {
+          this.forms.secretaryRoomMode = "off";
+        }
         this.scheduleHistoryPersist();
         this.scrollMainContentTop();
         this.refreshRoomSummary(this.forms.activeRoomId, { silent: true }).catch(() => undefined);
+        this.refreshSecretaryPanel({ silent: true }).catch(() => undefined);
         this.syncMessages({ silent: true, timeoutMs: 0, showErrors: false }).catch(() => undefined);
         this.scrollChatToBottom();
       },
@@ -1207,8 +1564,15 @@
           };
 
           this.refreshSessionStatus();
-          if (this.forms.activeRoomId.trim()) {
-            await this.refreshRoomSummary(this.forms.activeRoomId.trim(), { silent: true });
+          const activeRoomId = this.forms.activeRoomId.trim();
+          if (activeRoomId) {
+            await this.refreshRoomSummary(activeRoomId, { silent: true });
+            this.refreshSecretaryPanel({ silent: true }).catch(() => undefined);
+            const roomMode = this.secretaryModes[activeRoomId] || this.forms.secretaryRoomMode || "off";
+            if (roomMode !== "off" && this.syncPayloadHasExternalMessage(payload, activeRoomId)) {
+              const sourceMessage = this.latestNonSelfRoomMessage(activeRoomId);
+              this.runSecretaryAssistForMessage(sourceMessage, { silent: true }).catch(() => undefined);
+            }
           }
           this.scrollChatToBottom();
 
@@ -1536,6 +1900,682 @@
         } catch (error) {
           const reason = this.normalizeError(error);
           this.notify("error", `${this.tt("msg_download_failed")}: ${reason}`);
+          throw error;
+        }
+      },
+      parseRoomScopeCsv(raw) {
+        if (!raw || typeof raw !== "string") {
+          return [];
+        }
+        return raw
+          .split(",")
+          .map((item) => item.trim())
+          .filter((item) => item !== "");
+      },
+      applySecretaryToForm(secretary) {
+        if (!secretary || typeof secretary !== "object") {
+          return;
+        }
+        this.forms.secretaryAgentId = secretary.agent_id || this.forms.secretaryAgentId;
+        this.forms.secretaryPurpose = secretary.purpose || this.forms.secretaryPurpose;
+        this.forms.agentId = secretary.agent_id || this.forms.agentId;
+        this.forms.purpose = secretary.purpose || this.forms.purpose;
+        this.forms.memoryAgentId = secretary.agent_id || this.forms.memoryAgentId;
+        this.applyLlmToForm("secretary", secretary.llm || null);
+      },
+      applySecretaryModes(records) {
+        const next = {};
+        if (Array.isArray(records)) {
+          for (const row of records) {
+            if (!row || typeof row !== "object") {
+              continue;
+            }
+            const roomId = typeof row.room_id === "string" ? row.room_id.trim() : "";
+            const mode = typeof row.mode === "string" ? row.mode.trim() : "";
+            if (!roomId || !mode) {
+              continue;
+            }
+            next[roomId] = mode;
+          }
+        }
+        this.secretaryModes = next;
+        const activeRoomId = this.forms.activeRoomId.trim();
+        if (activeRoomId && next[activeRoomId]) {
+          this.forms.secretaryRoomMode = next[activeRoomId];
+        } else if (!activeRoomId && !this.forms.secretaryRoomMode) {
+          this.forms.secretaryRoomMode = "off";
+        }
+      },
+      latestNonSelfRoomMessage(roomId) {
+        const rows = this.roomMessages[roomId] || [];
+        for (let i = rows.length - 1; i >= 0; i -= 1) {
+          const item = rows[i];
+          if (!item || typeof item !== "object") {
+            continue;
+          }
+          if (this.session && item.sender === this.session.userId) {
+            continue;
+          }
+          const body = typeof item.body === "string" ? item.body.trim() : "";
+          if (!body) {
+            continue;
+          }
+          if (this.isAssistantGeneratedBody(body)) {
+            continue;
+          }
+          return item;
+        }
+        return null;
+      },
+      syncPayloadHasExternalMessage(syncPayload, roomId) {
+        const events = syncPayload?.rooms?.join?.[roomId]?.timeline?.events || [];
+        if (!Array.isArray(events)) {
+          return false;
+        }
+        for (const event of events) {
+          if (!event || event.type !== "m.room.message") {
+            continue;
+          }
+          const sender = typeof event.sender === "string" ? event.sender : "";
+          if (this.session && sender === this.session.userId) {
+            continue;
+          }
+          const body = typeof event?.content?.body === "string" ? event.content.body.trim() : "";
+          if (!body) {
+            continue;
+          }
+          if (this.isAssistantGeneratedBody(body)) {
+            continue;
+          }
+          return true;
+        }
+        return false;
+      },
+      async runSecretaryAssistForMessage(sourceMessage, options = {}) {
+        const silent = Boolean(options.silent);
+        const overwriteComposer = Boolean(options.overwriteComposer);
+        const roomId = this.forms.activeRoomId.trim();
+        if (!roomId) {
+          return null;
+        }
+        if (!this.resolveSecretaryAgentId()) {
+          if (!silent) {
+            throw new Error(this.tt("err_need_secretary"));
+          }
+          return null;
+        }
+        if (!sourceMessage || typeof sourceMessage !== "object") {
+          return null;
+        }
+        const eventId = typeof sourceMessage.eventId === "string" ? sourceMessage.eventId : "";
+        if (eventId && this.secretaryProcessedByRoom[roomId] === eventId) {
+          return null;
+        }
+        const sourceText = typeof sourceMessage.body === "string" ? sourceMessage.body.trim() : "";
+        if (!sourceText) {
+          return null;
+        }
+        try {
+          const payload = await this.request("/agents/secretary/suggestions/generate", {
+            method: "POST",
+            body: {
+              room_id: roomId,
+              source_text: sourceText,
+              source_event_id: eventId || undefined,
+              source_sender_id:
+                typeof sourceMessage.sender === "string" ? sourceMessage.sender : undefined,
+              purpose: this.forms.secretaryPurpose.trim() || "assistant_reply",
+            },
+          });
+          if (eventId) {
+            this.secretaryProcessedByRoom = {
+              ...this.secretaryProcessedByRoom,
+              [roomId]: eventId,
+            };
+          }
+          this.assistantPanelOutput = payload;
+          const suggestedText =
+            typeof payload?.suggestion?.suggested_text === "string"
+              ? payload.suggestion.suggested_text.trim()
+              : "";
+          if (payload?.mode === "semi" && suggestedText) {
+            if (overwriteComposer || !this.forms.messageBody.trim()) {
+              this.forms.messageBody = suggestedText;
+            }
+            if (!silent) {
+              this.notify("info", this.tt("msg_secretary_prefilled"));
+            }
+          }
+          await this.refreshSecretaryPanel({ silent: true });
+          if (payload?.room_event_id) {
+            await this.syncMessages({ silent: true, timeoutMs: 0, showErrors: false });
+          }
+          if (!silent) {
+            this.notify("success", this.tt("msg_secretary_generated"));
+          }
+          return payload;
+        } catch (error) {
+          if (!silent) {
+            this.notify("error", this.normalizeError(error));
+          }
+          throw error;
+        }
+      },
+      async loadSecretaryModes(options = {}) {
+        const silent = Boolean(options.silent);
+        try {
+          this.ensureSession();
+          const payload = await this.request("/agents/secretary/modes", { method: "GET" });
+          const records = Array.isArray(payload?.modes) ? payload.modes : [];
+          this.applySecretaryModes(records);
+          return records;
+        } catch (error) {
+          if (!silent) {
+            this.notify("error", this.normalizeError(error));
+          }
+          throw error;
+        }
+      },
+      async saveSecretaryRoomMode() {
+        try {
+          this.ensureSession();
+          const roomId = this.forms.activeRoomId.trim();
+          if (!roomId) {
+            throw new Error(this.tt("err_need_room"));
+          }
+          const mode = this.forms.secretaryRoomMode || "off";
+          const payload = await this.request(
+            `/agents/secretary/modes/${encodeURIComponent(roomId)}`,
+            {
+              method: "PUT",
+              body: { mode },
+            }
+          );
+          if (payload && typeof payload.mode === "string") {
+            this.secretaryModes = {
+              ...this.secretaryModes,
+              [roomId]: payload.mode,
+            };
+            this.forms.secretaryRoomMode = payload.mode;
+          }
+          this.assistantPanelOutput = payload;
+          this.notify("success", this.tt("msg_secretary_mode_saved"));
+          return payload;
+        } catch (error) {
+          this.notify("error", this.normalizeError(error));
+          throw error;
+        }
+      },
+      async loadSecretarySuggestions(options = {}) {
+        const silent = Boolean(options.silent);
+        try {
+          this.ensureSession();
+          const params = new URLSearchParams();
+          const roomId = this.forms.activeRoomId.trim();
+          params.set("limit", "120");
+          if (roomId) {
+            params.set("room_id", roomId);
+          }
+          const payload = await this.request(`/agents/secretary/suggestions?${params.toString()}`, {
+            method: "GET",
+          });
+          this.secretarySuggestions = Array.isArray(payload?.suggestions) ? payload.suggestions : [];
+          return this.secretarySuggestions;
+        } catch (error) {
+          if (!silent) {
+            this.notify("error", this.normalizeError(error));
+          }
+          throw error;
+        }
+      },
+      async loadSecretaryInsights(options = {}) {
+        const silent = Boolean(options.silent);
+        try {
+          this.ensureSession();
+          const params = new URLSearchParams();
+          params.set("limit", "120");
+          const roomId = this.forms.activeRoomId.trim();
+          if (roomId) {
+            params.set("room_id", roomId);
+          }
+          const payload = await this.request(`/agents/secretary/insights?${params.toString()}`, {
+            method: "GET",
+          });
+          this.secretaryInsights = Array.isArray(payload?.insights) ? payload.insights : [];
+          return this.secretaryInsights;
+        } catch (error) {
+          if (!silent) {
+            this.notify("error", this.normalizeError(error));
+          }
+          throw error;
+        }
+      },
+      async refreshSecretaryPanel(options = {}) {
+        const silent = Boolean(options.silent);
+        if (!this.session) {
+          return;
+        }
+        await this.loadSecretaryModes({ silent }).catch(() => undefined);
+        await this.loadSecretarySuggestions({ silent }).catch(() => undefined);
+        await this.loadSecretaryInsights({ silent }).catch(() => undefined);
+      },
+      async processLatestMessageWithSecretary() {
+        try {
+          this.ensureSession();
+          const roomId = this.forms.activeRoomId.trim();
+          if (!roomId) {
+            throw new Error(this.tt("err_need_room"));
+          }
+          if (!this.resolveSecretaryAgentId()) {
+            throw new Error(this.tt("err_need_secretary"));
+          }
+          const sourceMessage = this.latestNonSelfRoomMessage(roomId);
+          if (!sourceMessage || !String(sourceMessage.body || "").trim()) {
+            throw new Error(this.tt("empty_chat"));
+          }
+          return await this.runSecretaryAssistForMessage(sourceMessage, {
+            silent: false,
+            overwriteComposer: true,
+          });
+        } catch (error) {
+          throw error;
+        }
+      },
+      async approveSecretarySuggestion(row, sendToRoom = true) {
+        try {
+          this.ensureSession();
+          const suggestionId = row && typeof row.suggestion_id === "string" ? row.suggestion_id : "";
+          if (!suggestionId) {
+            throw new Error("invalid_suggestion_id");
+          }
+          const payload = await this.request(
+            `/agents/secretary/suggestions/${encodeURIComponent(suggestionId)}/approve`,
+            {
+              method: "POST",
+              body: {
+                send_to_room: Boolean(sendToRoom),
+                purpose: this.forms.secretaryPurpose.trim() || "assistant_reply",
+              },
+            }
+          );
+          this.assistantPanelOutput = payload;
+          await this.refreshSecretaryPanel({ silent: true });
+          if (payload?.room_event_id) {
+            await this.syncMessages({ silent: true, timeoutMs: 0, showErrors: false });
+          }
+          this.notify("success", this.tt("msg_secretary_approved"));
+          return payload;
+        } catch (error) {
+          this.notify("error", this.normalizeError(error));
+          throw error;
+        }
+      },
+      async rejectSecretarySuggestion(row) {
+        try {
+          this.ensureSession();
+          const suggestionId = row && typeof row.suggestion_id === "string" ? row.suggestion_id : "";
+          if (!suggestionId) {
+            throw new Error("invalid_suggestion_id");
+          }
+          const payload = await this.request(
+            `/agents/secretary/suggestions/${encodeURIComponent(suggestionId)}/reject`,
+            {
+              method: "POST",
+            }
+          );
+          this.assistantPanelOutput = payload;
+          await this.refreshSecretaryPanel({ silent: true });
+          this.notify("success", this.tt("msg_secretary_rejected"));
+          return payload;
+        } catch (error) {
+          this.notify("error", this.normalizeError(error));
+          throw error;
+        }
+      },
+      async loadSkillCatalog(options = {}) {
+        const silent = Boolean(options.silent);
+        try {
+          const payload = await this.request("/agents/skills", { method: "GET" });
+          this.skillCatalog = Array.isArray(payload?.skills) ? payload.skills : [];
+          if (!silent) {
+            this.notify("success", this.tt("msg_skills_loaded"));
+          }
+          return this.skillCatalog;
+        } catch (error) {
+          if (!silent) {
+            this.notify("error", this.normalizeError(error));
+          }
+          throw error;
+        }
+      },
+      async loadAgents(options = {}) {
+        const silent = Boolean(options.silent);
+        try {
+          this.ensureSession();
+          const payload = await this.request("/agents?ensure_secretary=true", { method: "GET" });
+          this.agentProfiles = Array.isArray(payload?.agents) ? payload.agents : [];
+          const secretary = this.agentProfiles.find((item) => item && item.kind === "secretary");
+          if (secretary) {
+            this.applySecretaryToForm(secretary);
+          }
+          if (this.forms.memoryAgentId.trim() === "" && this.agentProfiles.length > 0) {
+            this.forms.memoryAgentId = this.agentProfiles[0].agent_id;
+          }
+          if (!silent) {
+            this.notify("success", this.tt("msg_agents_loaded"));
+          }
+          this.refreshSecretaryPanel({ silent: true }).catch(() => undefined);
+          return this.agentProfiles;
+        } catch (error) {
+          if (!silent) {
+            this.notify("error", this.normalizeError(error));
+          }
+          throw error;
+        }
+      },
+      async bootstrapAgents() {
+        try {
+          this.ensureSession();
+          const payload = await this.request("/agents/bootstrap", { method: "POST", body: {} });
+          const secretary = payload?.secretary || null;
+          this.applySecretaryToForm(secretary);
+          await this.loadAgents({ silent: true });
+          this.agentOutput = payload;
+          this.notify("success", this.tt("msg_agents_loaded"));
+        } catch (error) {
+          this.notify("error", this.normalizeError(error));
+          throw error;
+        }
+      },
+      async saveSecretaryProfile() {
+        try {
+          this.ensureSession();
+          const agentId = this.forms.secretaryAgentId.trim();
+          const purpose = this.forms.secretaryPurpose.trim();
+          if (!purpose) {
+            throw new Error(this.tt("err_need_secretary"));
+          }
+          const payload = await this.request("/agents", {
+            method: "POST",
+            body: {
+              agent_id: agentId || undefined,
+              kind: "secretary",
+              display_name: "Digital Secretary",
+              purpose,
+              description: "Personal assistant that collects updates and keeps memory for the user.",
+              system_prompt:
+                "You are the user's digital secretary. Keep concise memory and provide practical summaries.",
+              skill_ids: ["secretary.daily_digest", "specialist.todo_extractor"],
+              room_ids: [],
+              auto_collect_enabled: true,
+              llm: this.buildLlmPayload("secretary"),
+            },
+          });
+          this.applySecretaryToForm(payload);
+          await this.loadAgents({ silent: true });
+          this.agentOutput = payload;
+          this.notify("success", this.tt("msg_secretary_saved"));
+        } catch (error) {
+          this.notify("error", this.normalizeError(error));
+          throw error;
+        }
+      },
+      async grantSecretary() {
+        try {
+          const session = this.ensureSession();
+          const agentId = this.forms.secretaryAgentId.trim();
+          const purpose = this.forms.secretaryCollectPurpose.trim() || this.forms.secretaryPurpose.trim();
+          if (!agentId || !purpose) {
+            throw new Error(this.tt("err_need_secretary"));
+          }
+          const payload = await this.request("/policy/grants", {
+            method: "POST",
+            body: {
+              user_id: session.userId,
+              agent_id: agentId,
+              data_category: "room_messages",
+              purpose,
+              rate_limit_per_minute: Math.max(1, Number(this.forms.rateLimit || 60)),
+            },
+          });
+          if (payload?.grant_id) {
+            this.forms.grantId = payload.grant_id;
+          }
+          this.agentOutput = payload;
+          this.notify("success", `${this.tt("btn_grant_secretary")} OK`);
+        } catch (error) {
+          this.notify("error", this.normalizeError(error));
+          throw error;
+        }
+      },
+      async collectSecretaryMemory() {
+        try {
+          this.ensureSession();
+          const agentId = this.forms.secretaryAgentId.trim();
+          if (!agentId) {
+            throw new Error(this.tt("err_need_secretary"));
+          }
+          const purpose = this.forms.secretaryCollectPurpose.trim() || this.forms.secretaryPurpose.trim();
+          const payload = await this.request(`/agents/${encodeURIComponent(agentId)}/memory/collect`, {
+            method: "POST",
+            body: {
+              room_ids: [],
+              include_self_messages: false,
+              limit_per_room: 80,
+              purpose,
+            },
+          });
+          this.agentOutput = payload;
+          this.notify("success", this.tt("msg_memory_collected"));
+          await this.loadRecentMemory();
+        } catch (error) {
+          this.notify("error", this.normalizeError(error));
+          throw error;
+        }
+      },
+      async createSpecialistAgent() {
+        try {
+          this.ensureSession();
+          const displayName = this.forms.specialistDisplayName.trim();
+          const purpose = this.forms.specialistPurpose.trim();
+          const skillId = this.forms.specialistSkillId.trim();
+          const secretaryAgentId = this.resolveSecretaryAgentId();
+          if (!displayName || !purpose) {
+            throw new Error(this.tt("err_need_specialist_name"));
+          }
+          if (!secretaryAgentId) {
+            throw new Error(this.tt("err_need_secretary"));
+          }
+          const roomScope = this.parseRoomScopeCsv(this.forms.specialistRoomScope);
+          const payload = await this.request("/agents", {
+            method: "POST",
+            body: {
+              kind: "specialist",
+              display_name: displayName,
+              purpose,
+              description: `Specialist agent for ${purpose}`,
+              system_prompt: `You are a specialist agent focused on ${purpose}.`,
+              skill_ids: skillId ? [skillId] : [],
+              room_ids: roomScope,
+              manager_agent_id: secretaryAgentId,
+              parent_policy_mode: "inherit",
+              auto_collect_enabled: false,
+              llm: this.buildLlmPayload("specialist"),
+            },
+          });
+          this.agentOutput = payload;
+          await this.loadAgents({ silent: true });
+          this.notify("success", this.tt("msg_specialist_created"));
+        } catch (error) {
+          this.notify("error", this.normalizeError(error));
+          throw error;
+        }
+      },
+      async collectSpecialistMemory(agentRow) {
+        try {
+          this.ensureSession();
+          const row = agentRow && typeof agentRow === "object" ? agentRow : null;
+          const agentId = row && typeof row.agent_id === "string" ? row.agent_id : "";
+          if (!agentId) {
+            throw new Error(this.tt("err_need_agent"));
+          }
+          const purpose = row && typeof row.purpose === "string" && row.purpose ? row.purpose : "assistant_run";
+          const payload = await this.request(`/agents/${encodeURIComponent(agentId)}/memory/collect`, {
+            method: "POST",
+            body: {
+              room_ids: [],
+              include_self_messages: false,
+              limit_per_room: 60,
+              purpose,
+            },
+          });
+          this.agentOutput = payload;
+          this.notify("success", this.tt("msg_memory_collected"));
+        } catch (error) {
+          this.notify("error", this.normalizeError(error));
+          throw error;
+        }
+      },
+      async searchAgentMemory() {
+        try {
+          this.ensureSession();
+          const agentId = this.forms.memoryAgentId.trim();
+          if (!agentId) {
+            throw new Error(this.tt("err_need_memory_agent"));
+          }
+          const params = new URLSearchParams();
+          params.set("limit", String(Math.max(1, Number(this.forms.memoryLimit || 20))));
+          if (this.forms.memoryQuery.trim()) {
+            params.set("q", this.forms.memoryQuery.trim());
+          }
+          const payload = await this.request(
+            `/agents/${encodeURIComponent(agentId)}/memory?${params.toString()}`,
+            { method: "GET" }
+          );
+          this.memoryHits = Array.isArray(payload?.hits) ? payload.hits : [];
+          this.agentOutput = payload;
+          this.notify("success", this.tt("msg_memory_loaded"));
+        } catch (error) {
+          this.notify("error", this.normalizeError(error));
+          throw error;
+        }
+      },
+      async loadRecentMemory() {
+        try {
+          this.ensureSession();
+          const agentId = this.forms.memoryAgentId.trim() || this.forms.secretaryAgentId.trim();
+          if (!agentId) {
+            throw new Error(this.tt("err_need_memory_agent"));
+          }
+          if (!this.forms.memoryAgentId.trim()) {
+            this.forms.memoryAgentId = agentId;
+          }
+          const params = new URLSearchParams();
+          params.set("limit", String(Math.max(1, Number(this.forms.memoryLimit || 20))));
+          const payload = await this.request(
+            `/agents/${encodeURIComponent(agentId)}/memory?${params.toString()}`,
+            { method: "GET" }
+          );
+          this.memoryHits = Array.isArray(payload?.hits) ? payload.hits : [];
+          this.agentOutput = payload;
+          this.notify("success", this.tt("msg_memory_loaded"));
+        } catch (error) {
+          this.notify("error", this.normalizeError(error));
+          throw error;
+        }
+      },
+      async appendMemoryNote() {
+        try {
+          this.ensureSession();
+          const agentId = this.forms.memoryAgentId.trim();
+          const content = this.forms.memoryNote.trim();
+          if (!agentId) {
+            throw new Error(this.tt("err_need_memory_agent"));
+          }
+          if (!content) {
+            throw new Error(this.tt("err_need_memory_note"));
+          }
+          const payload = await this.request(`/agents/${encodeURIComponent(agentId)}/memory/notes`, {
+            method: "POST",
+            body: {
+              content,
+              tags: ["manual_note"],
+              importance: 0.7,
+            },
+          });
+          this.forms.memoryNote = "";
+          this.agentOutput = payload;
+          this.notify("success", this.tt("msg_memory_loaded"));
+          await this.loadRecentMemory();
+        } catch (error) {
+          this.notify("error", this.normalizeError(error));
+          throw error;
+        }
+      },
+      async runSelectedSkill() {
+        try {
+          this.ensureSession();
+          const agentId = this.forms.agentId.trim();
+          if (!agentId) {
+            throw new Error(this.tt("err_need_skill_run"));
+          }
+          const payload = await this.request(`/agents/${encodeURIComponent(agentId)}/skills/run`, {
+            method: "POST",
+            body: {
+              skill_id: this.forms.skillRunId.trim() || undefined,
+              query: this.forms.skillRunQuery.trim(),
+              purpose: this.forms.purpose.trim() || "assistant_run",
+              room_id: this.forms.activeRoomId.trim() || undefined,
+              room_message_limit: 60,
+              memory_limit: Math.max(1, Number(this.forms.memoryLimit || 20)),
+              send_to_room: Boolean(this.forms.skillSendToRoom),
+            },
+          });
+          this.agentOutput = payload;
+          this.notify("success", this.tt("msg_skill_done"));
+          await this.loadRecentMemory();
+          if (payload?.room_event_id) {
+            await this.syncMessages({ silent: true, timeoutMs: 0, showErrors: false });
+          }
+        } catch (error) {
+          this.notify("error", this.normalizeError(error));
+          throw error;
+        }
+      },
+      async runSecretaryDigest() {
+        try {
+          const agentId = this.forms.secretaryAgentId.trim();
+          if (!agentId) {
+            throw new Error(this.tt("err_need_secretary"));
+          }
+          this.forms.agentId = agentId;
+          this.forms.skillRunId = "secretary.daily_digest";
+          this.forms.skillRunQuery = this.forms.skillRunQuery.trim() || "daily digest";
+          this.forms.purpose = this.forms.secretaryPurpose.trim() || this.forms.purpose;
+          await this.runSelectedSkill();
+        } catch (error) {
+          this.notify("error", this.normalizeError(error));
+          throw error;
+        }
+      },
+      async runSpecialistQuick(agentRow) {
+        try {
+          const row = agentRow && typeof agentRow === "object" ? agentRow : null;
+          const agentId = row && typeof row.agent_id === "string" ? row.agent_id : "";
+          if (!agentId) {
+            throw new Error(this.tt("err_need_agent"));
+          }
+          this.forms.agentId = agentId;
+          this.forms.purpose = row && row.purpose ? row.purpose : this.forms.purpose;
+          this.forms.skillRunId =
+            row && Array.isArray(row.skill_ids) && row.skill_ids.length > 0
+              ? row.skill_ids[0]
+              : this.forms.skillRunId;
+          this.forms.skillRunQuery =
+            this.forms.skillRunQuery.trim() || (this.language === "zh" ? "提取待办并给优先级" : "extract todos and priorities");
+          await this.runSelectedSkill();
+        } catch (error) {
+          this.notify("error", this.normalizeError(error));
           throw error;
         }
       },

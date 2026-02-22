@@ -15,6 +15,7 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
 
+from app.agent.skills import SkillRegistry
 from app.agent.tool_gateway import InMemoryRateCounter
 from app.api.router import api_router
 from app.audit.immudb_client import ImmudbClient
@@ -89,6 +90,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         username_prefix=settings.matrix_agent_bot_username_prefix,
         password_secret=settings.matrix_agent_bot_password_secret,
     )
+    app.state.agent_skill_registry = SkillRegistry.default()
     _setup_observability(app)
     yield
     await app.state.opa_client.close()

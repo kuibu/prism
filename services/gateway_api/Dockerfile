@@ -6,9 +6,16 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-COPY services/gateway_api /app
+# Install third-party dependencies from pyproject first.
+# This keeps dependency layers cached when only application source changes.
+COPY services/gateway_api/pyproject.toml /tmp/gateway_api/pyproject.toml
+COPY services/gateway_api/scripts/export_requirements.py /tmp/gateway_api/export_requirements.py
+RUN python /tmp/gateway_api/export_requirements.py \
+    /tmp/gateway_api/pyproject.toml \
+    /tmp/gateway_api/requirements-dev.txt
+RUN pip install --upgrade pip && pip install -r /tmp/gateway_api/requirements-dev.txt
 
-RUN pip install --upgrade pip && pip install ".[dev]"
+COPY services/gateway_api /app
 
 EXPOSE 8000
 

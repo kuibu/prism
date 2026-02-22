@@ -241,6 +241,195 @@
 
               <el-tab-pane :label="tt('tab_agent')" name="agent">
                 <el-card shadow="never" class="page-card">
+                  <div class="action-row">
+                    <el-button type="primary" @click="bootstrapAgents">{{ tt("btn_bootstrap_agents") }}</el-button>
+                    <el-button @click="loadAgents">{{ tt("btn_load_agents") }}</el-button>
+                    <el-button @click="loadSkillCatalog">{{ tt("btn_load_skills") }}</el-button>
+                  </div>
+
+                  <el-divider>{{ tt("section_secretary") }}</el-divider>
+                  <el-form label-position="top" class="form-grid two-col">
+                    <el-form-item :label="tt('label_secretary_id')">
+                      <el-input v-model.trim="forms.secretaryAgentId" :placeholder="tt('placeholder_agent_id')" />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_secretary_purpose')">
+                      <el-input v-model.trim="forms.secretaryPurpose" :placeholder="tt('placeholder_purpose')" />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_secretary_collect_purpose')">
+                      <el-input
+                        v-model.trim="forms.secretaryCollectPurpose"
+                        :placeholder="tt('placeholder_secretary_collect')"
+                      />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_rate_limit')">
+                      <el-input-number v-model="forms.rateLimit" :min="1" :max="10000" />
+                    </el-form-item>
+                  </el-form>
+
+                  <el-divider>{{ tt("section_llm_config") }}</el-divider>
+                  <el-form label-position="top" class="form-grid two-col">
+                    <el-form-item :label="tt('label_llm_enabled')">
+                      <el-switch v-model="forms.secretaryLlmEnabled" />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_llm_provider')">
+                      <el-select v-model="forms.secretaryLlmProvider">
+                        <el-option :label="tt('llm_provider_openrouter')" value="openrouter" />
+                        <el-option :label="tt('llm_provider_qwen')" value="qwen" />
+                        <el-option :label="tt('llm_provider_compatible')" value="openai_compatible" />
+                      </el-select>
+                    </el-form-item>
+                    <el-form-item :label="tt('label_llm_model')">
+                      <el-input
+                        v-model.trim="forms.secretaryLlmModel"
+                        :placeholder="tt('placeholder_llm_model')"
+                      />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_llm_api_key')">
+                      <el-input
+                        v-model.trim="forms.secretaryLlmApiKey"
+                        type="password"
+                        show-password
+                        :placeholder="tt('placeholder_llm_api_key')"
+                      />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_llm_base_url')">
+                      <el-input
+                        v-model.trim="forms.secretaryLlmBaseUrl"
+                        :placeholder="tt('placeholder_llm_base_url')"
+                      />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_llm_api_path')">
+                      <el-input
+                        v-model.trim="forms.secretaryLlmApiPath"
+                        :placeholder="tt('placeholder_llm_api_path')"
+                      />
+                    </el-form-item>
+                  </el-form>
+
+                  <div class="action-row">
+                    <el-button type="primary" @click="saveSecretaryProfile">{{ tt("btn_save_secretary") }}</el-button>
+                    <el-button @click="grantSecretary">{{ tt("btn_grant_secretary") }}</el-button>
+                    <el-button @click="collectSecretaryMemory">{{ tt("btn_collect_secretary_memory") }}</el-button>
+                    <el-button type="primary" @click="runSecretaryDigest">{{ tt("btn_run_secretary_digest") }}</el-button>
+                  </div>
+
+                  <el-divider>{{ tt("section_specialists") }}</el-divider>
+                  <el-form label-position="top" class="form-grid two-col">
+                    <el-form-item :label="tt('label_specialist_name')">
+                      <el-input
+                        v-model.trim="forms.specialistDisplayName"
+                        :placeholder="tt('placeholder_specialist_name')"
+                      />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_specialist_purpose')">
+                      <el-input
+                        v-model.trim="forms.specialistPurpose"
+                        :placeholder="tt('placeholder_specialist_purpose')"
+                      />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_specialist_skill')">
+                      <el-select v-model="forms.specialistSkillId" filterable allow-create default-first-option>
+                        <el-option
+                          v-for="item in skillCatalog"
+                          :key="item.skill_id"
+                          :label="item.display_name + ' (' + item.skill_id + ')'"
+                          :value="item.skill_id"
+                        />
+                      </el-select>
+                    </el-form-item>
+                    <el-form-item :label="tt('label_specialist_rooms')">
+                      <el-input
+                        v-model.trim="forms.specialistRoomScope"
+                        :placeholder="tt('placeholder_specialist_rooms')"
+                      />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_llm_enabled')">
+                      <el-switch v-model="forms.specialistLlmEnabled" />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_llm_provider')">
+                      <el-select v-model="forms.specialistLlmProvider">
+                        <el-option :label="tt('llm_provider_openrouter')" value="openrouter" />
+                        <el-option :label="tt('llm_provider_qwen')" value="qwen" />
+                        <el-option :label="tt('llm_provider_compatible')" value="openai_compatible" />
+                      </el-select>
+                    </el-form-item>
+                    <el-form-item :label="tt('label_llm_model')">
+                      <el-input
+                        v-model.trim="forms.specialistLlmModel"
+                        :placeholder="tt('placeholder_llm_model')"
+                      />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_llm_api_key')">
+                      <el-input
+                        v-model.trim="forms.specialistLlmApiKey"
+                        type="password"
+                        show-password
+                        :placeholder="tt('placeholder_llm_api_key')"
+                      />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_llm_base_url')">
+                      <el-input
+                        v-model.trim="forms.specialistLlmBaseUrl"
+                        :placeholder="tt('placeholder_llm_base_url')"
+                      />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_llm_api_path')">
+                      <el-input
+                        v-model.trim="forms.specialistLlmApiPath"
+                        :placeholder="tt('placeholder_llm_api_path')"
+                      />
+                    </el-form-item>
+                  </el-form>
+
+                  <div class="action-row">
+                    <el-button type="primary" @click="createSpecialistAgent">{{ tt("btn_create_specialist") }}</el-button>
+                  </div>
+
+                  <el-table :data="specialistAgents" stripe border height="220">
+                    <el-table-column prop="agent_id" :label="tt('col_agent_id')" min-width="220" />
+                    <el-table-column prop="display_name" :label="tt('col_agent_name')" min-width="140" />
+                    <el-table-column prop="purpose" :label="tt('col_agent_purpose')" min-width="180" />
+                    <el-table-column prop="manager_agent_id" :label="tt('col_agent_manager')" min-width="220" />
+                    <el-table-column :label="tt('col_action')" width="220">
+                      <template #default="scope">
+                        <el-button size="small" @click="runSpecialistQuick(scope.row)">{{ tt("btn_run_skill") }}</el-button>
+                        <el-button size="small" @click="collectSpecialistMemory(scope.row)">
+                          {{ tt("btn_collect_memory") }}
+                        </el-button>
+                      </template>
+                    </el-table-column>
+                  </el-table>
+
+                  <el-divider>{{ tt("section_memory") }}</el-divider>
+                  <el-form label-position="top" class="form-grid two-col">
+                    <el-form-item :label="tt('label_memory_agent')">
+                      <el-select v-model="forms.memoryAgentId" filterable allow-create>
+                        <el-option
+                          v-for="item in agentProfiles"
+                          :key="item.agent_id"
+                          :label="item.display_name + ' (' + item.agent_id + ')'"
+                          :value="item.agent_id"
+                        />
+                      </el-select>
+                    </el-form-item>
+                    <el-form-item :label="tt('label_memory_query')">
+                      <el-input v-model.trim="forms.memoryQuery" :placeholder="tt('placeholder_memory_query')" />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_memory_note')">
+                      <el-input v-model.trim="forms.memoryNote" :placeholder="tt('placeholder_memory_note')" />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_memory_limit')">
+                      <el-input-number v-model="forms.memoryLimit" :min="1" :max="200" />
+                    </el-form-item>
+                  </el-form>
+
+                  <div class="action-row">
+                    <el-button @click="searchAgentMemory">{{ tt("btn_search_memory") }}</el-button>
+                    <el-button @click="loadRecentMemory">{{ tt("btn_recent_memory") }}</el-button>
+                    <el-button type="primary" @click="appendMemoryNote">{{ tt("btn_add_memory_note") }}</el-button>
+                  </div>
+
+                  <el-divider>{{ tt("section_skill_run") }}</el-divider>
                   <el-form label-position="top" class="form-grid two-col">
                     <el-form-item :label="tt('label_agent_id')">
                       <el-input v-model.trim="forms.agentId" :placeholder="tt('placeholder_agent_id')" />
@@ -254,6 +443,22 @@
                     <el-form-item :label="tt('label_grant_id')">
                       <el-input v-model.trim="forms.grantId" :placeholder="tt('placeholder_grant')" />
                     </el-form-item>
+                    <el-form-item :label="tt('label_run_skill_id')">
+                      <el-select v-model="forms.skillRunId" filterable allow-create default-first-option>
+                        <el-option
+                          v-for="item in skillCatalog"
+                          :key="item.skill_id"
+                          :label="item.display_name + ' (' + item.skill_id + ')'"
+                          :value="item.skill_id"
+                        />
+                      </el-select>
+                    </el-form-item>
+                    <el-form-item :label="tt('label_run_query')">
+                      <el-input v-model.trim="forms.skillRunQuery" :placeholder="tt('placeholder_run_query')" />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_run_send_room')">
+                      <el-switch v-model="forms.skillSendToRoom" />
+                    </el-form-item>
                   </el-form>
 
                   <div class="action-row">
@@ -262,6 +467,7 @@
                     <el-button type="warning" @click="revokeAgent">{{ tt("btn_revoke") }}</el-button>
                     <el-button @click="summarizeOnly">{{ tt("btn_summarize") }}</el-button>
                     <el-button type="primary" @click="summarizeAndSend">{{ tt("btn_summarize_send") }}</el-button>
+                    <el-button type="primary" @click="runSelectedSkill">{{ tt("btn_run_skill") }}</el-button>
                   </div>
 
                   <pre class="output-box">{{ pretty(agentOutput) }}</pre>
@@ -462,6 +668,119 @@
                     {{ tt("btn_upload") }}
                   </el-button>
                 </div>
+
+                <el-divider>{{ tt("section_secretary_assist") }}</el-divider>
+                <el-form label-position="top" class="assistant-mode-form">
+                  <el-form-item :label="tt('label_secretary_mode')">
+                    <el-select
+                      v-model="forms.secretaryRoomMode"
+                      :disabled="!session || !forms.activeRoomId.trim()"
+                    >
+                      <el-option :label="tt('mode_auto')" value="auto" />
+                      <el-option :label="tt('mode_semi')" value="semi" />
+                      <el-option :label="tt('mode_off')" value="off" />
+                    </el-select>
+                  </el-form-item>
+                </el-form>
+                <div class="action-row composer-actions">
+                  <el-button
+                    :disabled="!session || !forms.activeRoomId.trim()"
+                    @click="saveSecretaryRoomMode"
+                  >
+                    {{ tt("btn_save_secretary_mode") }}
+                  </el-button>
+                  <el-button
+                    :disabled="!session || !forms.activeRoomId.trim()"
+                    @click="refreshSecretaryPanel"
+                  >
+                    {{ tt("btn_refresh_secretary_panel") }}
+                  </el-button>
+                  <el-button
+                    type="primary"
+                    :disabled="!session || !forms.activeRoomId.trim()"
+                    @click="processLatestMessageWithSecretary"
+                  >
+                    {{ tt("btn_secretary_assist") }}
+                  </el-button>
+                </div>
+                <el-descriptions :column="1" border size="small" class="assistant-result-box">
+                  <el-descriptions-item :label="tt('label_secretary_mode')">
+                    {{ roomModeLabel(activeRoomSecretaryMode) }}
+                  </el-descriptions-item>
+                  <el-descriptions-item :label="tt('label_assist_result')">
+                    {{ assistantPanelOutput?.status || "-" }}
+                  </el-descriptions-item>
+                </el-descriptions>
+
+                <el-divider>{{ tt("section_secretary_suggestions") }}</el-divider>
+                <el-scrollbar class="assistant-scroll">
+                  <p v-if="secretarySuggestions.length === 0" class="muted">
+                    {{ tt("empty_secretary_suggestions") }}
+                  </p>
+                  <el-card
+                    v-for="item in secretarySuggestions"
+                    :key="item.suggestion_id"
+                    class="assistant-item-card"
+                    shadow="never"
+                  >
+                    <template #header>
+                      <div class="assistant-item-head">
+                        <el-tag size="small" :type="item.status === 'pending' ? 'warning' : 'success'">
+                          {{ item.status }}
+                        </el-tag>
+                        <span class="mono-row">{{ item.suggestion_id }}</span>
+                      </div>
+                    </template>
+                    <p class="assistant-source">{{ item.source_text }}</p>
+                    <p class="assistant-suggest">{{ item.suggested_text }}</p>
+                    <div class="action-row">
+                      <el-button
+                        v-if="item.status === 'pending'"
+                        size="small"
+                        type="primary"
+                        @click="approveSecretarySuggestion(item, true)"
+                      >
+                        {{ tt("btn_approve_send") }}
+                      </el-button>
+                      <el-button
+                        v-if="item.status === 'pending'"
+                        size="small"
+                        @click="approveSecretarySuggestion(item, false)"
+                      >
+                        {{ tt("btn_approve_only") }}
+                      </el-button>
+                      <el-button
+                        v-if="item.status === 'pending'"
+                        size="small"
+                        type="warning"
+                        @click="rejectSecretarySuggestion(item)"
+                      >
+                        {{ tt("btn_reject_suggestion") }}
+                      </el-button>
+                    </div>
+                  </el-card>
+                </el-scrollbar>
+
+                <el-divider>{{ tt("section_secretary_insights") }}</el-divider>
+                <el-scrollbar class="assistant-scroll">
+                  <p v-if="secretaryInsights.length === 0" class="muted">
+                    {{ tt("empty_secretary_insights") }}
+                  </p>
+                  <el-card
+                    v-for="item in secretaryInsights"
+                    :key="item.insight_id"
+                    class="assistant-item-card"
+                    shadow="never"
+                  >
+                    <template #header>
+                      <div class="assistant-item-head">
+                        <el-tag size="small" type="info">{{ insightChannelLabel(item.channel) }}</el-tag>
+                        <span>{{ item.created_at ? new Date(item.created_at).toLocaleString() : "-" }}</span>
+                      </div>
+                    </template>
+                    <p class="assistant-insight">{{ item.content }}</p>
+                  </el-card>
+                </el-scrollbar>
               </div>
             </el-card>
           </el-aside>
@@ -511,6 +830,6 @@
 
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <script src="https://unpkg.com/element-plus/dist/index.full.min.js"></script>
-    <script src="./app.js?v=20260222h"></script>
+    <script src="./app.js?v=20260222j"></script>
   </body>
 </html>

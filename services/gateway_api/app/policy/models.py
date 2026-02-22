@@ -28,6 +28,7 @@ class GrantStatus(StrEnum):
 
 class DataCategory(StrEnum):
     ROOM_MESSAGES = "room_messages"
+    MEMORY_NOTES = "memory_notes"
 
 
 class GrantCreateRequest(BaseModel):

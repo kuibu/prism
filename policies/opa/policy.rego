@@ -19,7 +19,7 @@ allow := {"allow": true, "reason": "healthcheck"} if {
 }
 
 active_matching_grant if {
-	input.action == "read_messages"
+	agent_action_supported
 	some grant_id
 	grant := data.prism.grants[grant_id]
 	base_match(grant)
@@ -29,7 +29,7 @@ active_matching_grant if {
 }
 
 rate_limited_grant if {
-	input.action == "read_messages"
+	agent_action_supported
 	some grant_id
 	grant := data.prism.grants[grant_id]
 	base_match(grant)
@@ -39,7 +39,7 @@ rate_limited_grant if {
 }
 
 time_window_denied_grant if {
-	input.action == "read_messages"
+	agent_action_supported
 	some grant_id
 	grant := data.prism.grants[grant_id]
 	base_match(grant)
@@ -48,7 +48,7 @@ time_window_denied_grant if {
 }
 
 revoked_matching_grant if {
-	input.action == "read_messages"
+	agent_action_supported
 	some grant_id
 	grant := data.prism.grants[grant_id]
 	base_match(grant)
@@ -56,7 +56,7 @@ revoked_matching_grant if {
 }
 
 purpose_mismatch_grant if {
-	input.action == "read_messages"
+	agent_action_supported
 	some grant_id
 	grant := data.prism.grants[grant_id]
 	grant.user_id == input.user_id
@@ -78,6 +78,10 @@ normalized_data_category(grant) := category if {
 
 normalized_input_data_category := category if {
 	category := object.get(input, "data_category", "room_messages")
+}
+
+agent_action_supported if {
+	input.action in {"read_messages", "collect_messages", "run_skill", "read_memory"}
 }
 
 within_time_window(grant) if {
