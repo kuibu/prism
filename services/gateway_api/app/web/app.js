@@ -70,7 +70,7 @@
       placeholder_agent_id: "agent.summary.demo",
       placeholder_purpose: "daily_summary",
       placeholder_secretary_collect: "secretary_collect",
-      placeholder_llm_model: "例如：qwen/qwen-plus 或 openai/gpt-4o-mini",
+      placeholder_llm_model: "例如：qwen2.5-32b 或 openai/gpt-4o-mini",
       placeholder_llm_api_key: "输入服务商 API Key（将仅用于后端调用）",
       placeholder_llm_base_url: "可选，兼容 OpenAI 的 http(s) 地址",
       placeholder_llm_api_path: "/chat/completions",
@@ -88,6 +88,7 @@
       hint_invite_preview: "将发送邀请给：",
       hint_chat_room_required: "请先在房间列表选择一个房间，再发送消息或上传文件。",
       hint_need_login: "请先登录，再使用发送区发消息或上传文件。",
+      hint_secretary_mode_scope: "可先切换模式；选择房间后点击“保存秘书模式”才会对该房间生效。",
       btn_open_second: "打开第二个客户端窗口",
       btn_register: "注册",
       btn_login: "登录",
@@ -294,7 +295,7 @@
       placeholder_agent_id: "agent.summary.demo",
       placeholder_purpose: "daily_summary",
       placeholder_secretary_collect: "secretary_collect",
-      placeholder_llm_model: "e.g. qwen/qwen-plus or openai/gpt-4o-mini",
+      placeholder_llm_model: "e.g. qwen2.5-32b or openai/gpt-4o-mini",
       placeholder_llm_api_key: "Provider API key for backend calls",
       placeholder_llm_base_url: "optional OpenAI-compatible http(s) endpoint",
       placeholder_llm_api_path: "/chat/completions",
@@ -312,6 +313,7 @@
       hint_invite_preview: "Invite target:",
       hint_chat_room_required: "Select a room first, then send messages or upload files.",
       hint_need_login: "Login first to send messages or upload files from the composer.",
+      hint_secretary_mode_scope: "You can switch mode first; it takes effect for a room after selecting one and clicking Save Mode.",
       btn_open_second: "Open Second Client Window",
       btn_register: "Register",
       btn_login: "Login",
@@ -514,21 +516,21 @@
           secretaryAgentId: "",
           secretaryPurpose: "secretary_collect",
           secretaryCollectPurpose: "secretary_collect",
-          secretaryLlmEnabled: false,
-          secretaryLlmProvider: "openrouter",
-          secretaryLlmModel: "qwen/qwen-plus",
+          secretaryLlmEnabled: true,
+          secretaryLlmProvider: "openai_compatible",
+          secretaryLlmModel: "qwen2.5-32b",
           secretaryLlmApiKey: "",
-          secretaryLlmBaseUrl: "",
+          secretaryLlmBaseUrl: "https://32b.qwen.rag8.cn/v1",
           secretaryLlmApiPath: "/chat/completions",
           specialistDisplayName: "",
           specialistPurpose: "",
           specialistSkillId: "specialist.todo_extractor",
           specialistRoomScope: "",
-          specialistLlmEnabled: false,
-          specialistLlmProvider: "openrouter",
-          specialistLlmModel: "qwen/qwen-plus",
+          specialistLlmEnabled: true,
+          specialistLlmProvider: "openai_compatible",
+          specialistLlmModel: "qwen2.5-32b",
           specialistLlmApiKey: "",
-          specialistLlmBaseUrl: "",
+          specialistLlmBaseUrl: "https://32b.qwen.rag8.cn/v1",
           specialistLlmApiPath: "/chat/completions",
           memoryAgentId: "",
           memoryQuery: "",
@@ -645,6 +647,13 @@
       pendingSecretarySuggestionCount() {
         return this.secretarySuggestions.filter((item) => item?.status === "pending").length;
       },
+      secretaryModeOptions() {
+        return [
+          { value: "auto", label: this.tt("mode_auto") || "全自动回复 / Auto Reply" },
+          { value: "semi", label: this.tt("mode_semi") || "半自动建议 / Semi-Auto Suggest" },
+          { value: "off", label: this.tt("mode_off") || "不进行回复辅助 / No Assist" },
+        ];
+      },
     },
     mounted() {
       this.language = this.loadLanguage() || "zh";
@@ -750,10 +759,11 @@
       },
       buildLlmPayload(prefix) {
         const enabled = Boolean(this.forms[`${prefix}LlmEnabled`]);
-        const provider = this.normalizeOptional(this.forms[`${prefix}LlmProvider`]) || "openrouter";
-        const model = this.normalizeOptional(this.forms[`${prefix}LlmModel`]) || "qwen/qwen-plus";
+        const provider = this.normalizeOptional(this.forms[`${prefix}LlmProvider`]) || "openai_compatible";
+        const model = this.normalizeOptional(this.forms[`${prefix}LlmModel`]) || "qwen2.5-32b";
         const apiKey = this.normalizeOptional(this.forms[`${prefix}LlmApiKey`]);
-        const baseUrl = this.normalizeOptional(this.forms[`${prefix}LlmBaseUrl`]);
+        const baseUrl =
+          this.normalizeOptional(this.forms[`${prefix}LlmBaseUrl`]) || "https://32b.qwen.rag8.cn/v1";
         const apiPath = this.normalizeOptional(this.forms[`${prefix}LlmApiPath`]) || "/chat/completions";
         return {
           enabled,
@@ -772,15 +782,17 @@
         this.forms[`${prefix}LlmProvider`] =
           typeof cfg.provider === "string" && cfg.provider.trim() !== ""
             ? cfg.provider.trim()
-            : "openrouter";
+            : "openai_compatible";
         this.forms[`${prefix}LlmModel`] =
           typeof cfg.model === "string" && cfg.model.trim() !== ""
             ? cfg.model.trim()
-            : "qwen/qwen-plus";
+            : "qwen2.5-32b";
         this.forms[`${prefix}LlmApiKey`] =
           typeof cfg.api_key === "string" ? cfg.api_key : this.forms[`${prefix}LlmApiKey`] || "";
         this.forms[`${prefix}LlmBaseUrl`] =
-          typeof cfg.base_url === "string" ? cfg.base_url : this.forms[`${prefix}LlmBaseUrl`] || "";
+          typeof cfg.base_url === "string"
+            ? cfg.base_url
+            : this.forms[`${prefix}LlmBaseUrl`] || "https://32b.qwen.rag8.cn/v1";
         this.forms[`${prefix}LlmApiPath`] =
           typeof cfg.api_path === "string" && cfg.api_path.trim() !== ""
             ? cfg.api_path.trim()
@@ -1568,8 +1580,7 @@
           if (activeRoomId) {
             await this.refreshRoomSummary(activeRoomId, { silent: true });
             this.refreshSecretaryPanel({ silent: true }).catch(() => undefined);
-            const roomMode = this.secretaryModes[activeRoomId] || this.forms.secretaryRoomMode || "off";
-            if (roomMode !== "off" && this.syncPayloadHasExternalMessage(payload, activeRoomId)) {
+            if (this.syncPayloadHasExternalMessage(payload, activeRoomId)) {
               const sourceMessage = this.latestNonSelfRoomMessage(activeRoomId);
               this.runSecretaryAssistForMessage(sourceMessage, { silent: true }).catch(() => undefined);
             }

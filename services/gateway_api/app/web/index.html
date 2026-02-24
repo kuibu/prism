@@ -674,12 +674,22 @@
                   <el-form-item :label="tt('label_secretary_mode')">
                     <el-select
                       v-model="forms.secretaryRoomMode"
-                      :disabled="!session || !forms.activeRoomId.trim()"
+                      :disabled="!session"
                     >
-                      <el-option :label="tt('mode_auto')" value="auto" />
-                      <el-option :label="tt('mode_semi')" value="semi" />
-                      <el-option :label="tt('mode_off')" value="off" />
+                      <el-option
+                        v-for="modeItem in secretaryModeOptions"
+                        :key="modeItem.value"
+                        :label="modeItem.label"
+                        :value="modeItem.value"
+                      />
                     </el-select>
+                    <el-text
+                      v-if="session && !forms.activeRoomId.trim()"
+                      size="small"
+                      type="info"
+                    >
+                      {{ tt("hint_secretary_mode_scope") }}
+                    </el-text>
                   </el-form-item>
                 </el-form>
                 <div class="action-row composer-actions">
@@ -830,6 +840,6 @@
 
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <script src="https://unpkg.com/element-plus/dist/index.full.min.js"></script>
-    <script src="./app.js?v=20260222j"></script>
+    <script src="./app.js?v=20260223a"></script>
   </body>
 </html>

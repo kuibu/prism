@@ -9,6 +9,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from app.agent.assistant_models import (
     AgentKind,
     AgentListResponse,
+    AgentLLMConfig,
+    AgentLLMProvider,
     AgentMemoryEntry,
     AgentProfile,
     AgentStatus,
@@ -34,6 +36,11 @@ from app.agent.assistant_models import (
     SkillRunResponse,
 )
 from app.agent.llm_gateway import AgentLLMError, chat_completion
+from app.agent.memory_backends import (
+    OPADocumentMemoryBackend,
+    OpenVikingConfig,
+    OpenVikingMemoryBackend,
+)
 from app.agent.memory_store import AgentNotFoundError, AgentStoreError, OPAAgentStore
 from app.agent.secretary_runtime import (
     SECRETARY_AUTO_REPLY_MARKER,
@@ -55,9 +62,62 @@ from app.policy.opa_client import OPAClient
 router = APIRouter(prefix="/agents", tags=["agents", "memory", "skills"])
 
 
+def _build_default_agent_llm_config(request: Request) -> AgentLLMConfig | None:
+    settings = request.app.state.settings
+    if not bool(settings.agent_default_llm_enabled):
+        return None
+
+    provider_raw = str(settings.agent_default_llm_provider).strip().lower()
+    if provider_raw == "":
+        provider_raw = AgentLLMProvider.OPENAI_COMPATIBLE.value
+    try:
+        provider = AgentLLMProvider(provider_raw)
+    except ValueError:
+        provider = AgentLLMProvider.OPENAI_COMPATIBLE
+
+    api_key_raw = str(settings.agent_default_llm_api_key).strip()
+    base_url_raw = str(settings.agent_default_llm_base_url).strip()
+    api_path_raw = str(settings.agent_default_llm_api_path).strip()
+
+    return AgentLLMConfig(
+        enabled=True,
+        provider=provider,
+        model=str(settings.agent_default_llm_model).strip() or "qwen2.5-32b",
+        api_key=api_key_raw or None,
+        base_url=base_url_raw or None,
+        api_path=api_path_raw or "/chat/completions",
+        temperature=float(settings.agent_default_llm_temperature),
+        max_tokens=int(settings.agent_default_llm_max_tokens),
+        timeout_seconds=float(settings.agent_default_llm_timeout_seconds),
+    )
+
+
 def _agent_store(request: Request, opa_client: OPAClient) -> OPAAgentStore:
     settings = request.app.state.settings
-    return OPAAgentStore(opa_client=opa_client, opa_data_root=settings.opa_data_root)
+    local_memory_backend = OPADocumentMemoryBackend(
+        opa_client=opa_client,
+        opa_data_root=settings.opa_data_root,
+    )
+    backend_name = str(settings.agent_memory_backend).strip().lower()
+    memory_backend = local_memory_backend
+    if backend_name == "openviking":
+        memory_backend = OpenVikingMemoryBackend(
+            primary=local_memory_backend,
+            config=OpenVikingConfig(
+                base_url=settings.openviking_base_url,
+                api_key=settings.openviking_api_key,
+                agent_id=settings.openviking_agent_id,
+                timeout_seconds=settings.openviking_timeout_seconds,
+                retry_attempts=settings.openviking_retry_attempts,
+            ),
+        )
+
+    return OPAAgentStore(
+        opa_client=opa_client,
+        opa_data_root=settings.opa_data_root,
+        default_llm_config=_build_default_agent_llm_config(request),
+        memory_backend=memory_backend,
+    )
 
 
 def _skill_registry(request: Request) -> SkillRegistry:
@@ -739,6 +799,63 @@ async def generate_secretary_suggestion(
     if not allow:
         raise HTTPException(status_code=403, detail={"status": "denied", "reason": reason})
 
+    source_sender_id = (
+        payload.source_sender_id.strip()
+        if isinstance(payload.source_sender_id, str) and payload.source_sender_id.strip()
+        else None
+    )
+    source_event_id = (
+        payload.source_event_id.strip()
+        if isinstance(payload.source_event_id, str) and payload.source_event_id.strip()
+        else ""
+    )
+    try:
+        source_memory_entry = await store.create_memory_entry(
+            user_id=authenticated_user.user_id,
+            agent_id=secretary.agent_id,
+            source_type=MemorySourceType.MATRIX_ROOM_MESSAGE,
+            source_id=source_event_id,
+            content=payload.source_text,
+            room_id=room_id,
+            sender_id=source_sender_id,
+            tags=["secretary_auto_ingest", "incoming_message"],
+            importance=0.66,
+            metadata={
+                "source": "secretary_suggestion_generate",
+                "purpose": payload.purpose,
+                "room_mode": room_mode.value,
+            },
+        )
+        memory_append_result = await store.append_memory_entries(
+            user_id=authenticated_user.user_id,
+            agent_id=secretary.agent_id,
+            entries=[source_memory_entry],
+        )
+    except AgentStoreError as exc:
+        raise HTTPException(status_code=503, detail=f"agent_store_failed: {exc}") from exc
+
+    await _append_audit(
+        immudb_client=immudb_client,
+        event=AuditEventCreate(
+            actor_type=ActorType.AGENT,
+            actor_id=secretary.agent_id,
+            action_type="agent_memory_collect",
+            resource_type="memory",
+            resource_id=secretary.agent_id,
+            decision=DecisionType.ALLOW,
+            reason_code="secretary_auto_ingest",
+            user_id=authenticated_user.user_id,
+            room_id=room_id,
+            metadata={
+                "purpose": payload.purpose,
+                "room_mode": room_mode.value,
+                "source_event_id": source_event_id or None,
+                "stored_count": memory_append_result.stored_count,
+                "skipped_count": memory_append_result.skipped_count,
+            },
+        ),
+    )
+
     context_messages = await _load_recent_room_context(
         request=request,
         user_access_token=authenticated_user.access_token,
@@ -788,6 +905,10 @@ async def generate_secretary_suggestion(
             "reason": "room_mode_off",
             "generation_source": generation_source,
             "context_message_count": len(context_messages),
+            "memory_ingest": {
+                "stored_count": memory_append_result.stored_count,
+                "skipped_count": memory_append_result.skipped_count,
+            },
             "insights": [item.model_dump(mode="json") for item in persisted_insights],
         }
 
@@ -879,6 +1000,10 @@ async def generate_secretary_suggestion(
         "mode": room_mode.value,
         "generation_source": generation_source,
         "context_message_count": len(context_messages),
+        "memory_ingest": {
+            "stored_count": memory_append_result.stored_count,
+            "skipped_count": memory_append_result.skipped_count,
+        },
         "suggestion": final_suggestion.model_dump(mode="json"),
         "room_event_id": room_event_id,
         "bot_user_id": bot_user_id,

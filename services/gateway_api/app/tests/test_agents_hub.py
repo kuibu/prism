@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import Any
 from uuid import uuid4
 
+import httpx
+import pytest
 from fastapi.testclient import TestClient
 
+from app.agent.assistant_models import SecretaryRoomMode
 from app.agent.tool_gateway import InMemoryRateCounter
 from app.audit.schemas import AuditEvent, AuditEventCreate, AuditQuery, AuditVerifyResponse
 from app.audit.verification import compute_chain_hash, sha256_hex, verify_chain
@@ -338,6 +342,65 @@ class _StubMatrixClient:
         return {"event_id": "$skill_send:localhost"}
 
 
+class _OpenVikingDummyResponse:
+    def __init__(self, payload: dict[str, Any], status_code: int = 200) -> None:
+        self._payload = payload
+        self.status_code = status_code
+
+    def raise_for_status(self) -> None:
+        if self.status_code >= 400:
+            raise httpx.HTTPStatusError(
+                message=f"HTTP {self.status_code}",
+                request=httpx.Request("POST", "http://openviking.local"),
+                response=httpx.Response(self.status_code),
+            )
+
+    def json(self) -> dict[str, Any]:
+        return self._payload
+
+
+class _OpenVikingDummyClient:
+    def __init__(self) -> None:
+        self.calls: list[tuple[str, str, dict[str, Any] | None]] = []
+
+    async def __aenter__(self) -> _OpenVikingDummyClient:
+        return self
+
+    async def __aexit__(self, exc_type: object, exc: object, tb: object) -> bool:
+        _ = exc_type, exc, tb
+        return False
+
+    async def request(
+        self,
+        method: str,
+        endpoint: str,
+        json: dict[str, Any] | None = None,
+    ) -> _OpenVikingDummyResponse:
+        self.calls.append((method, endpoint, json))
+        if endpoint == "/api/v1/sessions":
+            return _OpenVikingDummyResponse(
+                {"status": "ok", "result": {"session_id": "sess_prism_1"}}
+            )
+        if endpoint.endswith("/messages"):
+            return _OpenVikingDummyResponse(
+                {
+                    "status": "ok",
+                    "result": {"session_id": "sess_prism_1"},
+                }
+            )
+        if endpoint.endswith("/commit"):
+            return _OpenVikingDummyResponse(
+                {
+                    "status": "ok",
+                    "result": {
+                        "status": "committed",
+                        "memories_extracted": 1,
+                    },
+                }
+            )
+        return _OpenVikingDummyResponse({"status": "ok", "result": {}})
+
+
 def _auth_headers(token: str = "token_alice") -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
@@ -369,6 +432,10 @@ def _grant_payload(*, user_id: str, agent_id: str, purpose: str) -> dict[str, ob
     }
 
 
+def test_secretary_mode_enum_contains_three_modes() -> None:
+    assert {item.value for item in SecretaryRoomMode} == {"auto", "semi", "off"}
+
+
 def test_agents_bootstrap_and_list() -> None:
     with TestClient(app) as client:
         _install_stubs(client)
@@ -380,6 +447,9 @@ def test_agents_bootstrap_and_list() -> None:
     payload = bootstrap.json()
     assert payload["secretary"]["kind"] == "secretary"
     assert payload["secretary"]["agent_id"].startswith("agent.secretary")
+    assert payload["secretary"]["llm"]["enabled"] is True
+    assert payload["secretary"]["llm"]["model"] == "qwen2.5-32b"
+    assert payload["secretary"]["llm"]["base_url"] == "https://32b.qwen.rag8.cn/v1"
 
     assert listed.status_code == 200
     agents = listed.json()["agents"]
@@ -443,6 +513,130 @@ def test_secretary_collect_memory_requires_grant_then_succeeds() -> None:
     assert any(event.decision.value == "allow" for event in audit_events)
 
 
+def test_secretary_collect_memory_openviking_backend(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    with TestClient(app) as client:
+        _install_stubs(client)
+
+        settings = client.app.state.settings
+        original_backend = settings.agent_memory_backend
+        original_base_url = settings.openviking_base_url
+        original_retry = settings.openviking_retry_attempts
+        original_timeout = settings.openviking_timeout_seconds
+
+        settings.agent_memory_backend = "openviking"
+        settings.openviking_base_url = "http://openviking.local:1933"
+        settings.openviking_retry_attempts = 1
+        settings.openviking_timeout_seconds = 2.0
+
+        dummy_client = _OpenVikingDummyClient()
+        monkeypatch.setattr(
+            "app.agent.memory_backends.httpx.AsyncClient",
+            lambda **_: dummy_client,
+        )
+
+        try:
+            bootstrap = client.post("/api/v1/agents/bootstrap", headers=_auth_headers())
+            secretary_id = bootstrap.json()["secretary"]["agent_id"]
+
+            grant = client.post(
+                "/api/v1/policy/grants",
+                headers=_auth_headers(),
+                json=_grant_payload(
+                    user_id="@alice:localhost",
+                    agent_id=secretary_id,
+                    purpose="secretary_collect",
+                ),
+            )
+            assert grant.status_code == 201
+
+            allowed = client.post(
+                f"/api/v1/agents/{secretary_id}/memory/collect",
+                headers=_auth_headers(),
+                json={
+                    "purpose": "secretary_collect",
+                    "limit_per_room": 50,
+                    "include_self_messages": False,
+                },
+            )
+            assert allowed.status_code == 200
+            assert allowed.json()["stored_count"] >= 1
+            assert any(endpoint == "/api/v1/sessions" for _, endpoint, _ in dummy_client.calls)
+            assert any(endpoint.endswith("/messages") for _, endpoint, _ in dummy_client.calls)
+            assert any(endpoint.endswith("/commit") for _, endpoint, _ in dummy_client.calls)
+        finally:
+            settings.agent_memory_backend = original_backend
+            settings.openviking_base_url = original_base_url
+            settings.openviking_retry_attempts = original_retry
+            settings.openviking_timeout_seconds = original_timeout
+
+
+def test_specialist_memory_note_openviking_backend(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    with TestClient(app) as client:
+        _install_stubs(client)
+
+        settings = client.app.state.settings
+        original_backend = settings.agent_memory_backend
+        original_base_url = settings.openviking_base_url
+        original_retry = settings.openviking_retry_attempts
+        original_timeout = settings.openviking_timeout_seconds
+
+        settings.agent_memory_backend = "openviking"
+        settings.openviking_base_url = "http://openviking.local:1933"
+        settings.openviking_retry_attempts = 1
+        settings.openviking_timeout_seconds = 2.0
+
+        dummy_client = _OpenVikingDummyClient()
+        monkeypatch.setattr(
+            "app.agent.memory_backends.httpx.AsyncClient",
+            lambda **_: dummy_client,
+        )
+
+        try:
+            bootstrap = client.post("/api/v1/agents/bootstrap", headers=_auth_headers())
+            assert bootstrap.status_code == 200
+
+            create_specialist = client.post(
+                "/api/v1/agents",
+                headers=_auth_headers(),
+                json={
+                    "kind": "specialist",
+                    "display_name": "Memory Specialist",
+                    "purpose": "memory_organize",
+                    "description": "Organize memory notes",
+                    "system_prompt": "Organize notes by priority.",
+                    "skill_ids": ["specialist.todo_extractor"],
+                    "room_ids": [],
+                    "auto_collect_enabled": False,
+                },
+            )
+            assert create_specialist.status_code == 201
+            specialist_id = create_specialist.json()["agent_id"]
+
+            note = client.post(
+                f"/api/v1/agents/{specialist_id}/memory/notes",
+                headers=_auth_headers(),
+                json={
+                    "content": "记录一个子 agent 的长期记忆样例。",
+                    "tags": ["memory", "specialist"],
+                    "importance": 0.7,
+                },
+            )
+            assert note.status_code == 201
+            assert note.json()["stored_count"] >= 1
+            assert any(endpoint == "/api/v1/sessions" for _, endpoint, _ in dummy_client.calls)
+            assert any(endpoint.endswith("/messages") for _, endpoint, _ in dummy_client.calls)
+            assert any(endpoint.endswith("/commit") for _, endpoint, _ in dummy_client.calls)
+        finally:
+            settings.agent_memory_backend = original_backend
+            settings.openviking_base_url = original_base_url
+            settings.openviking_retry_attempts = original_retry
+            settings.openviking_timeout_seconds = original_timeout
+
+
 def test_specialist_skill_run_writes_audit() -> None:
     with TestClient(app) as client:
         audit_stub, _ = _install_stubs(client)
@@ -493,7 +687,13 @@ def test_specialist_skill_run_writes_audit() -> None:
     assert run.status_code == 200
     payload = run.json()
     assert payload["skill_id"] == "specialist.todo_extractor"
-    assert "todo" in payload["output_text"].lower()
+    output_text = str(payload["output_text"]).lower()
+    assert output_text != ""
+    assert (
+        "todo" in output_text
+        or "next action" in output_text
+        or "follow up" in output_text
+    )
 
     audit_events = [event for event in audit_stub.events if event.action_type == "agent_skill_run"]
     assert len(audit_events) >= 1
@@ -570,6 +770,7 @@ def test_secretary_room_mode_suggestion_and_approve_flow() -> None:
         generated_payload = generated.json()
         assert generated_payload["status"] == "ok"
         assert generated_payload["mode"] == "semi"
+        assert generated_payload["memory_ingest"]["stored_count"] >= 1
         assert generated_payload["suggestion"]["status"] == "pending"
         assert len(generated_payload["insights"]) >= 4
 
@@ -636,6 +837,74 @@ def test_secretary_mode_off_skips_suggestion_creation() -> None:
         assert payload["status"] == "ignored"
         assert payload["mode"] == "off"
         assert "suggestion" not in payload
+        assert payload["memory_ingest"]["stored_count"] >= 1
+
+        memory = client.get(
+            f"/api/v1/agents/{secretary_id}/memory",
+            headers=_auth_headers(),
+            params={"limit": 20},
+        )
+        assert memory.status_code == 200
+        hits = memory.json()["hits"]
+        assert len(hits) >= 1
+        assert any("今天是否要上线" in row.get("content", "") for row in hits)
+
+
+def test_secretary_auto_ingest_memory_deduplicates_by_source_event_id() -> None:
+    with TestClient(app) as client:
+        _install_stubs(client)
+
+        bootstrap = client.post("/api/v1/agents/bootstrap", headers=_auth_headers())
+        secretary_id = bootstrap.json()["secretary"]["agent_id"]
+        grant = client.post(
+            "/api/v1/policy/grants",
+            headers=_auth_headers(),
+            json=_grant_payload(
+                user_id="@alice:localhost",
+                agent_id=secretary_id,
+                purpose="assistant_reply",
+            ),
+        )
+        assert grant.status_code == 201
+
+        first = client.post(
+            "/api/v1/agents/secretary/suggestions/generate",
+            headers=_auth_headers(),
+            json={
+                "room_id": "!room:localhost",
+                "source_text": "请确认风险清单",
+                "source_event_id": "$evt-ingest-1:localhost",
+                "source_sender_id": "@bob:localhost",
+                "purpose": "assistant_reply",
+            },
+        )
+        second = client.post(
+            "/api/v1/agents/secretary/suggestions/generate",
+            headers=_auth_headers(),
+            json={
+                "room_id": "!room:localhost",
+                "source_text": "请确认风险清单",
+                "source_event_id": "$evt-ingest-1:localhost",
+                "source_sender_id": "@bob:localhost",
+                "purpose": "assistant_reply",
+            },
+        )
+
+        assert first.status_code == 200
+        assert second.status_code == 200
+        assert first.json()["memory_ingest"]["stored_count"] == 1
+        assert second.json()["memory_ingest"]["stored_count"] == 0
+        assert second.json()["memory_ingest"]["skipped_count"] >= 1
+
+        memory = client.get(
+            f"/api/v1/agents/{secretary_id}/memory",
+            headers=_auth_headers(),
+            params={"limit": 40},
+        )
+        assert memory.status_code == 200
+        hits = memory.json()["hits"]
+        matched = [row for row in hits if row.get("source_id") == "$evt-ingest-1:localhost"]
+        assert len(matched) == 1
 
 
 def test_secretary_auto_mode_posts_as_user_with_marker() -> None:

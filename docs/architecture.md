@@ -46,8 +46,11 @@
 2. Gateway ensures one secretary profile per user (OPA data document)
 3. User creates specialist profiles (`/api/v1/agents`)
 4. Secretary collects room updates (`/api/v1/agents/{id}/memory/collect`) with OPA allow checks
-5. Specialist runs skills (`/api/v1/agents/{id}/skills/run`) with memory + optional room context
-6. Gateway audits policy checks, memory writes, skill start/finish, and optional room send actions
+5. Agent memory backend writes canonical structured rows (local OPA document backend)
+6. If `AGENT_MEMORY_BACKEND=openviking`, gateway mirrors memory batch into OpenViking Session API:
+   `create session -> add messages -> commit` to trigger memory extraction
+7. Specialist runs skills (`/api/v1/agents/{id}/skills/run`) with memory + optional room context
+8. Gateway audits policy checks, memory writes, skill start/finish, and optional room send actions
 
 ### Audit Verify Flow
 1. Client calls `/api/v1/audit/verify`
@@ -65,6 +68,10 @@
 
 - Agent tools are pluggable in `app/agent`
 - Skill runtime follows `SkillRegistry + SkillRouter + SkillExecutor` pipeline in `app/agent/skills`
-- Agent profiles and memory use OPA data API for MVP persistence (`data.prism.agent_registry`, `data.prism.agent_memory`)
+- Agent profiles use OPA data API for MVP persistence (`data.prism.agent_registry`)
+- Agent memory is decoupled behind a backend interface:
+  - `OPADocumentMemoryBackend` (canonical structured memory rows)
+  - `OpenVikingMemoryBackend` (session-based mirror + semantic retrieval hint)
+  - backend selection via `AGENT_MEMORY_BACKEND=local|openviking`
 - Matrix client wrappers are centralized in `app/matrix/client.py`
 - Current summarizer is rule-based placeholder; LLM provider can be added behind same policy/audit gates

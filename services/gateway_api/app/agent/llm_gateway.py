@@ -61,13 +61,13 @@ def _extract_text_from_chat_completion(payload: dict[str, Any]) -> str:
 
 def _build_headers(config: AgentLLMConfig) -> dict[str, str]:
     api_key = (config.api_key or "").strip()
-    if api_key == "":
-        raise AgentLLMError("llm_api_key_required")
-
     headers: dict[str, str] = {
-        "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
     }
+    if api_key != "":
+        headers["Authorization"] = f"Bearer {api_key}"
+    elif config.provider == AgentLLMProvider.OPENROUTER:
+        raise AgentLLMError("llm_api_key_required_for_openrouter")
     if config.provider == AgentLLMProvider.OPENROUTER:
         headers.setdefault("HTTP-Referer", "http://localhost:8080/web/")
         headers.setdefault("X-Title", "Prism Digital Secretary")
@@ -121,4 +121,3 @@ async def chat_completion(
                 break
             await asyncio.sleep(0.25)
     raise AgentLLMError(f"llm_request_failed: {last_error or 'unknown_error'}")
-

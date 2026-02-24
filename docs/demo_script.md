@@ -27,7 +27,19 @@ docker compose run --rm gateway_api pytest -q
 ```
 
 Expected:
-- `15 passed, 5 skipped` (live integration tests are skipped by default)
+- `47 passed, 6 skipped` (live integration tests are skipped by default)
+
+## 2.1) OpenViking memory backend tests (mocked HTTP)
+
+```bash
+docker compose run --rm gateway_api pytest -q \
+  app/tests/test_memory_backends.py \
+  app/tests/test_agents_hub.py::test_secretary_collect_memory_openviking_backend \
+  app/tests/test_agents_hub.py::test_specialist_memory_note_openviking_backend
+```
+
+Expected:
+- `5 passed`
 
 ## 3) Real live integration tests (against running stack)
 

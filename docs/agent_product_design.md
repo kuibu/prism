@@ -1,208 +1,90 @@
-# Agent Product Design Review (Create Agent Page)
+# 数字秘书联动产品设计对照（Agent Product Alignment）
 
-## 1. Scope
-This document organizes the current Create Agent design, lists key issues, and checks the gap against our target product:
-- Each user has one default digital secretary agent.
-- Each user can create multiple specialist agents.
-- Specialist agents are managed by the secretary agent.
-- In room chat, secretary supports three modes:
-  - fully automatic reply
-  - semi-automatic suggestion with user confirmation
-  - no reply assistance
-- Chat page right sidebar shows secretary insights:
-  - realtime analysis
-  - deep thinking
-  - implied meaning
-  - roast/commentary
+## 1) 目标要求整理（来自你的要求）
 
-## 2. Current State (As-Is)
-Current implementation mainly lives in:
-- Frontend:
-  - `services/gateway_api/app/web/index.html`
-  - `services/gateway_api/app/web/app.js`
-- Backend:
-  - `services/gateway_api/app/api/agents.py`
-  - `services/gateway_api/app/agent/assistant_models.py`
-  - `services/gateway_api/app/agent/memory_store.py`
-  - `services/gateway_api/app/agent/skills/*`
+### 1.1 Agent 结构
+- 每个用户默认有且只有一个数字秘书 Agent（Secretary）。
+- 每个用户可以创建多个专用 Agent（Specialists）。
+- 所有专用 Agent 都由数字秘书管理。
 
-Current Create Agent page supports:
-- Bootstrap secretary + list agents + list skills.
-- Secretary profile save, grant, collect memory, run digest.
-- Specialist creation, quick run, collect memory.
-- Memory search/recent/manual note.
-- Skill run panel with optional send-to-room.
+### 1.2 房间联动行为
+- 在聊天房间里，数字秘书收到新消息后支持三种模式：
+  - `auto`：全自动回复。
+  - `semi`：半自动建议（用户确认后发送）。
+  - `off`：不进行回复辅助。
 
-## 3. What Works Today
-- Default secretary bootstrap is available (`ensure_secretary`).
-- Multiple specialist agents can be created.
-- Memory entries are persisted and searchable.
-- Skill pipeline works end-to-end:
-  - `SkillRegistry -> SkillRouter -> SkillExecutor`
-- OPA policy decisions are integrated for memory collect and skill run.
-- Audit events are written around profile changes, policy checks, memory collect/write, and skill runs.
+### 1.3 右侧秘书功能区
+- 右侧侧栏展示秘书分析能力：
+  - 实时分析
+  - 深度思考
+  - 言外之意
+  - 吐槽
 
-## 4. Main Problems in Current Create Agent Design
+### 1.4 记忆与模型接入
+- 数字秘书要收集与用户相关的信息和房间消息，沉淀到记忆中。
+- 数字秘书与专用 Agent 都支持接入大模型（兼容千问 / OpenRouter / OpenAI-compatible）。
 
-### 4.1 Information architecture is overloaded
-- One tab mixes too many responsibilities:
-  - lifecycle, authorization, memory operations, and execution controls.
-- The user mental model is weak:
-  - "who manages whom" and "what runs automatically" are not clear.
+---
 
-### 4.2 Secretary-specialist management relation is missing
-- Specialist agents are only same-level records with `kind="specialist"`.
-- No explicit ownership link to secretary:
-  - missing `manager_agent_id` or equivalent governance relation.
-- "Secretary manages specialists" cannot be enforced.
+## 2) 当前实现对照（最新代码状态）
 
-### 4.3 Reply-mode product capability is missing
-- No room-level mode model for:
-  - auto reply
-  - semi-auto suggestion
-  - off
-- No trigger loop for incoming room messages to mode-based assistant behavior.
+| 需求 | 状态 | 说明 |
+|---|---|---|
+| 默认秘书 Agent | 已实现 | `ensure_secretary` 自动兜底创建；前端加载 Agent 时会确保存在秘书。 |
+| 多专用 Agent | 已实现 | 支持创建多个 `kind=specialist`。 |
+| 专用 Agent 受秘书管理 | 已实现（基础） | 专用 Agent 创建时默认绑定 `manager_agent_id` 到秘书，并校验 manager 必须是秘书。 |
+| 三种秘书模式 `auto/semi/off` | 已实现 | 后端有房间模式模型与 API；前端有模式下拉和保存。 |
+| `auto` 自动回复 + 尾部标记 | 已实现 | 自动发送内容尾部带 `数字秘书自动回复` 标记。 |
+| `semi` 生成建议并可确认发送 | 已实现 | 生成 pending suggestion；支持 approve/reject；建议可预填到快捷发送区。 |
+| `off` 不回复辅助 | 已实现 | 返回 `ignored`，不自动回消息。 |
+| 右侧分析四通道 | 已实现 | insights 支持四类通道并在右侧展示。 |
+| LLM 配置（秘书+专用） | 已实现 | 前端可配置 provider/model/key/base_url/api_path；后端已打通。 |
+| 默认 LLM 配置 | 已实现 | 支持环境变量默认注入（当前默认 qwen openai-compatible 端点）。 |
+| 消息沉淀记忆 | 已补齐 | 联动处理时会自动将来源消息入秘书记忆（包含审计）。 |
 
-### 4.4 No structured suggestion/approval workflow
-- Semi-auto requires "generate suggestion -> user confirm -> post" flow.
-- Current API only supports direct skill run; no queue/state for pending suggestions.
+---
 
-### 4.5 Chat right sidebar intelligence area is missing
-- No dedicated data model or API for:
-  - realtime analysis
-  - deep thinking
-  - implied meaning
-  - roast/commentary
-- Current right side is a fixed composer, not an assistant insight workspace.
+## 3) 本轮补齐内容（修正项）
 
-### 4.6 Product and API still include legacy overlap
-- Legacy "Create Agent Profile / Grant / Revoke / Run Skill" controls coexist with secretary-specialist controls.
-- Creates duplicated pathways and inconsistent behavior expectations.
+### 3.1 自动记忆沉淀补齐
+- 文件：`services/gateway_api/app/api/agents.py`
+- 在 `POST /api/v1/agents/secretary/suggestions/generate` 中新增：
+  - 对来源消息创建 `MemorySourceType.MATRIX_ROOM_MESSAGE` 记忆条目；
+  - append 到秘书 memory；
+  - 写入审计事件 `agent_memory_collect`（reason: `secretary_auto_ingest`）；
+  - 响应增加 `memory_ingest.stored_count/skipped_count`。
 
-### 4.7 Automation semantics are weak
-- Memory collect and skill execution are mostly manual button actions.
-- Missing default background orchestration policy:
-  - message ingestion cadence
-  - summarization cadence
-  - safe send guards
+### 3.2 `off` 模式联动触发改造
+- 文件：`services/gateway_api/app/web/app.js`
+- 自动同步发现新外部消息时，不再只限 `auto/semi` 才触发联动。
+- 统一交给后端按房间模式判定：
+  - `off` 仍不发回复，但可完成“仅分析/仅记忆沉淀”。
 
-## 5. Gap vs Target
+### 3.3 测试补齐
+- 文件：`services/gateway_api/app/tests/test_agents_hub.py`
+- 增加/强化断言：
+  - `semi` 建议生成时包含 `memory_ingest`；
+  - `off` 模式下不创建建议，但能入记忆；
+  - 同一 `source_event_id` 重复处理时，记忆去重正确（stored=0, skipped>=1）。
 
-### 5.1 Agent structure
-- Target: one secretary + many specialists managed by secretary.
-- Current: one secretary + many specialists exists, but no secretary governance relation.
-- Gap: add explicit hierarchy and enforcement.
+---
 
-### 5.2 Chat behavior modes
-- Target: per-room `auto / semi / off`.
-- Current: not implemented.
-- Gap: add config model + runtime decision loop.
+## 4) 仍需持续优化的点（真实差距）
 
-### 5.3 Right sidebar intelligence
-- Target: realtime analysis/deep thinking/implied meaning/roast.
-- Current: not implemented as structured outputs.
-- Gap: add insight generation pipeline and UI panels.
+1. 目前“自动联动”主要发生在前端打开会话并触发 `/sync` 的房间，不是独立后端消息总线。
+2. “秘书管理专用 Agent”已实现关系绑定，但更细粒度的策略继承/覆盖规则（`inherit/custom` 的严格执行）仍可继续增强。
+3. 记忆是结构化持久化（非向量检索），复杂语义召回能力可在后续迭代引入。
+4. Agent 页仍保留一些 legacy 操作入口，后续可继续做“秘书优先”的信息架构收敛。
 
-### 5.4 Human-in-the-loop safety
-- Target: semi-auto suggestion with confirmation.
-- Current: direct run/send without suggestion queue.
-- Gap: add suggestion state machine and approval APIs.
+---
 
-### 5.5 Management UX
-- Target: secretary is the control plane for specialists.
-- Current: specialist actions are independent in the same form panel.
-- Gap: redesign to "secretary-first" management console.
+## 5) 验收要点（当前可验证）
 
-## 6. Target Product Design (Next Version)
-
-### 6.1 Agent hierarchy
-- `secretary`:
-  - per-user singleton.
-  - can supervise specialist execution.
-- `specialist`:
-  - must reference a manager secretary.
-  - execution policy and room scope inherited or constrained by secretary policy.
-
-Suggested model additions:
-- `AgentProfile.manager_agent_id: str | None`
-- `AgentProfile.parent_policy_mode: "inherit" | "custom"`
-
-### 6.2 Secretary room mode
-Introduce per-room mode config:
-- `auto`:
-  - secretary can post automatically under policy/rate limits.
-- `semi`:
-  - secretary creates reply suggestions; user approves/rejects.
-- `off`:
-  - secretary does not assist with replies, can still keep memory if allowed.
-
-Suggested object:
-- `SecretaryRoomMode`:
-  - `owner_user_id`, `secretary_agent_id`, `room_id`, `mode`, `updated_at`
-
-### 6.3 Suggestion workflow
-Add suggestion queue:
-- states:
-  - `pending`, `approved`, `rejected`, `expired`, `posted`
-- core APIs:
-  - create suggestion from incoming room event
-  - list pending suggestions
-  - approve/reject suggestion
-  - post approved suggestion to room
-
-### 6.4 Right sidebar assistant insights
-Add insight channels:
-- realtime analysis
-- deep thinking
-- implied meaning
-- roast/commentary
-
-Suggested object:
-- `AssistantInsight`:
-  - `insight_id`, `room_id`, `agent_id`, `channel`, `content`, `source_event_id`, `created_at`
-
-### 6.5 UI redesign direction
-- Keep `Create Agent` focused on:
-  - secretary profile
-  - specialist creation and attachment to secretary
-  - permission scope
-- Move runtime interaction to chat page:
-  - room mode switch
-  - suggestion approval queue
-  - right sidebar insight cards
-
-## 7. Recommended Backend API Additions
-- `GET /api/v1/agents/secretary`
-- `PATCH /api/v1/agents/{agent_id}`:
-  - support `manager_agent_id` updates for specialists.
-- `PUT /api/v1/agents/secretary/modes/{room_id}`
-- `GET /api/v1/agents/secretary/modes`
-- `POST /api/v1/agents/secretary/suggestions/{id}/approve`
-- `POST /api/v1/agents/secretary/suggestions/{id}/reject`
-- `GET /api/v1/agents/secretary/suggestions`
-- `GET /api/v1/agents/secretary/insights?room_id=...`
-
-All write paths must:
-- pass OPA check where applicable
-- write immutable audit event (allow and deny)
-
-## 8. Recommended Execution Plan
-1. Data model upgrade:
-   - add manager relation + room mode + suggestion + insight schema.
-2. API upgrade:
-   - add room mode and suggestion endpoints first.
-3. Runtime upgrade:
-   - add incoming message hook to secretary mode dispatcher.
-4. Frontend upgrade:
-   - chat right sidebar for insights + suggestion review.
-5. Safety and audit completion:
-   - deny reasons, rate limits, and full event coverage.
-
-## 9. Definition of Done for This Target
-- User sees default secretary after login.
-- User can create multiple specialists and bind each to secretary.
-- In each room, user can switch secretary mode:
-  - auto / semi / off.
-- Semi mode produces pending suggestions and requires explicit approval.
-- Right sidebar shows the 4 insight channels in near realtime.
-- Every key action writes immutable audit record with allow/deny reason.
+- 登录后加载 Agent，默认可见秘书。
+- 可创建多个专用 Agent，且 manager 指向秘书。
+- 房间内切换 `auto/semi/off`：
+  - `auto` 自动回消息并带秘书标记；
+  - `semi` 产生建议，可批准/拒绝；
+  - `off` 不自动回复，但会记录分析与记忆沉淀。
+- 右侧可见秘书四类分析。
+- 审计可看到策略检查、建议生成/审批、记忆沉淀等关键动作。

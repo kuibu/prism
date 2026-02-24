@@ -43,6 +43,68 @@ class Settings(BaseSettings):
     http_timeout_seconds: float = Field(default=3.0, validation_alias="HTTP_TIMEOUT_SECONDS")
     http_retry_attempts: int = Field(default=3, validation_alias="HTTP_RETRY_ATTEMPTS")
 
+    agent_default_llm_enabled: bool = Field(
+        default=True,
+        validation_alias="AGENT_DEFAULT_LLM_ENABLED",
+    )
+    agent_default_llm_provider: str = Field(
+        default="openai_compatible",
+        validation_alias="AGENT_DEFAULT_LLM_PROVIDER",
+    )
+    agent_default_llm_model: str = Field(
+        default="qwen2.5-32b",
+        validation_alias="AGENT_DEFAULT_LLM_MODEL",
+    )
+    agent_default_llm_api_key: str = Field(
+        default="",
+        validation_alias="AGENT_DEFAULT_LLM_API_KEY",
+    )
+    agent_default_llm_base_url: str = Field(
+        default="https://32b.qwen.rag8.cn/v1",
+        validation_alias="AGENT_DEFAULT_LLM_BASE_URL",
+    )
+    agent_default_llm_api_path: str = Field(
+        default="/chat/completions",
+        validation_alias="AGENT_DEFAULT_LLM_API_PATH",
+    )
+    agent_default_llm_temperature: float = Field(
+        default=0.3,
+        validation_alias="AGENT_DEFAULT_LLM_TEMPERATURE",
+    )
+    agent_default_llm_max_tokens: int = Field(
+        default=500,
+        validation_alias="AGENT_DEFAULT_LLM_MAX_TOKENS",
+    )
+    agent_default_llm_timeout_seconds: float = Field(
+        default=18.0,
+        validation_alias="AGENT_DEFAULT_LLM_TIMEOUT_SECONDS",
+    )
+
+    agent_memory_backend: str = Field(
+        default="local",
+        validation_alias="AGENT_MEMORY_BACKEND",
+    )
+    openviking_base_url: str = Field(
+        default="http://openviking:1933",
+        validation_alias="OPENVIKING_BASE_URL",
+    )
+    openviking_api_key: str = Field(
+        default="",
+        validation_alias="OPENVIKING_API_KEY",
+    )
+    openviking_agent_id: str = Field(
+        default="prism-gateway-api",
+        validation_alias="OPENVIKING_AGENT_ID",
+    )
+    openviking_timeout_seconds: float = Field(
+        default=6.0,
+        validation_alias="OPENVIKING_TIMEOUT_SECONDS",
+    )
+    openviking_retry_attempts: int = Field(
+        default=2,
+        validation_alias="OPENVIKING_RETRY_ATTEMPTS",
+    )
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

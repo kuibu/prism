@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-from hashlib import sha256
 from typing import Any
 from uuid import uuid4
 
@@ -9,6 +8,7 @@ from pydantic import ValidationError
 
 from app.agent.assistant_models import (
     AgentKind,
+    AgentLLMConfig,
     AgentMemoryAppendResult,
     AgentMemoryEntry,
     AgentProfile,
@@ -23,6 +23,11 @@ from app.agent.assistant_models import (
     SecretarySuggestionRecord,
     SecretarySuggestionStatus,
     now_utc,
+)
+from app.agent.memory_backends import (
+    AgentMemoryBackend,
+    AgentMemoryBackendError,
+    OPADocumentMemoryBackend,
 )
 from app.policy.opa_client import OPAClient, OPAClientError, OPANotFoundError
 
@@ -50,6 +55,8 @@ class OPAAgentStore:
         *,
         opa_client: OPAClient,
         opa_data_root: str,
+        default_llm_config: AgentLLMConfig | None = None,
+        memory_backend: AgentMemoryBackend | None = None,
         max_memories_per_agent: int = 2000,
         max_suggestions_per_user: int = 2000,
         max_insights_per_user: int = 4000,
@@ -57,13 +64,24 @@ class OPAAgentStore:
         root = opa_data_root.rstrip("/")
         self._opa = opa_client
         self._agent_registry_path = f"{root}/agent_registry"
-        self._memory_registry_path = f"{root}/agent_memory"
         self._mode_registry_path = f"{root}/agent_secretary_modes"
         self._suggestion_registry_path = f"{root}/agent_secretary_suggestions"
         self._insight_registry_path = f"{root}/agent_secretary_insights"
-        self._max_memories_per_agent = max(100, max_memories_per_agent)
         self._max_suggestions_per_user = max(100, max_suggestions_per_user)
         self._max_insights_per_user = max(200, max_insights_per_user)
+        self._default_llm_config = (
+            default_llm_config.model_copy(deep=True) if default_llm_config is not None else None
+        )
+        self._memory_backend: AgentMemoryBackend = memory_backend or OPADocumentMemoryBackend(
+            opa_client=opa_client,
+            opa_data_root=opa_data_root,
+            max_memories_per_agent=max_memories_per_agent,
+        )
+
+    def _clone_default_llm(self) -> AgentLLMConfig | None:
+        if self._default_llm_config is None:
+            return None
+        return self._default_llm_config.model_copy(deep=True)
 
     async def _read_json_document(self, path: str) -> dict[str, Any]:
         try:
@@ -87,12 +105,6 @@ class OPAAgentStore:
 
     async def _save_agent_registry(self, payload: dict[str, Any]) -> None:
         await self._write_json_document(self._agent_registry_path, payload)
-
-    async def _load_memory_registry(self) -> dict[str, Any]:
-        return await self._read_json_document(self._memory_registry_path)
-
-    async def _save_memory_registry(self, payload: dict[str, Any]) -> None:
-        await self._write_json_document(self._memory_registry_path, payload)
 
     async def _load_mode_registry(self) -> dict[str, Any]:
         return await self._read_json_document(self._mode_registry_path)
@@ -197,6 +209,7 @@ class OPAAgentStore:
             skill_ids=["secretary.daily_digest", "specialist.todo_extractor"],
             room_ids=[],
             auto_collect_enabled=True,
+            llm=self._clone_default_llm(),
             metadata={"auto_bootstrap": True},
         )
         return await self.upsert_agent(user_id, default_request)
@@ -239,6 +252,9 @@ class OPAAgentStore:
                 created_at = now
 
         parent_policy_mode = self._normalize_parent_policy_mode(request.parent_policy_mode)
+        llm_config = request.llm
+        if llm_config is None:
+            llm_config = self._clone_default_llm()
         manager_agent_id: str | None = None
         if request.kind == AgentKind.SECRETARY:
             manager_agent_id = None
@@ -278,7 +294,7 @@ class OPAAgentStore:
             auto_collect_enabled=request.auto_collect_enabled,
             manager_agent_id=manager_agent_id,
             parent_policy_mode=parent_policy_mode,
-            llm=request.llm,
+            llm=llm_config,
             status=AgentStatus.ACTIVE,
             created_at=created_at,
             updated_at=now,
@@ -357,48 +373,14 @@ class OPAAgentStore:
         agent_id: str,
         entries: list[AgentMemoryEntry],
     ) -> AgentMemoryAppendResult:
-        memory_registry = await self._load_memory_registry()
-        user_bucket_raw = memory_registry.get(user_id)
-        if not isinstance(user_bucket_raw, dict):
-            user_bucket_raw = {}
-
-        existing_rows = user_bucket_raw.get(agent_id)
-        if not isinstance(existing_rows, list):
-            existing_rows = []
-
-        normalized_existing: list[AgentMemoryEntry] = []
-        seen_source_ids: set[str] = set()
-        for raw in existing_rows:
-            if not isinstance(raw, dict):
-                continue
-            try:
-                parsed = AgentMemoryEntry.model_validate(raw)
-            except ValidationError:
-                continue
-            normalized_existing.append(parsed)
-            seen_source_ids.add(parsed.source_id)
-
-        stored_count = 0
-        skipped_count = 0
-        merged = list(normalized_existing)
-
-        for entry in entries:
-            if entry.source_id in seen_source_ids:
-                skipped_count += 1
-                continue
-            merged.append(entry)
-            seen_source_ids.add(entry.source_id)
-            stored_count += 1
-
-        merged.sort(key=lambda item: item.ts)
-        if len(merged) > self._max_memories_per_agent:
-            merged = merged[-self._max_memories_per_agent :]
-
-        user_bucket_raw[agent_id] = [row.model_dump(mode="json") for row in merged]
-        memory_registry[user_id] = user_bucket_raw
-        await self._save_memory_registry(memory_registry)
-
-        return AgentMemoryAppendResult(stored_count=stored_count, skipped_count=skipped_count)
+        try:
+            return await self._memory_backend.append_memory_entries(
+                user_id=user_id,
+                agent_id=agent_id,
+                entries=entries,
+            )
+        except AgentMemoryBackendError as exc:
+            raise AgentStoreError(str(exc)) from exc
 
     async def create_memory_entry(
         self,
@@ -414,60 +396,33 @@ class OPAAgentStore:
         importance: float,
         metadata: dict[str, Any] | None,
     ) -> AgentMemoryEntry:
-        content_clean = content.strip()
-        if content_clean == "":
-            raise AgentStoreError("empty_memory_content")
-
-        source_id_clean = source_id.strip()
-        if source_id_clean == "":
-            source_id_clean = sha256(
-                f"{user_id}:{agent_id}:{source_type.value}:{content_clean}".encode()
-            ).hexdigest()
-
-        return AgentMemoryEntry(
-            memory_id=str(uuid4()),
-            user_id=user_id,
-            agent_id=agent_id,
-            source_type=source_type,
-            source_id=source_id_clean,
-            room_id=room_id,
-            sender_id=sender_id,
-            content=content_clean,
-            tags=[item.strip() for item in (tags or []) if item.strip() != ""],
-            importance=importance,
-            ts=now_utc(),
-            metadata=metadata or {},
-        )
+        try:
+            return await self._memory_backend.create_memory_entry(
+                user_id=user_id,
+                agent_id=agent_id,
+                source_type=source_type,
+                source_id=source_id,
+                content=content,
+                room_id=room_id,
+                sender_id=sender_id,
+                tags=tags,
+                importance=importance,
+                metadata=metadata,
+            )
+        except AgentMemoryBackendError as exc:
+            raise AgentStoreError(str(exc)) from exc
 
     async def list_memory_entries(
         self, *, user_id: str, agent_id: str, limit: int = 100
     ) -> list[AgentMemoryEntry]:
-        memory_registry = await self._load_memory_registry()
-        user_bucket = memory_registry.get(user_id)
-        if not isinstance(user_bucket, dict):
-            return []
-
-        rows = user_bucket.get(agent_id)
-        if not isinstance(rows, list):
-            return []
-
-        parsed: list[AgentMemoryEntry] = []
-        for raw in rows:
-            if not isinstance(raw, dict):
-                continue
-            try:
-                parsed.append(AgentMemoryEntry.model_validate(raw))
-            except ValidationError:
-                continue
-
-        parsed.sort(key=lambda item: item.ts, reverse=True)
-        return parsed[: max(1, limit)]
-
-    @staticmethod
-    def _tokenize(value: str) -> list[str]:
-        return [
-            token.lower() for token in re.findall(r"[A-Za-z0-9_\u4e00-\u9fff]+", value) if token
-        ]
+        try:
+            return await self._memory_backend.list_memory_entries(
+                user_id=user_id,
+                agent_id=agent_id,
+                limit=limit,
+            )
+        except AgentMemoryBackendError as exc:
+            raise AgentStoreError(str(exc)) from exc
 
     async def search_memory_entries(
         self,
@@ -477,29 +432,15 @@ class OPAAgentStore:
         query: str,
         limit: int,
     ) -> list[AgentMemoryEntry]:
-        entries = await self.list_memory_entries(user_id=user_id, agent_id=agent_id, limit=600)
-        query_text = query.strip()
-        if query_text == "":
-            return entries[:limit]
-
-        query_tokens = self._tokenize(query_text)
-        query_chars = {char for char in query_text.lower() if not char.isspace()}
-
-        scored: list[tuple[float, AgentMemoryEntry]] = []
-        for idx, entry in enumerate(entries):
-            body = entry.content.lower()
-            overlap = sum(1 for token in query_tokens if token in body)
-            char_overlap = len(
-                query_chars.intersection({char for char in body if not char.isspace()})
+        try:
+            return await self._memory_backend.search_memory_entries(
+                user_id=user_id,
+                agent_id=agent_id,
+                query=query,
+                limit=limit,
             )
-            if overlap == 0 and char_overlap == 0:
-                continue
-            recency_bonus = max(0.0, 0.3 - (0.005 * idx))
-            score = float(overlap) + (0.04 * float(char_overlap)) + recency_bonus + entry.importance
-            scored.append((score, entry))
-
-        scored.sort(key=lambda item: item[0], reverse=True)
-        return [entry for _, entry in scored[:limit]]
+        except AgentMemoryBackendError as exc:
+            raise AgentStoreError(str(exc)) from exc
 
     @staticmethod
     def _mode_key(secretary_agent_id: str, room_id: str) -> str:
