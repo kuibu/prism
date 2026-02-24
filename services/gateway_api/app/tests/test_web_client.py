@@ -28,6 +28,9 @@ def test_web_client_contains_chat_controls() -> None:
     assert '@click="uploadFile"' in response.text
     assert '@click="downloadMessageFile(msg)"' in response.text
     assert '@click="acceptInviteFromInbox"' in response.text
+    assert 'name="bridge"' in response.text
+    assert '@click="runBridgeInboundRelay"' in response.text
+    assert '@click="runBridgeOutboundPreview"' in response.text
 
 
 def test_web_client_persists_session_and_history() -> None:
@@ -41,3 +44,5 @@ def test_web_client_persists_session_and_history() -> None:
     assert "HISTORY_KEY_PREFIX" in js_source
     assert "saveHistoryCache" in js_source
     assert "restoreHistoryCache" in js_source
+    assert "loadBridgeConnectors" in js_source
+    assert "createBridgeLink" in js_source

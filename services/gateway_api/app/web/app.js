@@ -11,6 +11,7 @@
       tab_invite: "邀请好友",
       tab_inbox: "消息中心",
       tab_agent: "创建 Agent",
+      tab_bridge: "桥接测试",
       tab_chat: "聊天页面",
       tab_audit: "审计页面",
       status_logged_out: "未登录（建议打开两个窗口分别登录两个用户进行联调）。",
@@ -51,6 +52,17 @@
       label_run_query: "技能输入",
       label_run_send_room: "将结果发回房间",
       label_message: "消息内容",
+      label_bridge_platform: "桥接平台",
+      label_bridge_display_name: "桥接名称",
+      label_bridge_direction: "桥接方向",
+      label_bridge_connector: "桥接连接器",
+      label_bridge_external_room_id: "外部会话 ID",
+      label_bridge_external_room_name: "外部会话名称",
+      label_bridge_relay_prefix: "转发前缀",
+      label_bridge_sender: "外部发送者",
+      label_bridge_message: "外部消息内容",
+      label_bridge_preview_limit: "预览条数",
+      label_bridge_secret_ref: "密钥引用（可选）",
       label_actor_id: "Actor ID",
       label_action_type: "动作类型",
       label_member_count: "房间成员",
@@ -82,6 +94,14 @@
       placeholder_memory_note: "手动记录一条重要记忆",
       placeholder_run_query: "例如：请提取今天待办并生成优先级",
       placeholder_message: "输入消息后点击发送，消息会自动实时刷新",
+      placeholder_bridge_display_name: "例如：Telegram 产品群桥",
+      placeholder_bridge_connector: "先创建连接器或从下拉选择",
+      placeholder_bridge_external_room_id: "例如：telegram_group_1001",
+      placeholder_bridge_external_room_name: "例如：产品讨论群",
+      placeholder_bridge_relay_prefix: "例如：[TelegramBridge]",
+      placeholder_bridge_sender: "例如：alice",
+      placeholder_bridge_message: "例如：请同步今天的发布状态",
+      placeholder_bridge_secret_ref: "例如：telegram_bot_token",
       placeholder_actor: "agent.summary.demo",
       placeholder_action: "agent_summarize",
       hint_invite_auto: "可直接输入用户名（如 alice），系统会自动补全为 @alice:localhost",
@@ -128,6 +148,17 @@
       btn_query_audit: "查询审计",
       btn_verify_audit: "验证审计链",
       btn_run_demo: "一键双人联调演示",
+      btn_load_bridge_platforms: "加载平台能力",
+      btn_load_bridge_connectors: "加载连接器",
+      btn_create_bridge_connector: "创建连接器",
+      btn_disable_bridge_connector: "禁用",
+      btn_enable_bridge_connector: "启用",
+      btn_delete_bridge_connector: "删除连接器",
+      btn_load_bridge_links: "加载桥接映射",
+      btn_create_bridge_link: "创建桥接映射",
+      btn_delete_bridge_link: "删除映射",
+      btn_bridge_inbound_relay: "模拟外部消息入站",
+      btn_bridge_outbound_preview: "预览出站消息",
       btn_refresh_members: "刷新成员",
       btn_save_secretary_mode: "保存秘书模式",
       btn_refresh_secretary_panel: "刷新秘书面板",
@@ -143,12 +174,23 @@
       col_agent_name: "名称",
       col_agent_purpose: "Purpose",
       col_agent_manager: "管理秘书",
+      col_bridge_connector: "连接器",
+      col_bridge_platform: "平台",
+      col_bridge_direction: "方向",
+      col_bridge_enabled: "启用状态",
+      col_bridge_room_mapping: "房间映射",
+      col_bridge_link_id: "映射 ID",
+      col_bridge_external_room: "外部会话",
+      col_bridge_relay_preview: "出站预览",
       dialog_inbox_title: "消息中心详情",
       section_secretary: "数字秘书 Agent",
       section_llm_config: "大模型接入配置",
       section_specialists: "专用 Agent",
       section_memory: "Agent 记忆",
       section_skill_run: "技能运行与兼容能力",
+      section_bridge_connectors: "Bridge 连接器",
+      section_bridge_links: "Bridge 房间映射",
+      section_bridge_relay: "Bridge 消息中继测试",
       section_secretary_assist: "数字秘书联动",
       section_secretary_suggestions: "半自动回复建议",
       section_secretary_insights: "秘书分析侧栏",
@@ -161,6 +203,9 @@
       inbox_file_line: "{room} 有新文件：{sender} 上传了「{preview}」",
       inbox_join_hint: "你已加入房间 {room}",
       empty_chat: "暂无消息，系统正在自动同步。",
+      empty_bridge_connectors: "暂无桥接连接器。",
+      empty_bridge_links: "暂无桥接映射。",
+      empty_bridge_preview: "暂无出站预览。",
       empty_secretary_suggestions: "当前没有待处理建议。",
       empty_secretary_insights: "当前没有秘书分析记录。",
       self_name: "我",
@@ -170,6 +215,9 @@
       llm_provider_openrouter: "OpenRouter",
       llm_provider_qwen: "千问（Qwen）",
       llm_provider_compatible: "兼容 OpenAI 接口",
+      bridge_direction_inbound: "仅入站",
+      bridge_direction_outbound: "仅出站",
+      bridge_direction_bidirectional: "双向",
       channel_realtime_analysis: "实时分析",
       channel_deep_thinking: "深度思考",
       channel_implied_meaning: "言外之意",
@@ -191,6 +239,17 @@
       msg_memory_collected: "消息采集完成。",
       msg_memory_loaded: "记忆加载完成。",
       msg_skill_done: "技能运行完成。",
+      msg_bridge_platforms_loaded: "桥接平台能力已加载。",
+      msg_bridge_connectors_loaded: "桥接连接器已刷新。",
+      msg_bridge_connector_created: "桥接连接器已创建。",
+      msg_bridge_connector_updated: "桥接连接器已更新。",
+      msg_bridge_connector_deleted: "桥接连接器已删除。",
+      msg_bridge_connector_selected: "桥接连接器已选中。",
+      msg_bridge_links_loaded: "桥接映射已刷新。",
+      msg_bridge_link_created: "桥接映射已创建。",
+      msg_bridge_link_deleted: "桥接映射已删除。",
+      msg_bridge_inbound_ok: "外部消息已模拟入站到 Matrix。",
+      msg_bridge_outbound_preview_ok: "已生成出站消息预览。",
       msg_secretary_mode_saved: "秘书模式已保存。",
       msg_secretary_generated: "秘书建议已生成。",
       msg_secretary_prefilled: "已将秘书建议填入快捷发送区，可直接发送或继续编辑。",
@@ -210,6 +269,11 @@
       err_need_specialist_name: "请填写专用Agent名称与Purpose。",
       err_need_memory_agent: "请先选择记忆所属Agent。",
       err_need_memory_note: "请先输入记忆笔记内容。",
+      err_need_bridge_connector: "请先创建或选择一个桥接连接器。",
+      err_need_bridge_display_name: "请填写桥接连接器名称。",
+      err_need_bridge_external_room_id: "请填写外部会话 ID。",
+      err_need_bridge_message: "请填写外部消息内容。",
+      err_need_bridge_sender: "请填写外部发送者。",
       err_need_skill_run: "请填写要运行的Agent ID。",
       err_need_grant: "请填写授权 ID。",
       err_need_file: "请先选择文件。",
@@ -236,6 +300,7 @@
       tab_invite: "Invite Friend",
       tab_inbox: "Message Center",
       tab_agent: "Create Agent",
+      tab_bridge: "Bridge Test",
       tab_chat: "Chat",
       tab_audit: "Audit",
       status_logged_out: "Logged out. Use two windows with two users for end-to-end chat tests.",
@@ -276,6 +341,17 @@
       label_run_query: "Skill Input",
       label_run_send_room: "Send result to room",
       label_message: "Message",
+      label_bridge_platform: "Bridge Platform",
+      label_bridge_display_name: "Bridge Name",
+      label_bridge_direction: "Direction",
+      label_bridge_connector: "Bridge Connector",
+      label_bridge_external_room_id: "External Room ID",
+      label_bridge_external_room_name: "External Room Name",
+      label_bridge_relay_prefix: "Relay Prefix",
+      label_bridge_sender: "External Sender",
+      label_bridge_message: "External Message",
+      label_bridge_preview_limit: "Preview Limit",
+      label_bridge_secret_ref: "Secret Ref (optional)",
       label_actor_id: "Actor ID",
       label_action_type: "Action Type",
       label_member_count: "Members",
@@ -307,6 +383,14 @@
       placeholder_memory_note: "Record one important memory note",
       placeholder_run_query: "e.g. extract todos and rank by priority",
       placeholder_message: "Type and send. New messages appear automatically.",
+      placeholder_bridge_display_name: "e.g. Telegram Product Bridge",
+      placeholder_bridge_connector: "Create connector first or choose one",
+      placeholder_bridge_external_room_id: "e.g. telegram_group_1001",
+      placeholder_bridge_external_room_name: "e.g. Product Discussion Group",
+      placeholder_bridge_relay_prefix: "e.g. [TelegramBridge]",
+      placeholder_bridge_sender: "e.g. alice",
+      placeholder_bridge_message: "e.g. Please sync today's release status",
+      placeholder_bridge_secret_ref: "e.g. telegram_bot_token",
       placeholder_actor: "agent.summary.demo",
       placeholder_action: "agent_summarize",
       hint_invite_auto: "You can type only username (alice). It auto-completes to @alice:localhost",
@@ -353,6 +437,17 @@
       btn_query_audit: "Query Audit",
       btn_verify_audit: "Verify Chain",
       btn_run_demo: "Run Demo Flow",
+      btn_load_bridge_platforms: "Load Platform Capabilities",
+      btn_load_bridge_connectors: "Load Connectors",
+      btn_create_bridge_connector: "Create Connector",
+      btn_disable_bridge_connector: "Disable",
+      btn_enable_bridge_connector: "Enable",
+      btn_delete_bridge_connector: "Delete Connector",
+      btn_load_bridge_links: "Load Mappings",
+      btn_create_bridge_link: "Create Mapping",
+      btn_delete_bridge_link: "Delete Mapping",
+      btn_bridge_inbound_relay: "Simulate Inbound Relay",
+      btn_bridge_outbound_preview: "Preview Outbound Relay",
       btn_refresh_members: "Refresh Members",
       btn_save_secretary_mode: "Save Mode",
       btn_refresh_secretary_panel: "Refresh Secretary Panel",
@@ -368,12 +463,23 @@
       col_agent_name: "Name",
       col_agent_purpose: "Purpose",
       col_agent_manager: "Manager Secretary",
+      col_bridge_connector: "Connector",
+      col_bridge_platform: "Platform",
+      col_bridge_direction: "Direction",
+      col_bridge_enabled: "Enabled",
+      col_bridge_room_mapping: "Room Mapping",
+      col_bridge_link_id: "Mapping ID",
+      col_bridge_external_room: "External Room",
+      col_bridge_relay_preview: "Outbound Preview",
       dialog_inbox_title: "Message Center Details",
       section_secretary: "Digital Secretary Agent",
       section_llm_config: "LLM Integration Config",
       section_specialists: "Specialist Agents",
       section_memory: "Agent Memory",
       section_skill_run: "Skill Runtime and Legacy Controls",
+      section_bridge_connectors: "Bridge Connectors",
+      section_bridge_links: "Bridge Room Mappings",
+      section_bridge_relay: "Bridge Relay Test",
       section_secretary_assist: "Secretary Assistant Linkage",
       section_secretary_suggestions: "Semi-Auto Suggestions",
       section_secretary_insights: "Secretary Insight Sidebar",
@@ -386,6 +492,9 @@
       inbox_file_line: "{room} has a new file: {sender} uploaded \"{preview}\"",
       inbox_join_hint: "You joined room {room}",
       empty_chat: "No messages yet. Auto-sync is running.",
+      empty_bridge_connectors: "No bridge connectors yet.",
+      empty_bridge_links: "No bridge mappings yet.",
+      empty_bridge_preview: "No outbound preview yet.",
       empty_secretary_suggestions: "No pending suggestions.",
       empty_secretary_insights: "No secretary insights yet.",
       self_name: "Me",
@@ -395,6 +504,9 @@
       llm_provider_openrouter: "OpenRouter",
       llm_provider_qwen: "Qwen",
       llm_provider_compatible: "OpenAI-Compatible",
+      bridge_direction_inbound: "Inbound only",
+      bridge_direction_outbound: "Outbound only",
+      bridge_direction_bidirectional: "Bidirectional",
       channel_realtime_analysis: "Realtime Analysis",
       channel_deep_thinking: "Deep Thinking",
       channel_implied_meaning: "Implied Meaning",
@@ -416,6 +528,17 @@
       msg_memory_collected: "Memory collection completed.",
       msg_memory_loaded: "Memory loaded.",
       msg_skill_done: "Skill run completed.",
+      msg_bridge_platforms_loaded: "Bridge platform capabilities loaded.",
+      msg_bridge_connectors_loaded: "Bridge connectors refreshed.",
+      msg_bridge_connector_created: "Bridge connector created.",
+      msg_bridge_connector_updated: "Bridge connector updated.",
+      msg_bridge_connector_deleted: "Bridge connector deleted.",
+      msg_bridge_connector_selected: "Bridge connector selected.",
+      msg_bridge_links_loaded: "Bridge mappings refreshed.",
+      msg_bridge_link_created: "Bridge mapping created.",
+      msg_bridge_link_deleted: "Bridge mapping deleted.",
+      msg_bridge_inbound_ok: "Inbound bridge relay simulated to Matrix.",
+      msg_bridge_outbound_preview_ok: "Outbound bridge preview generated.",
       msg_secretary_mode_saved: "Secretary mode saved.",
       msg_secretary_generated: "Secretary suggestion generated.",
       msg_secretary_prefilled: "Suggestion copied to quick composer. Send directly or edit it.",
@@ -435,6 +558,11 @@
       err_need_specialist_name: "Specialist name and purpose are required.",
       err_need_memory_agent: "Please choose an agent for memory actions.",
       err_need_memory_note: "Please enter a memory note.",
+      err_need_bridge_connector: "Create or select a bridge connector first.",
+      err_need_bridge_display_name: "Bridge connector display name is required.",
+      err_need_bridge_external_room_id: "External room ID is required.",
+      err_need_bridge_message: "External message is required.",
+      err_need_bridge_sender: "External sender is required.",
       err_need_skill_run: "Agent ID is required to run skill.",
       err_need_grant: "Grant ID is required.",
       err_need_file: "Please pick a file first.",
@@ -494,6 +622,7 @@
           { id: "invite", label: "tab_invite" },
           { id: "inbox", label: "tab_inbox" },
           { id: "agent", label: "tab_agent" },
+          { id: "bridge", label: "tab_bridge" },
           { id: "chat", label: "tab_chat" },
           { id: "audit", label: "tab_audit" },
         ],
@@ -541,6 +670,18 @@
           skillSendToRoom: false,
           secretaryRoomMode: "off",
           messageBody: "",
+          bridgePlatform: "telegram",
+          bridgeDisplayName: "",
+          bridgeDirection: "bidirectional",
+          bridgeConnectorId: "",
+          bridgeExternalRoomId: "",
+          bridgeExternalRoomName: "",
+          bridgeRelayPrefix: "[Bridge]",
+          bridgeExternalSender: "",
+          bridgeMessage: "",
+          bridgePreviewLimit: 10,
+          bridgeSecretRef: "",
+          bridgeEnabled: true,
           auditActorId: "",
           auditActionType: "",
         },
@@ -555,9 +696,13 @@
         inviteOutput: {},
         agentOutput: {},
         assistantPanelOutput: {},
+        bridgeOutput: {},
         auditOutput: {},
         agentProfiles: [],
         skillCatalog: [],
+        bridgePlatforms: [],
+        bridgeConnectors: [],
+        bridgeLinks: [],
         memoryHits: [],
         secretaryModes: {},
         secretarySuggestions: [],
@@ -630,6 +775,37 @@
         }
         return [];
       },
+      bridgePlatformOptions() {
+        if (Array.isArray(this.bridgePlatforms) && this.bridgePlatforms.length > 0) {
+          return this.bridgePlatforms.map((item) => ({
+            value: item.platform,
+            label: item.display_name || item.platform,
+            notes: item.notes || "",
+          }));
+        }
+        return [
+          { value: "slack", label: "Slack", notes: "" },
+          { value: "telegram", label: "Telegram", notes: "" },
+          { value: "discord", label: "Discord", notes: "" },
+          { value: "wecom", label: "WeCom", notes: "" },
+          { value: "whatsapp", label: "WhatsApp", notes: "" },
+          { value: "signal", label: "Signal", notes: "" },
+          { value: "custom", label: "Custom", notes: "" },
+        ];
+      },
+      bridgeDirectionOptions() {
+        return [
+          { value: "inbound", label: this.tt("bridge_direction_inbound") },
+          { value: "outbound", label: this.tt("bridge_direction_outbound") },
+          { value: "bidirectional", label: this.tt("bridge_direction_bidirectional") },
+        ];
+      },
+      bridgeConnectorOptions() {
+        return (this.bridgeConnectors || []).map((item) => ({
+          value: item.connector_id,
+          label: `${item.display_name || item.connector_id} (${item.platform})`,
+        }));
+      },
       secretaryAgent() {
         const row = this.agentProfiles.find((item) => item && item.kind === "secretary");
         return row || null;
@@ -675,6 +851,9 @@
         this.syncMessages({ silent: true, timeoutMs: 0, showErrors: false }).catch(() => undefined);
         this.loadSkillCatalog({ silent: true }).catch(() => undefined);
         this.loadAgents({ silent: true }).catch(() => undefined);
+        this.loadBridgePlatforms({ silent: true }).catch(() => undefined);
+        this.loadBridgeConnectors({ silent: true }).catch(() => undefined);
+        this.loadBridgeLinks({ silent: true }).catch(() => undefined);
         this.refreshSecretaryPanel({ silent: true }).catch(() => undefined);
       }
     },
@@ -737,6 +916,11 @@
         if (this.activeTab === "agent" && this.session) {
           this.loadSkillCatalog({ silent: true }).catch(() => undefined);
           this.loadAgents({ silent: true }).catch(() => undefined);
+        }
+        if (this.activeTab === "bridge" && this.session) {
+          this.loadBridgePlatforms({ silent: true }).catch(() => undefined);
+          this.loadBridgeConnectors({ silent: true }).catch(() => undefined);
+          this.loadBridgeLinks({ silent: true }).catch(() => undefined);
         }
       },
       switchTab(tabId) {
@@ -975,11 +1159,19 @@
         this.roomDetails = {};
         this.inboxItems = [];
         this.inboxSeen = {};
+        this.bridgeConnectors = [];
+        this.bridgeLinks = [];
+        this.bridgeOutput = {};
         this.secretaryProcessedByRoom = {};
         this.forms.activeRoomId = "";
         this.forms.secretaryRoomMode = "off";
         this.forms.joinRoomId = "";
         this.forms.messageBody = "";
+        this.forms.bridgeConnectorId = "";
+        this.forms.bridgeExternalRoomId = "";
+        this.forms.bridgeExternalRoomName = "";
+        this.forms.bridgeExternalSender = "";
+        this.forms.bridgeMessage = "";
         this.selectedFile = null;
       },
       normalizeUsername(raw) {
@@ -1311,6 +1503,9 @@
         this.startAutoSync();
         this.loadSkillCatalog({ silent: true }).catch(() => undefined);
         this.loadAgents({ silent: true }).catch(() => undefined);
+        this.loadBridgePlatforms({ silent: true }).catch(() => undefined);
+        this.loadBridgeConnectors({ silent: true }).catch(() => undefined);
+        this.loadBridgeLinks({ silent: true }).catch(() => undefined);
       },
       startAutoSync() {
         this.stopAutoSync();
@@ -2710,6 +2905,306 @@
           this.agentOutput = payload;
           this.notify("success", `${this.tt("btn_summarize_send")} OK`);
           await this.syncMessages({ silent: true, timeoutMs: 0, showErrors: false });
+        } catch (error) {
+          this.notify("error", this.normalizeError(error));
+          throw error;
+        }
+      },
+      bridgeDirectionLabel(direction) {
+        if (direction === "inbound") {
+          return this.tt("bridge_direction_inbound");
+        }
+        if (direction === "outbound") {
+          return this.tt("bridge_direction_outbound");
+        }
+        return this.tt("bridge_direction_bidirectional");
+      },
+      selectBridgeConnector(connector) {
+        const connectorId =
+          typeof connector === "string"
+            ? connector.trim()
+            : connector && typeof connector.connector_id === "string"
+              ? connector.connector_id.trim()
+              : "";
+        if (!connectorId) {
+          this.forms.bridgeConnectorId = "";
+          return;
+        }
+        this.forms.bridgeConnectorId = connectorId;
+        this.notify("info", this.tt("msg_bridge_connector_selected"));
+        this.loadBridgeLinks({ silent: true }).catch(() => undefined);
+      },
+      async loadBridgePlatforms(options = {}) {
+        const silent = Boolean(options.silent);
+        try {
+          this.ensureSession();
+          const payload = await this.request("/bridges/platforms", { method: "GET" });
+          this.bridgePlatforms = Array.isArray(payload?.platforms) ? payload.platforms : [];
+          const known = new Set(this.bridgePlatformOptions.map((item) => item.value));
+          if (!known.has(this.forms.bridgePlatform)) {
+            this.forms.bridgePlatform = this.bridgePlatformOptions[0]?.value || "telegram";
+          }
+          if (!silent) {
+            this.notify("success", this.tt("msg_bridge_platforms_loaded"));
+          }
+          return this.bridgePlatforms;
+        } catch (error) {
+          if (!silent) {
+            this.notify("error", this.normalizeError(error));
+          }
+          throw error;
+        }
+      },
+      async loadBridgeConnectors(options = {}) {
+        const silent = Boolean(options.silent);
+        try {
+          this.ensureSession();
+          const payload = await this.request("/bridges/connectors", { method: "GET" });
+          this.bridgeConnectors = Array.isArray(payload?.connectors) ? payload.connectors : [];
+          const currentConnectorId = this.forms.bridgeConnectorId.trim();
+          const exists = this.bridgeConnectors.some((item) => item.connector_id === currentConnectorId);
+          if (!exists) {
+            this.forms.bridgeConnectorId = this.bridgeConnectors[0]?.connector_id || "";
+          }
+          if (!silent) {
+            this.notify("success", this.tt("msg_bridge_connectors_loaded"));
+          }
+          return this.bridgeConnectors;
+        } catch (error) {
+          if (!silent) {
+            this.notify("error", this.normalizeError(error));
+          }
+          throw error;
+        }
+      },
+      async createBridgeConnector() {
+        try {
+          this.ensureSession();
+          const displayName = this.forms.bridgeDisplayName.trim();
+          if (!displayName) {
+            throw new Error(this.tt("err_need_bridge_display_name"));
+          }
+          const secretRef = this.forms.bridgeSecretRef.trim();
+          const payload = await this.request("/bridges/connectors", {
+            method: "POST",
+            body: {
+              platform: this.forms.bridgePlatform || "telegram",
+              display_name: displayName,
+              direction: this.forms.bridgeDirection || "bidirectional",
+              enabled: Boolean(this.forms.bridgeEnabled),
+              secret_refs: secretRef ? [secretRef] : [],
+              config: {},
+              metadata: {},
+            },
+          });
+          this.bridgeOutput = payload;
+          if (payload?.connector_id) {
+            this.forms.bridgeConnectorId = payload.connector_id;
+          }
+          this.notify("success", this.tt("msg_bridge_connector_created"));
+          await this.loadBridgeConnectors({ silent: true });
+          await this.loadBridgeLinks({ silent: true });
+          return payload;
+        } catch (error) {
+          this.notify("error", this.normalizeError(error));
+          throw error;
+        }
+      },
+      async toggleBridgeConnector(row, enabled) {
+        try {
+          this.ensureSession();
+          const connectorId = row && typeof row.connector_id === "string" ? row.connector_id.trim() : "";
+          if (!connectorId) {
+            throw new Error(this.tt("err_need_bridge_connector"));
+          }
+          const payload = await this.request(`/bridges/connectors/${encodeURIComponent(connectorId)}`, {
+            method: "PATCH",
+            body: { enabled: Boolean(enabled) },
+          });
+          this.bridgeOutput = payload;
+          this.notify("success", this.tt("msg_bridge_connector_updated"));
+          await this.loadBridgeConnectors({ silent: true });
+          return payload;
+        } catch (error) {
+          this.notify("error", this.normalizeError(error));
+          throw error;
+        }
+      },
+      async deleteBridgeConnector(row) {
+        try {
+          this.ensureSession();
+          const connectorId = row && typeof row.connector_id === "string" ? row.connector_id.trim() : "";
+          if (!connectorId) {
+            throw new Error(this.tt("err_need_bridge_connector"));
+          }
+          await this.request(`/bridges/connectors/${encodeURIComponent(connectorId)}`, {
+            method: "DELETE",
+          });
+          if (this.forms.bridgeConnectorId.trim() === connectorId) {
+            this.forms.bridgeConnectorId = "";
+          }
+          this.bridgeOutput = { status: "deleted", connector_id: connectorId };
+          this.notify("success", this.tt("msg_bridge_connector_deleted"));
+          await this.loadBridgeConnectors({ silent: true });
+          await this.loadBridgeLinks({ silent: true });
+        } catch (error) {
+          this.notify("error", this.normalizeError(error));
+          throw error;
+        }
+      },
+      async loadBridgeLinks(options = {}) {
+        const silent = Boolean(options.silent);
+        try {
+          this.ensureSession();
+          const connectorId = this.forms.bridgeConnectorId.trim();
+          const params = new URLSearchParams();
+          if (connectorId) {
+            params.set("connector_id", connectorId);
+          }
+          const queryString = params.toString();
+          const path = queryString ? `/bridges/links?${queryString}` : "/bridges/links";
+          const payload = await this.request(path, { method: "GET" });
+          this.bridgeLinks = Array.isArray(payload?.links) ? payload.links : [];
+          if (!silent) {
+            this.notify("success", this.tt("msg_bridge_links_loaded"));
+          }
+          return this.bridgeLinks;
+        } catch (error) {
+          if (!silent) {
+            this.notify("error", this.normalizeError(error));
+          }
+          throw error;
+        }
+      },
+      async createBridgeLink() {
+        try {
+          this.ensureSession();
+          const connectorId = this.forms.bridgeConnectorId.trim();
+          const roomId = this.forms.activeRoomId.trim();
+          const externalRoomId = this.forms.bridgeExternalRoomId.trim();
+          if (!connectorId) {
+            throw new Error(this.tt("err_need_bridge_connector"));
+          }
+          if (!roomId) {
+            throw new Error(this.tt("err_need_room"));
+          }
+          if (!externalRoomId) {
+            throw new Error(this.tt("err_need_bridge_external_room_id"));
+          }
+          const payload = await this.request("/bridges/links", {
+            method: "POST",
+            body: {
+              connector_id: connectorId,
+              room_id: roomId,
+              external_room_id: externalRoomId,
+              external_room_name: this.forms.bridgeExternalRoomName.trim() || undefined,
+              relay_prefix: this.forms.bridgeRelayPrefix.trim() || "[Bridge]",
+              enabled: true,
+              metadata: {},
+            },
+          });
+          this.bridgeOutput = payload;
+          this.notify("success", this.tt("msg_bridge_link_created"));
+          await this.loadBridgeLinks({ silent: true });
+          return payload;
+        } catch (error) {
+          this.notify("error", this.normalizeError(error));
+          throw error;
+        }
+      },
+      async deleteBridgeLink(row) {
+        try {
+          this.ensureSession();
+          const linkId = row && typeof row.link_id === "string" ? row.link_id.trim() : "";
+          if (!linkId) {
+            throw new Error("invalid_bridge_link_id");
+          }
+          await this.request(`/bridges/links/${encodeURIComponent(linkId)}`, {
+            method: "DELETE",
+          });
+          this.bridgeOutput = { status: "deleted", link_id: linkId };
+          this.notify("success", this.tt("msg_bridge_link_deleted"));
+          await this.loadBridgeLinks({ silent: true });
+        } catch (error) {
+          this.notify("error", this.normalizeError(error));
+          throw error;
+        }
+      },
+      async runBridgeInboundRelay() {
+        try {
+          this.ensureSession();
+          const connectorId = this.forms.bridgeConnectorId.trim();
+          const externalRoomId = this.forms.bridgeExternalRoomId.trim();
+          const externalSender = this.forms.bridgeExternalSender.trim();
+          const message = this.forms.bridgeMessage.trim();
+          const roomId = this.forms.activeRoomId.trim();
+          if (!connectorId) {
+            throw new Error(this.tt("err_need_bridge_connector"));
+          }
+          if (!externalRoomId) {
+            throw new Error(this.tt("err_need_bridge_external_room_id"));
+          }
+          if (!externalSender) {
+            throw new Error(this.tt("err_need_bridge_sender"));
+          }
+          if (!message) {
+            throw new Error(this.tt("err_need_bridge_message"));
+          }
+          const payload = await this.request("/bridges/relay/inbound", {
+            method: "POST",
+            body: {
+              connector_id: connectorId,
+              external_room_id: externalRoomId,
+              external_sender: externalSender,
+              message,
+              room_id: roomId || undefined,
+            },
+          });
+          this.bridgeOutput = payload;
+          this.notify("success", this.tt("msg_bridge_inbound_ok"));
+          if (payload?.room_id) {
+            this.mergeRoomId(payload.room_id);
+            this.forms.activeRoomId = payload.room_id;
+            this.scheduleHistoryPersist();
+          }
+          this.addInboxItem({
+            id: `system:bridge_inbound:${payload?.event_id || Date.now()}`,
+            type: "system",
+            roomId: payload?.room_id || roomId,
+            time: this.formatNow(),
+            line: typeof payload?.relayed_body === "string" ? payload.relayed_body : this.tt("msg_bridge_inbound_ok"),
+            detail: payload,
+          });
+          await this.syncMessages({ silent: true, timeoutMs: 0, showErrors: false });
+          return payload;
+        } catch (error) {
+          this.notify("error", this.normalizeError(error));
+          throw error;
+        }
+      },
+      async runBridgeOutboundPreview() {
+        try {
+          this.ensureSession();
+          const connectorId = this.forms.bridgeConnectorId.trim();
+          const roomId = this.forms.activeRoomId.trim();
+          if (!connectorId) {
+            throw new Error(this.tt("err_need_bridge_connector"));
+          }
+          if (!roomId) {
+            throw new Error(this.tt("err_need_room"));
+          }
+          const payload = await this.request("/bridges/relay/outbound/preview", {
+            method: "POST",
+            body: {
+              connector_id: connectorId,
+              room_id: roomId,
+              external_room_id: this.forms.bridgeExternalRoomId.trim() || undefined,
+              limit: Math.max(1, Number(this.forms.bridgePreviewLimit || 10)),
+            },
+          });
+          this.bridgeOutput = payload;
+          this.notify("success", this.tt("msg_bridge_outbound_preview_ok"));
+          return payload;
         } catch (error) {
           this.notify("error", this.normalizeError(error));
           throw error;

@@ -474,6 +474,235 @@
                 </el-card>
               </el-tab-pane>
 
+              <el-tab-pane :label="tt('tab_bridge')" name="bridge">
+                <el-card shadow="never" class="page-card">
+                  <el-alert
+                    v-if="!session"
+                    type="warning"
+                    :closable="false"
+                    :title="tt('err_no_session')"
+                  />
+
+                  <el-divider>{{ tt("section_bridge_connectors") }}</el-divider>
+                  <el-form label-position="top" class="form-grid two-col">
+                    <el-form-item :label="tt('label_bridge_platform')">
+                      <el-select v-model="forms.bridgePlatform">
+                        <el-option
+                          v-for="item in bridgePlatformOptions"
+                          :key="item.value"
+                          :label="item.label"
+                          :value="item.value"
+                        />
+                      </el-select>
+                    </el-form-item>
+                    <el-form-item :label="tt('label_bridge_display_name')">
+                      <el-input
+                        v-model.trim="forms.bridgeDisplayName"
+                        :placeholder="tt('placeholder_bridge_display_name')"
+                      />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_bridge_direction')">
+                      <el-select v-model="forms.bridgeDirection">
+                        <el-option
+                          v-for="item in bridgeDirectionOptions"
+                          :key="item.value"
+                          :label="item.label"
+                          :value="item.value"
+                        />
+                      </el-select>
+                    </el-form-item>
+                    <el-form-item :label="tt('label_bridge_secret_ref')">
+                      <el-input
+                        v-model.trim="forms.bridgeSecretRef"
+                        :placeholder="tt('placeholder_bridge_secret_ref')"
+                      />
+                    </el-form-item>
+                  </el-form>
+
+                  <div class="action-row">
+                    <el-button @click="loadBridgePlatforms">{{ tt("btn_load_bridge_platforms") }}</el-button>
+                    <el-button @click="loadBridgeConnectors">{{ tt("btn_load_bridge_connectors") }}</el-button>
+                    <el-button type="primary" @click="createBridgeConnector">
+                      {{ tt("btn_create_bridge_connector") }}
+                    </el-button>
+                  </div>
+
+                  <el-table
+                    :data="bridgeConnectors"
+                    stripe
+                    border
+                    height="220"
+                    @row-click="selectBridgeConnector"
+                  >
+                    <el-table-column prop="connector_id" :label="tt('col_bridge_connector')" min-width="220" />
+                    <el-table-column prop="platform" :label="tt('col_bridge_platform')" width="120" />
+                    <el-table-column :label="tt('col_bridge_direction')" width="140">
+                      <template #default="scope">{{ bridgeDirectionLabel(scope.row.direction) }}</template>
+                    </el-table-column>
+                    <el-table-column :label="tt('col_bridge_enabled')" width="110">
+                      <template #default="scope">
+                        <el-tag :type="scope.row.enabled ? 'success' : 'info'">
+                          {{ scope.row.enabled ? "ON" : "OFF" }}
+                        </el-tag>
+                      </template>
+                    </el-table-column>
+                    <el-table-column :label="tt('col_action')" width="240">
+                      <template #default="scope">
+                        <el-button
+                          v-if="scope.row.enabled"
+                          size="small"
+                          @click.stop="toggleBridgeConnector(scope.row, false)"
+                        >
+                          {{ tt("btn_disable_bridge_connector") }}
+                        </el-button>
+                        <el-button
+                          v-else
+                          size="small"
+                          type="success"
+                          @click.stop="toggleBridgeConnector(scope.row, true)"
+                        >
+                          {{ tt("btn_enable_bridge_connector") }}
+                        </el-button>
+                        <el-button
+                          size="small"
+                          type="danger"
+                          @click.stop="deleteBridgeConnector(scope.row)"
+                        >
+                          {{ tt("btn_delete_bridge_connector") }}
+                        </el-button>
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                  <p v-if="bridgeConnectors.length === 0" class="muted">{{ tt("empty_bridge_connectors") }}</p>
+
+                  <el-divider>{{ tt("section_bridge_links") }}</el-divider>
+                  <el-form label-position="top" class="form-grid two-col">
+                    <el-form-item :label="tt('label_bridge_connector')">
+                      <el-select
+                        v-model="forms.bridgeConnectorId"
+                        filterable
+                        :placeholder="tt('placeholder_bridge_connector')"
+                        @change="selectBridgeConnector"
+                      >
+                        <el-option
+                          v-for="item in bridgeConnectorOptions"
+                          :key="item.value"
+                          :label="item.label"
+                          :value="item.value"
+                        />
+                      </el-select>
+                    </el-form-item>
+                    <el-form-item :label="tt('label_active_room')">
+                      <el-input v-model.trim="forms.activeRoomId" :placeholder="tt('placeholder_room_id')" />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_bridge_external_room_id')">
+                      <el-input
+                        v-model.trim="forms.bridgeExternalRoomId"
+                        :placeholder="tt('placeholder_bridge_external_room_id')"
+                      />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_bridge_external_room_name')">
+                      <el-input
+                        v-model.trim="forms.bridgeExternalRoomName"
+                        :placeholder="tt('placeholder_bridge_external_room_name')"
+                      />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_bridge_relay_prefix')">
+                      <el-input
+                        v-model.trim="forms.bridgeRelayPrefix"
+                        :placeholder="tt('placeholder_bridge_relay_prefix')"
+                      />
+                    </el-form-item>
+                  </el-form>
+
+                  <div class="action-row">
+                    <el-button @click="loadBridgeLinks">{{ tt("btn_load_bridge_links") }}</el-button>
+                    <el-button type="primary" @click="createBridgeLink">{{ tt("btn_create_bridge_link") }}</el-button>
+                  </div>
+
+                  <el-table :data="bridgeLinks" stripe border height="220">
+                    <el-table-column prop="link_id" :label="tt('col_bridge_link_id')" min-width="190" />
+                    <el-table-column prop="connector_id" :label="tt('col_bridge_connector')" min-width="180" />
+                    <el-table-column :label="tt('col_bridge_room_mapping')" min-width="270">
+                      <template #default="scope">
+                        <span class="mono-row">{{ scope.row.room_id }} ↔ {{ scope.row.external_room_id }}</span>
+                      </template>
+                    </el-table-column>
+                    <el-table-column :label="tt('col_bridge_external_room')" min-width="180">
+                      <template #default="scope">{{ scope.row.external_room_name || "-" }}</template>
+                    </el-table-column>
+                    <el-table-column :label="tt('col_action')" width="130">
+                      <template #default="scope">
+                        <el-button size="small" type="danger" @click="deleteBridgeLink(scope.row)">
+                          {{ tt("btn_delete_bridge_link") }}
+                        </el-button>
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                  <p v-if="bridgeLinks.length === 0" class="muted">{{ tt("empty_bridge_links") }}</p>
+
+                  <el-divider>{{ tt("section_bridge_relay") }}</el-divider>
+                  <el-form label-position="top" class="form-grid two-col">
+                    <el-form-item :label="tt('label_bridge_connector')">
+                      <el-select
+                        v-model="forms.bridgeConnectorId"
+                        filterable
+                        :placeholder="tt('placeholder_bridge_connector')"
+                        @change="selectBridgeConnector"
+                      >
+                        <el-option
+                          v-for="item in bridgeConnectorOptions"
+                          :key="item.value"
+                          :label="item.label"
+                          :value="item.value"
+                        />
+                      </el-select>
+                    </el-form-item>
+                    <el-form-item :label="tt('label_bridge_preview_limit')">
+                      <el-input-number v-model="forms.bridgePreviewLimit" :min="1" :max="100" />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_bridge_sender')">
+                      <el-input
+                        v-model.trim="forms.bridgeExternalSender"
+                        :placeholder="tt('placeholder_bridge_sender')"
+                      />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_bridge_message')">
+                      <el-input
+                        v-model.trim="forms.bridgeMessage"
+                        type="textarea"
+                        :rows="3"
+                        :placeholder="tt('placeholder_bridge_message')"
+                      />
+                    </el-form-item>
+                  </el-form>
+                  <div class="action-row">
+                    <el-button type="primary" @click="runBridgeInboundRelay">
+                      {{ tt("btn_bridge_inbound_relay") }}
+                    </el-button>
+                    <el-button @click="runBridgeOutboundPreview">{{ tt("btn_bridge_outbound_preview") }}</el-button>
+                  </div>
+
+                  <el-table
+                    :data="(bridgeOutput && bridgeOutput.preview_items) || []"
+                    stripe
+                    border
+                    height="180"
+                  >
+                    <el-table-column prop="external_room_id" :label="tt('col_bridge_external_room')" min-width="200" />
+                    <el-table-column prop="payload_text" :label="tt('col_bridge_relay_preview')" min-width="280" />
+                  </el-table>
+                  <p
+                    v-if="!bridgeOutput || !Array.isArray(bridgeOutput.preview_items) || bridgeOutput.preview_items.length === 0"
+                    class="muted"
+                  >
+                    {{ tt("empty_bridge_preview") }}
+                  </p>
+
+                  <pre class="output-box">{{ pretty(bridgeOutput) }}</pre>
+                </el-card>
+              </el-tab-pane>
+
               <el-tab-pane :label="tt('tab_chat')" name="chat">
                 <el-card shadow="never" class="page-card chat-card">
                   <div class="chat-header">

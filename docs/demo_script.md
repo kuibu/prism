@@ -108,6 +108,28 @@ In browser:
 5. Revoke + Summarize (expect deny)
 6. Query/verify audit
 
+## 5.1) Bridge tab test (Matrix ↔ external connector simulation)
+
+In Web `Bridge Test` tab:
+1. Click `Load Platform Capabilities`, `Load Connectors`
+2. Create connector:
+ - Platform: `Telegram` (or `Slack/Discord`)
+ - Bridge Name: `Demo Bridge`
+ - Direction: `Bidirectional`
+3. Create room mapping:
+ - Select connector
+ - `Active Room ID`: choose an existing room
+ - External Room ID: `telegram_group_demo`
+ - External Room Name: `Demo External Group`
+ - Relay Prefix: `[TelegramBridge]`
+4. Click `Create Mapping`
+5. In relay test:
+ - External Sender: `alice`
+ - External Message: `Hello from bridge test`
+ - Click `Simulate Inbound Relay`
+6. Verify message appears in chat and message center
+7. Click `Preview Outbound Relay` to check Matrix->external payload preview
+
 ## 6) Observability
 
 Prometheus:
