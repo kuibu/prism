@@ -145,3 +145,36 @@ class BridgeOutboundPreviewResponse(BaseModel):
     room_id: str
     preview_items: list[BridgeOutboundPreviewItem]
 
+
+class BridgeTelegramPollRequest(BaseModel):
+    connector_id: str = Field(min_length=1, max_length=128)
+    room_id: str | None = Field(default=None, max_length=255)
+    external_room_id: str | None = Field(default=None, max_length=255)
+    max_updates: int = Field(default=20, ge=1, le=100)
+    timeout_seconds: int = Field(default=0, ge=0, le=50)
+
+
+class BridgeTelegramPollResponse(BaseModel):
+    status: str
+    connector_id: str
+    processed: int
+    skipped: int
+    last_update_id: int | None = None
+    room_event_ids: list[str] = Field(default_factory=list)
+
+
+class BridgeTelegramSendRequest(BaseModel):
+    connector_id: str = Field(min_length=1, max_length=128)
+    room_id: str = Field(min_length=1, max_length=255)
+    external_room_id: str | None = Field(default=None, max_length=255)
+    text: str | None = Field(default=None, max_length=4000)
+    limit: int = Field(default=1, ge=1, le=20)
+
+
+class BridgeTelegramSendResponse(BaseModel):
+    status: str
+    connector_id: str
+    external_room_id: str
+    sent_count: int
+    telegram_message_ids: list[int] = Field(default_factory=list)
+    sent_texts: list[str] = Field(default_factory=list)

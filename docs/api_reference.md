@@ -214,3 +214,44 @@ Response fields:
 
 ### `GET /metrics`
 Prometheus metrics endpoint for gateway.
+
+## Bridge
+
+### `GET /bridges/platforms`
+List supported bridge platforms and direction capabilities.
+
+### `GET /bridges/connectors`
+List current user's bridge connectors (sensitive token fields are masked).
+
+### `POST /bridges/connectors`
+Create connector.
+
+### `PATCH /bridges/connectors/{connector_id}`
+Update connector.
+
+### `DELETE /bridges/connectors/{connector_id}`
+Delete connector and related links.
+
+### `GET /bridges/links`
+List bridge room mappings.
+
+### `POST /bridges/links`
+Create room mapping between Matrix room and external room.
+
+### `PATCH /bridges/links/{link_id}`
+Update mapping.
+
+### `DELETE /bridges/links/{link_id}`
+Delete mapping.
+
+### `POST /bridges/relay/inbound`
+Simulate inbound external message -> Matrix relay.
+
+### `POST /bridges/relay/outbound/preview`
+Preview Matrix -> external payload mapping.
+
+### `POST /bridges/telegram/poll`
+Real Telegram bridge: pull Telegram updates (`getUpdates`) and relay to mapped Matrix room(s).
+
+### `POST /bridges/telegram/send`
+Real Telegram bridge: send text to Telegram (`sendMessage`) from direct text or latest Matrix messages.

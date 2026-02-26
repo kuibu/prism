@@ -481,12 +481,12 @@
                     type="warning"
                     :closable="false"
                     :title="tt('err_no_session')"
-                  />
+                  ></el-alert>
 
                   <el-divider>{{ tt("section_bridge_connectors") }}</el-divider>
                   <el-form label-position="top" class="form-grid two-col">
                     <el-form-item :label="tt('label_bridge_platform')">
-                      <el-select v-model="forms.bridgePlatform">
+                      <el-select v-model="forms.bridgePlatform" @change="onBridgePlatformChanged">
                         <el-option
                           v-for="item in bridgePlatformOptions"
                           :key="item.value"
@@ -514,10 +514,19 @@
                     <el-form-item :label="tt('label_bridge_secret_ref')">
                       <el-input
                         v-model.trim="forms.bridgeSecretRef"
-                        :placeholder="tt('placeholder_bridge_secret_ref')"
+                        :placeholder="bridgeSecretRefPlaceholder"
                       />
+                      <el-text size="small" type="info">{{ bridgeSecretHintText }}</el-text>
                     </el-form-item>
                   </el-form>
+                  <el-alert
+                    type="info"
+                    :closable="false"
+                    :title="bridgePlatformSummaryText"
+                  ></el-alert>
+                  <el-text size="small" type="info">
+                    {{ ttf("hint_bridge_direction_support", { directions: bridgeDirectionSupportText }) }}
+                  </el-text>
 
                   <div class="action-row">
                     <el-button @click="loadBridgePlatforms">{{ tt("btn_load_bridge_platforms") }}</el-button>
@@ -598,8 +607,9 @@
                     <el-form-item :label="tt('label_bridge_external_room_id')">
                       <el-input
                         v-model.trim="forms.bridgeExternalRoomId"
-                        :placeholder="tt('placeholder_bridge_external_room_id')"
+                        :placeholder="bridgeExternalRoomPlaceholder"
                       />
+                      <el-text size="small" type="info">{{ bridgeExternalRoomHintText }}</el-text>
                     </el-form-item>
                     <el-form-item :label="tt('label_bridge_external_room_name')">
                       <el-input
@@ -664,8 +674,9 @@
                     <el-form-item :label="tt('label_bridge_sender')">
                       <el-input
                         v-model.trim="forms.bridgeExternalSender"
-                        :placeholder="tt('placeholder_bridge_sender')"
+                        :placeholder="bridgeSenderPlaceholder"
                       />
+                      <el-text size="small" type="info">{{ bridgeSenderHintText }}</el-text>
                     </el-form-item>
                     <el-form-item :label="tt('label_bridge_message')">
                       <el-input
@@ -677,10 +688,72 @@
                     </el-form-item>
                   </el-form>
                   <div class="action-row">
-                    <el-button type="primary" @click="runBridgeInboundRelay">
-                      {{ tt("btn_bridge_inbound_relay") }}
+                    <el-button
+                      type="primary"
+                      :disabled="!session || !bridgeCanInbound"
+                      @click="runBridgeInboundRelay"
+                    >
+                      {{ bridgeInboundButtonLabel }}
                     </el-button>
-                    <el-button @click="runBridgeOutboundPreview">{{ tt("btn_bridge_outbound_preview") }}</el-button>
+                    <el-button
+                      :disabled="!session || !bridgeCanOutbound"
+                      @click="runBridgeOutboundPreview"
+                    >
+                      {{ bridgeOutboundButtonLabel }}
+                    </el-button>
+                  </div>
+                  <el-text v-if="bridgeInboundDisabledReason" size="small" type="warning">
+                    {{ bridgeInboundDisabledReason }}
+                  </el-text>
+                  <el-text v-if="bridgeOutboundDisabledReason" size="small" type="warning">
+                    {{ bridgeOutboundDisabledReason }}
+                  </el-text>
+
+                  <el-divider v-if="bridgeIsTelegramPlatform">{{ tt("section_bridge_real_telegram") }}</el-divider>
+                  <el-form v-if="bridgeIsTelegramPlatform" label-position="top" class="form-grid two-col">
+                    <el-form-item :label="tt('label_bridge_telegram_bot_token')">
+                      <el-input
+                        v-model.trim="forms.bridgeTelegramBotToken"
+                        type="password"
+                        show-password
+                        :placeholder="tt('placeholder_bridge_telegram_bot_token')"
+                      />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_bridge_telegram_api_base_url')">
+                      <el-input
+                        v-model.trim="forms.bridgeTelegramApiBaseUrl"
+                        :placeholder="tt('placeholder_bridge_telegram_api_base_url')"
+                      />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_bridge_telegram_poll_timeout')">
+                      <el-input-number v-model="forms.bridgeTelegramPollTimeoutSeconds" :min="0" :max="50" />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_bridge_telegram_poll_max_updates')">
+                      <el-input-number v-model="forms.bridgeTelegramPollMaxUpdates" :min="1" :max="100" />
+                    </el-form-item>
+                    <el-form-item :label="tt('label_bridge_telegram_send_text')">
+                      <el-input
+                        v-model.trim="forms.bridgeTelegramSendText"
+                        type="textarea"
+                        :rows="2"
+                        :placeholder="tt('placeholder_bridge_telegram_send_text')"
+                      />
+                    </el-form-item>
+                  </el-form>
+                  <div v-if="bridgeIsTelegramPlatform" class="action-row">
+                    <el-button
+                      type="primary"
+                      :disabled="!session || !bridgeCanInbound"
+                      @click="runTelegramRealPoll"
+                    >
+                      {{ tt("btn_bridge_telegram_poll_real") }}
+                    </el-button>
+                    <el-button
+                      :disabled="!session || !bridgeCanOutbound"
+                      @click="runTelegramRealSend"
+                    >
+                      {{ tt("btn_bridge_telegram_send_real") }}
+                    </el-button>
                   </div>
 
                   <el-table

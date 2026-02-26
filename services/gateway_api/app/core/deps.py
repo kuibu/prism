@@ -9,6 +9,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
 
 from app.audit.immudb_client import ImmudbClient
+from app.bridge.telegram_client import TelegramBridgeClient
 from app.matrix.client import MatrixClient, MatrixClientError
 from app.policy.opa_client import OPAClient
 
@@ -19,6 +20,10 @@ def get_opa_client(request: Request) -> OPAClient:
 
 def get_immudb_client(request: Request) -> ImmudbClient:
     return cast(ImmudbClient, request.app.state.immudb_client)
+
+
+def get_telegram_bridge_client(request: Request) -> TelegramBridgeClient:
+    return cast(TelegramBridgeClient, request.app.state.telegram_bridge_client)
 
 
 class AuthenticatedUser(BaseModel):

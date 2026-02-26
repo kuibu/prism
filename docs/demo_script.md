@@ -130,6 +130,29 @@ In Web `Bridge Test` tab:
 6. Verify message appears in chat and message center
 7. Click `Preview Outbound Relay` to check Matrix->external payload preview
 
+## 5.2) Telegram real bridge test (Bot API)
+
+Prerequisite:
+- Create a Telegram bot via `@BotFather` and get a bot token
+- Add bot to your Telegram group/channel
+- Get Telegram chat_id (often looks like `-100...`)
+
+In Web `Bridge Test` tab:
+1. Platform select `Telegram`, direction select `Bidirectional`
+2. Fill `Telegram Bot Token` and (optional) `Telegram API Base URL`
+3. Create connector
+4. Create mapping:
+ - Active Room ID: your Matrix room
+ - External Room ID: Telegram chat_id
+5. Telegram -> Matrix:
+ - Send a text in Telegram
+ - Click `Pull Telegram Updates (Real)`
+ - Check Matrix chat receives relayed message
+6. Matrix -> Telegram:
+ - Send a text in Matrix room
+ - Click `Send To Telegram (Real)`
+ - Check Telegram receives message
+
 ## 6) Observability
 
 Prometheus:

@@ -63,6 +63,11 @@
       label_bridge_message: "外部消息内容",
       label_bridge_preview_limit: "预览条数",
       label_bridge_secret_ref: "密钥引用（可选）",
+      label_bridge_telegram_bot_token: "Telegram Bot Token",
+      label_bridge_telegram_api_base_url: "Telegram API Base URL",
+      label_bridge_telegram_poll_timeout: "拉取超时（秒）",
+      label_bridge_telegram_poll_max_updates: "每次最多拉取",
+      label_bridge_telegram_send_text: "发往 Telegram 的文本（可选）",
       label_actor_id: "Actor ID",
       label_action_type: "动作类型",
       label_member_count: "房间成员",
@@ -102,6 +107,9 @@
       placeholder_bridge_sender: "例如：alice",
       placeholder_bridge_message: "例如：请同步今天的发布状态",
       placeholder_bridge_secret_ref: "例如：telegram_bot_token",
+      placeholder_bridge_telegram_bot_token: "例如：123456789:AA...（从 @BotFather 获取）",
+      placeholder_bridge_telegram_api_base_url: "默认：https://api.telegram.org",
+      placeholder_bridge_telegram_send_text: "不填则发送房间最新消息",
       placeholder_actor: "agent.summary.demo",
       placeholder_action: "agent_summarize",
       hint_invite_auto: "可直接输入用户名（如 alice），系统会自动补全为 @alice:localhost",
@@ -109,6 +117,13 @@
       hint_chat_room_required: "请先在房间列表选择一个房间，再发送消息或上传文件。",
       hint_need_login: "请先登录，再使用发送区发消息或上传文件。",
       hint_secretary_mode_scope: "可先切换模式；选择房间后点击“保存秘书模式”才会对该房间生效。",
+      hint_bridge_platform_selected: "当前平台：{platform}。{note}",
+      hint_bridge_direction_support: "支持方向：{directions}",
+      hint_bridge_external_room: "外部会话 ID 示例：{example}",
+      hint_bridge_sender: "外部发送者示例：{example}",
+      hint_bridge_secret_ref: "密钥引用建议：{example}",
+      hint_bridge_inbound_disabled: "当前连接器不支持入站中继（方向为仅出站）。",
+      hint_bridge_outbound_disabled: "当前连接器不支持出站预览（方向为仅入站）。",
       btn_open_second: "打开第二个客户端窗口",
       btn_register: "注册",
       btn_login: "登录",
@@ -159,6 +174,10 @@
       btn_delete_bridge_link: "删除映射",
       btn_bridge_inbound_relay: "模拟外部消息入站",
       btn_bridge_outbound_preview: "预览出站消息",
+      btn_bridge_inbound_relay_for: "模拟入站（{platform}）",
+      btn_bridge_outbound_preview_for: "预览出站（{platform}）",
+      btn_bridge_telegram_poll_real: "拉取 Telegram 新消息（真实）",
+      btn_bridge_telegram_send_real: "发送到 Telegram（真实）",
       btn_refresh_members: "刷新成员",
       btn_save_secretary_mode: "保存秘书模式",
       btn_refresh_secretary_panel: "刷新秘书面板",
@@ -191,6 +210,7 @@
       section_bridge_connectors: "Bridge 连接器",
       section_bridge_links: "Bridge 房间映射",
       section_bridge_relay: "Bridge 消息中继测试",
+      section_bridge_real_telegram: "Telegram 真实联调",
       section_secretary_assist: "数字秘书联动",
       section_secretary_suggestions: "半自动回复建议",
       section_secretary_insights: "秘书分析侧栏",
@@ -250,6 +270,8 @@
       msg_bridge_link_deleted: "桥接映射已删除。",
       msg_bridge_inbound_ok: "外部消息已模拟入站到 Matrix。",
       msg_bridge_outbound_preview_ok: "已生成出站消息预览。",
+      msg_bridge_telegram_poll_ok: "已从 Telegram 拉取并转发消息。",
+      msg_bridge_telegram_send_ok: "已发送消息到 Telegram。",
       msg_secretary_mode_saved: "秘书模式已保存。",
       msg_secretary_generated: "秘书建议已生成。",
       msg_secretary_prefilled: "已将秘书建议填入快捷发送区，可直接发送或继续编辑。",
@@ -274,6 +296,9 @@
       err_need_bridge_external_room_id: "请填写外部会话 ID。",
       err_need_bridge_message: "请填写外部消息内容。",
       err_need_bridge_sender: "请填写外部发送者。",
+      err_need_bridge_telegram_token: "请填写 Telegram Bot Token，或在连接器里配置 bot_token。",
+      err_bridge_inbound_not_supported: "当前连接器方向不支持入站中继。",
+      err_bridge_outbound_not_supported: "当前连接器方向不支持出站预览。",
       err_need_skill_run: "请填写要运行的Agent ID。",
       err_need_grant: "请填写授权 ID。",
       err_need_file: "请先选择文件。",
@@ -352,6 +377,11 @@
       label_bridge_message: "External Message",
       label_bridge_preview_limit: "Preview Limit",
       label_bridge_secret_ref: "Secret Ref (optional)",
+      label_bridge_telegram_bot_token: "Telegram Bot Token",
+      label_bridge_telegram_api_base_url: "Telegram API Base URL",
+      label_bridge_telegram_poll_timeout: "Poll Timeout (sec)",
+      label_bridge_telegram_poll_max_updates: "Max Updates Per Poll",
+      label_bridge_telegram_send_text: "Text To Send (optional)",
       label_actor_id: "Actor ID",
       label_action_type: "Action Type",
       label_member_count: "Members",
@@ -391,6 +421,9 @@
       placeholder_bridge_sender: "e.g. alice",
       placeholder_bridge_message: "e.g. Please sync today's release status",
       placeholder_bridge_secret_ref: "e.g. telegram_bot_token",
+      placeholder_bridge_telegram_bot_token: "e.g. 123456789:AA... (from @BotFather)",
+      placeholder_bridge_telegram_api_base_url: "default: https://api.telegram.org",
+      placeholder_bridge_telegram_send_text: "Leave empty to send latest room messages",
       placeholder_actor: "agent.summary.demo",
       placeholder_action: "agent_summarize",
       hint_invite_auto: "You can type only username (alice). It auto-completes to @alice:localhost",
@@ -398,6 +431,13 @@
       hint_chat_room_required: "Select a room first, then send messages or upload files.",
       hint_need_login: "Login first to send messages or upload files from the composer.",
       hint_secretary_mode_scope: "You can switch mode first; it takes effect for a room after selecting one and clicking Save Mode.",
+      hint_bridge_platform_selected: "Current platform: {platform}. {note}",
+      hint_bridge_direction_support: "Supported directions: {directions}",
+      hint_bridge_external_room: "External room ID example: {example}",
+      hint_bridge_sender: "External sender example: {example}",
+      hint_bridge_secret_ref: "Suggested secret ref: {example}",
+      hint_bridge_inbound_disabled: "Current connector does not support inbound relay (outbound only).",
+      hint_bridge_outbound_disabled: "Current connector does not support outbound preview (inbound only).",
       btn_open_second: "Open Second Client Window",
       btn_register: "Register",
       btn_login: "Login",
@@ -448,6 +488,10 @@
       btn_delete_bridge_link: "Delete Mapping",
       btn_bridge_inbound_relay: "Simulate Inbound Relay",
       btn_bridge_outbound_preview: "Preview Outbound Relay",
+      btn_bridge_inbound_relay_for: "Inbound Relay ({platform})",
+      btn_bridge_outbound_preview_for: "Outbound Preview ({platform})",
+      btn_bridge_telegram_poll_real: "Pull Telegram Updates (Real)",
+      btn_bridge_telegram_send_real: "Send To Telegram (Real)",
       btn_refresh_members: "Refresh Members",
       btn_save_secretary_mode: "Save Mode",
       btn_refresh_secretary_panel: "Refresh Secretary Panel",
@@ -480,6 +524,7 @@
       section_bridge_connectors: "Bridge Connectors",
       section_bridge_links: "Bridge Room Mappings",
       section_bridge_relay: "Bridge Relay Test",
+      section_bridge_real_telegram: "Telegram Real Integration",
       section_secretary_assist: "Secretary Assistant Linkage",
       section_secretary_suggestions: "Semi-Auto Suggestions",
       section_secretary_insights: "Secretary Insight Sidebar",
@@ -539,6 +584,8 @@
       msg_bridge_link_deleted: "Bridge mapping deleted.",
       msg_bridge_inbound_ok: "Inbound bridge relay simulated to Matrix.",
       msg_bridge_outbound_preview_ok: "Outbound bridge preview generated.",
+      msg_bridge_telegram_poll_ok: "Telegram updates pulled and relayed to Matrix.",
+      msg_bridge_telegram_send_ok: "Message sent to Telegram.",
       msg_secretary_mode_saved: "Secretary mode saved.",
       msg_secretary_generated: "Secretary suggestion generated.",
       msg_secretary_prefilled: "Suggestion copied to quick composer. Send directly or edit it.",
@@ -563,6 +610,9 @@
       err_need_bridge_external_room_id: "External room ID is required.",
       err_need_bridge_message: "External message is required.",
       err_need_bridge_sender: "External sender is required.",
+      err_need_bridge_telegram_token: "Telegram Bot Token is required, or set bot_token in connector config.",
+      err_bridge_inbound_not_supported: "Current connector direction does not allow inbound relay.",
+      err_bridge_outbound_not_supported: "Current connector direction does not allow outbound preview.",
       err_need_skill_run: "Agent ID is required to run skill.",
       err_need_grant: "Grant ID is required.",
       err_need_file: "Please pick a file first.",
@@ -599,6 +649,108 @@
     "cow", "yak", "buffalo", "bison", "goat", "deer", "elk", "moose", "reindeer", "antelope",
     "horse", "zebra", "donkey", "mule", "camel", "seal", "walrus", "otter", "beaver", "platypus",
   ];
+  const DEFAULT_BRIDGE_PLATFORM_DESCRIPTORS = [
+    {
+      platform: "slack",
+      display_name: "Slack",
+      direction_support: ["bidirectional"],
+      notes: "Use Bot Token and channel_id (C...).",
+    },
+    {
+      platform: "telegram",
+      display_name: "Telegram",
+      direction_support: ["bidirectional"],
+      notes: "Use Bot Token and group/channel chat_id.",
+    },
+    {
+      platform: "discord",
+      display_name: "Discord",
+      direction_support: ["bidirectional"],
+      notes: "Use Bot Token and channel snowflake id.",
+    },
+    {
+      platform: "wecom",
+      display_name: "WeCom",
+      direction_support: ["bidirectional"],
+      notes: "Use enterprise app/webhook credentials and chat_id.",
+    },
+    {
+      platform: "whatsapp",
+      display_name: "WhatsApp",
+      direction_support: ["inbound", "outbound"],
+      notes: "Use business provider credentials and chat_id.",
+    },
+    {
+      platform: "signal",
+      display_name: "Signal",
+      direction_support: ["inbound", "outbound"],
+      notes: "Use Signal account/relay credentials and recipient id.",
+    },
+    {
+      platform: "custom",
+      display_name: "Custom Webhook",
+      direction_support: ["bidirectional"],
+      notes: "Use your own webhook adapter and external room key.",
+    },
+  ];
+  const BRIDGE_PLATFORM_UI_PRESETS = {
+    slack: {
+      externalRoomPlaceholder: "C0123456789",
+      externalSenderPlaceholder: "alice",
+      secretRefPlaceholder: "slack_bot_token",
+      relayPrefix: "[SlackBridge]",
+      hintZh: "适合团队频道同步，外部会话一般是 channel_id（C 开头）。",
+      hintEn: "Great for workspace channels. External room is usually channel_id (starts with C).",
+    },
+    telegram: {
+      externalRoomPlaceholder: "-1001234567890",
+      externalSenderPlaceholder: "@alice",
+      secretRefPlaceholder: "telegram_bot_token",
+      relayPrefix: "[TelegramBridge]",
+      hintZh: "常用于群组或频道同步，外部会话一般是 chat_id（常见 -100 开头）。",
+      hintEn: "Good for groups/channels. External room is usually chat_id (often starts with -100).",
+    },
+    discord: {
+      externalRoomPlaceholder: "1198765432109876543",
+      externalSenderPlaceholder: "alice#1024",
+      secretRefPlaceholder: "discord_bot_token",
+      relayPrefix: "[DiscordBridge]",
+      hintZh: "适合 Discord 频道同步，外部会话一般是长数字 channel id。",
+      hintEn: "Good for Discord channels. External room is usually a long numeric channel id.",
+    },
+    wecom: {
+      externalRoomPlaceholder: "wr_1a2b3c4d5e",
+      externalSenderPlaceholder: "zhangsan",
+      secretRefPlaceholder: "wecom_app_secret",
+      relayPrefix: "[WeComBridge]",
+      hintZh: "适合企业微信会话，外部会话一般是 chat_id。",
+      hintEn: "For WeCom conversations, external room is usually chat_id.",
+    },
+    whatsapp: {
+      externalRoomPlaceholder: "120363099999999999@g.us",
+      externalSenderPlaceholder: "+8613800138000",
+      secretRefPlaceholder: "whatsapp_provider_token",
+      relayPrefix: "[WhatsAppBridge]",
+      hintZh: "适合 WhatsApp 业务号，外部会话可用群组ID或用户号码。",
+      hintEn: "For WhatsApp business providers. External room can be group id or phone number.",
+    },
+    signal: {
+      externalRoomPlaceholder: "+14155552671",
+      externalSenderPlaceholder: "+14155550123",
+      secretRefPlaceholder: "signal_service_token",
+      relayPrefix: "[SignalBridge]",
+      hintZh: "适合 Signal 联系人或群组，外部会话可用手机号或群组标识。",
+      hintEn: "For Signal contacts/groups. External room can be phone or group identifier.",
+    },
+    custom: {
+      externalRoomPlaceholder: "my_external_room_key",
+      externalSenderPlaceholder: "external_user",
+      secretRefPlaceholder: "custom_bridge_secret",
+      relayPrefix: "[CustomBridge]",
+      hintZh: "用于自定义系统桥接，外部会话可由你自己定义。",
+      hintEn: "For custom systems. External room key is fully user-defined.",
+    },
+  };
 
   const { createApp } = window.Vue;
 
@@ -682,6 +834,11 @@
           bridgePreviewLimit: 10,
           bridgeSecretRef: "",
           bridgeEnabled: true,
+          bridgeTelegramBotToken: "",
+          bridgeTelegramApiBaseUrl: "https://api.telegram.org",
+          bridgeTelegramPollTimeoutSeconds: 0,
+          bridgeTelegramPollMaxUpdates: 20,
+          bridgeTelegramSendText: "",
           auditActorId: "",
           auditActionType: "",
         },
@@ -775,30 +932,164 @@
         }
         return [];
       },
+      availableBridgePlatforms() {
+        const source =
+          Array.isArray(this.bridgePlatforms) && this.bridgePlatforms.length > 0
+            ? this.bridgePlatforms
+            : DEFAULT_BRIDGE_PLATFORM_DESCRIPTORS;
+        return source.map((item) => {
+          const directions =
+            Array.isArray(item.direction_support) && item.direction_support.length > 0
+              ? item.direction_support
+                  .map((value) => String(value || "").trim())
+                  .filter((value) => value !== "")
+              : ["bidirectional"];
+          return {
+            platform: String(item.platform || "custom"),
+            display_name: String(item.display_name || item.platform || "Bridge"),
+            direction_support: directions,
+            notes: typeof item.notes === "string" ? item.notes : "",
+          };
+        });
+      },
       bridgePlatformOptions() {
-        if (Array.isArray(this.bridgePlatforms) && this.bridgePlatforms.length > 0) {
-          return this.bridgePlatforms.map((item) => ({
-            value: item.platform,
-            label: item.display_name || item.platform,
-            notes: item.notes || "",
-          }));
+        return this.availableBridgePlatforms.map((item) => ({
+          value: item.platform,
+          label: item.display_name,
+          notes: item.notes,
+        }));
+      },
+      selectedBridgePlatform() {
+        const platformId = String(this.forms.bridgePlatform || "").trim();
+        if (!platformId) {
+          return this.availableBridgePlatforms[0] || null;
         }
-        return [
-          { value: "slack", label: "Slack", notes: "" },
-          { value: "telegram", label: "Telegram", notes: "" },
-          { value: "discord", label: "Discord", notes: "" },
-          { value: "wecom", label: "WeCom", notes: "" },
-          { value: "whatsapp", label: "WhatsApp", notes: "" },
-          { value: "signal", label: "Signal", notes: "" },
-          { value: "custom", label: "Custom", notes: "" },
-        ];
+        return (
+          this.availableBridgePlatforms.find((item) => item.platform === platformId) ||
+          this.availableBridgePlatforms[0] ||
+          null
+        );
+      },
+      bridgePlatformDisplayName() {
+        return this.selectedBridgePlatform?.display_name || this.forms.bridgePlatform || "Bridge";
       },
       bridgeDirectionOptions() {
-        return [
-          { value: "inbound", label: this.tt("bridge_direction_inbound") },
-          { value: "outbound", label: this.tt("bridge_direction_outbound") },
-          { value: "bidirectional", label: this.tt("bridge_direction_bidirectional") },
-        ];
+        const supported =
+          Array.isArray(this.selectedBridgePlatform?.direction_support) &&
+          this.selectedBridgePlatform.direction_support.length > 0
+            ? this.selectedBridgePlatform.direction_support
+            : ["bidirectional"];
+        return supported.map((direction) => ({
+          value: direction,
+          label: this.bridgeDirectionLabel(direction),
+        }));
+      },
+      bridgeDirectionSupportText() {
+        if (!Array.isArray(this.bridgeDirectionOptions) || this.bridgeDirectionOptions.length === 0) {
+          return this.bridgeDirectionLabel("bidirectional");
+        }
+        return this.bridgeDirectionOptions.map((item) => item.label).join(" / ");
+      },
+      selectedBridgeConnector() {
+        const connectorId = String(this.forms.bridgeConnectorId || "").trim();
+        if (!connectorId) {
+          return null;
+        }
+        return this.bridgeConnectors.find((item) => item.connector_id === connectorId) || null;
+      },
+      bridgeEffectivePlatformId() {
+        if (this.selectedBridgeConnector && typeof this.selectedBridgeConnector.platform === "string") {
+          return this.selectedBridgeConnector.platform;
+        }
+        return String(this.forms.bridgePlatform || "custom");
+      },
+      bridgeUiPreset() {
+        const key = String(this.bridgeEffectivePlatformId || "custom").trim().toLowerCase();
+        return BRIDGE_PLATFORM_UI_PRESETS[key] || BRIDGE_PLATFORM_UI_PRESETS.custom;
+      },
+      bridgePlatformHintText() {
+        const preset = this.bridgeUiPreset || {};
+        if (this.language === "zh" && typeof preset.hintZh === "string" && preset.hintZh.trim() !== "") {
+          return preset.hintZh.trim();
+        }
+        if (this.language === "en" && typeof preset.hintEn === "string" && preset.hintEn.trim() !== "") {
+          return preset.hintEn.trim();
+        }
+        return this.selectedBridgePlatform?.notes || "";
+      },
+      bridgePlatformSummaryText() {
+        return this.ttf("hint_bridge_platform_selected", {
+          platform: this.bridgePlatformDisplayName,
+          note: this.bridgePlatformHintText || "",
+        });
+      },
+      bridgeIsTelegramPlatform() {
+        return String(this.bridgeEffectivePlatformId || "").toLowerCase() === "telegram";
+      },
+      bridgeExternalRoomPlaceholder() {
+        return (
+          (this.bridgeUiPreset && this.bridgeUiPreset.externalRoomPlaceholder) ||
+          this.tt("placeholder_bridge_external_room_id")
+        );
+      },
+      bridgeSenderPlaceholder() {
+        return (
+          (this.bridgeUiPreset && this.bridgeUiPreset.externalSenderPlaceholder) ||
+          this.tt("placeholder_bridge_sender")
+        );
+      },
+      bridgeSecretRefPlaceholder() {
+        return (
+          (this.bridgeUiPreset && this.bridgeUiPreset.secretRefPlaceholder) ||
+          this.tt("placeholder_bridge_secret_ref")
+        );
+      },
+      bridgeExternalRoomHintText() {
+        return this.ttf("hint_bridge_external_room", {
+          example: this.bridgeExternalRoomPlaceholder,
+        });
+      },
+      bridgeSenderHintText() {
+        return this.ttf("hint_bridge_sender", {
+          example: this.bridgeSenderPlaceholder,
+        });
+      },
+      bridgeSecretHintText() {
+        return this.ttf("hint_bridge_secret_ref", {
+          example: this.bridgeSecretRefPlaceholder,
+        });
+      },
+      bridgeConnectorDirection() {
+        if (this.selectedBridgeConnector && typeof this.selectedBridgeConnector.direction === "string") {
+          return this.selectedBridgeConnector.direction;
+        }
+        return String(this.forms.bridgeDirection || "bidirectional");
+      },
+      bridgeCanInbound() {
+        const direction = this.bridgeConnectorDirection;
+        return direction === "inbound" || direction === "bidirectional";
+      },
+      bridgeCanOutbound() {
+        const direction = this.bridgeConnectorDirection;
+        return direction === "outbound" || direction === "bidirectional";
+      },
+      bridgeInboundDisabledReason() {
+        if (this.bridgeCanInbound) {
+          return "";
+        }
+        return this.tt("hint_bridge_inbound_disabled");
+      },
+      bridgeOutboundDisabledReason() {
+        if (this.bridgeCanOutbound) {
+          return "";
+        }
+        return this.tt("hint_bridge_outbound_disabled");
+      },
+      bridgeInboundButtonLabel() {
+        return this.ttf("btn_bridge_inbound_relay_for", { platform: this.bridgePlatformDisplayName });
+      },
+      bridgeOutboundButtonLabel() {
+        return this.ttf("btn_bridge_outbound_preview_for", { platform: this.bridgePlatformDisplayName });
       },
       bridgeConnectorOptions() {
         return (this.bridgeConnectors || []).map((item) => ({
@@ -834,6 +1125,7 @@
     mounted() {
       this.language = this.loadLanguage() || "zh";
       document.documentElement.lang = this.language === "zh" ? "zh-CN" : "en";
+      this.onBridgePlatformChanged(this.forms.bridgePlatform);
       if (!this.config.gatewayUrl.trim()) {
         this.config.gatewayUrl = `${window.location.origin}/api/v1`;
       }
@@ -2919,7 +3211,36 @@
         }
         return this.tt("bridge_direction_bidirectional");
       },
-      selectBridgeConnector(connector) {
+      onBridgePlatformChanged(platformValue) {
+        const normalized = String(platformValue || this.forms.bridgePlatform || "").trim();
+        if (normalized) {
+          this.forms.bridgePlatform = normalized;
+        }
+        const allowedDirections = this.bridgeDirectionOptions.map((item) => item.value);
+        if (!allowedDirections.includes(this.forms.bridgeDirection)) {
+          this.forms.bridgeDirection = allowedDirections[0] || "bidirectional";
+        }
+        if (!this.forms.bridgeRelayPrefix.trim()) {
+          this.forms.bridgeRelayPrefix = this.bridgeUiPreset.relayPrefix || "[Bridge]";
+        }
+      },
+      buildBridgeConnectorConfig() {
+        const config = {};
+        const baseUrl = this.normalizeOptional(this.forms.bridgeTelegramApiBaseUrl);
+        if (baseUrl !== "") {
+          config.api_base_url = baseUrl;
+        }
+        if (this.bridgeIsTelegramPlatform) {
+          const botToken = this.normalizeOptional(this.forms.bridgeTelegramBotToken);
+          if (botToken !== "") {
+            config.bot_token = botToken;
+          }
+        }
+        return config;
+      },
+      selectBridgeConnector(connector, options = {}) {
+        const silent = Boolean(options.silent);
+        const shouldLoadLinks = options.loadLinks !== false;
         const connectorId =
           typeof connector === "string"
             ? connector.trim()
@@ -2931,8 +3252,36 @@
           return;
         }
         this.forms.bridgeConnectorId = connectorId;
-        this.notify("info", this.tt("msg_bridge_connector_selected"));
-        this.loadBridgeLinks({ silent: true }).catch(() => undefined);
+        const connectorRow =
+          this.bridgeConnectors.find((item) => item && item.connector_id === connectorId) || null;
+        if (connectorRow && typeof connectorRow.platform === "string" && connectorRow.platform.trim() !== "") {
+          this.forms.bridgePlatform = connectorRow.platform.trim();
+        }
+        if (connectorRow && typeof connectorRow.direction === "string" && connectorRow.direction.trim() !== "") {
+          this.forms.bridgeDirection = connectorRow.direction.trim();
+        }
+        if (connectorRow && connectorRow.config && typeof connectorRow.config === "object") {
+          const apiBaseUrlRaw = connectorRow.config.api_base_url;
+          if (typeof apiBaseUrlRaw === "string" && apiBaseUrlRaw.trim() !== "") {
+            this.forms.bridgeTelegramApiBaseUrl = apiBaseUrlRaw.trim();
+          }
+        }
+        if (
+          connectorRow &&
+          typeof connectorRow.platform === "string" &&
+          this.bridgeUiPreset &&
+          typeof this.bridgeUiPreset.relayPrefix === "string" &&
+          this.forms.bridgeRelayPrefix.trim() === ""
+        ) {
+          this.forms.bridgeRelayPrefix = this.bridgeUiPreset.relayPrefix;
+        }
+        this.onBridgePlatformChanged(this.forms.bridgePlatform);
+        if (!silent) {
+          this.notify("info", this.tt("msg_bridge_connector_selected"));
+        }
+        if (shouldLoadLinks) {
+          this.loadBridgeLinks({ silent: true }).catch(() => undefined);
+        }
       },
       async loadBridgePlatforms(options = {}) {
         const silent = Boolean(options.silent);
@@ -2944,6 +3293,7 @@
           if (!known.has(this.forms.bridgePlatform)) {
             this.forms.bridgePlatform = this.bridgePlatformOptions[0]?.value || "telegram";
           }
+          this.onBridgePlatformChanged(this.forms.bridgePlatform);
           if (!silent) {
             this.notify("success", this.tt("msg_bridge_platforms_loaded"));
           }
@@ -2965,6 +3315,11 @@
           const exists = this.bridgeConnectors.some((item) => item.connector_id === currentConnectorId);
           if (!exists) {
             this.forms.bridgeConnectorId = this.bridgeConnectors[0]?.connector_id || "";
+          }
+          if (this.forms.bridgeConnectorId.trim()) {
+            this.selectBridgeConnector(this.forms.bridgeConnectorId, { silent: true, loadLinks: false });
+          } else {
+            this.onBridgePlatformChanged(this.forms.bridgePlatform);
           }
           if (!silent) {
             this.notify("success", this.tt("msg_bridge_connectors_loaded"));
@@ -2993,13 +3348,14 @@
               direction: this.forms.bridgeDirection || "bidirectional",
               enabled: Boolean(this.forms.bridgeEnabled),
               secret_refs: secretRef ? [secretRef] : [],
-              config: {},
+              config: this.buildBridgeConnectorConfig(),
               metadata: {},
             },
           });
           this.bridgeOutput = payload;
           if (payload?.connector_id) {
             this.forms.bridgeConnectorId = payload.connector_id;
+            this.selectBridgeConnector(payload.connector_id, { silent: true, loadLinks: false });
           }
           this.notify("success", this.tt("msg_bridge_connector_created"));
           await this.loadBridgeConnectors({ silent: true });
@@ -3141,6 +3497,9 @@
           if (!connectorId) {
             throw new Error(this.tt("err_need_bridge_connector"));
           }
+          if (!this.bridgeCanInbound) {
+            throw new Error(this.tt("err_bridge_inbound_not_supported"));
+          }
           if (!externalRoomId) {
             throw new Error(this.tt("err_need_bridge_external_room_id"));
           }
@@ -3190,6 +3549,9 @@
           if (!connectorId) {
             throw new Error(this.tt("err_need_bridge_connector"));
           }
+          if (!this.bridgeCanOutbound) {
+            throw new Error(this.tt("err_bridge_outbound_not_supported"));
+          }
           if (!roomId) {
             throw new Error(this.tt("err_need_room"));
           }
@@ -3209,6 +3571,104 @@
           this.notify("error", this.normalizeError(error));
           throw error;
         }
+      },
+      async runTelegramRealPoll() {
+        try {
+          this.ensureSession();
+          const connectorId = this.forms.bridgeConnectorId.trim();
+          if (!connectorId) {
+            throw new Error(this.tt("err_need_bridge_connector"));
+          }
+          if (!this.bridgeIsTelegramPlatform) {
+            throw new Error("selected_connector_not_telegram");
+          }
+          if (!this.bridgeCanInbound) {
+            throw new Error(this.tt("err_bridge_inbound_not_supported"));
+          }
+          const botToken = this.normalizeOptional(this.forms.bridgeTelegramBotToken);
+          if (!botToken) {
+            this.notify("warning", this.tt("err_need_bridge_telegram_token"));
+          } else {
+            await this.syncTelegramConnectorConfig(connectorId, botToken);
+          }
+          const payload = await this.request("/bridges/telegram/poll", {
+            method: "POST",
+            body: {
+              connector_id: connectorId,
+              room_id: this.forms.activeRoomId.trim() || undefined,
+              external_room_id: this.forms.bridgeExternalRoomId.trim() || undefined,
+              max_updates: Math.max(1, Number(this.forms.bridgeTelegramPollMaxUpdates || 20)),
+              timeout_seconds: Math.max(0, Number(this.forms.bridgeTelegramPollTimeoutSeconds || 0)),
+            },
+          });
+          this.bridgeOutput = payload;
+          this.notify("success", this.tt("msg_bridge_telegram_poll_ok"));
+          if (payload && Array.isArray(payload.room_event_ids) && payload.room_event_ids.length > 0) {
+            await this.syncMessages({ silent: true, timeoutMs: 0, showErrors: false });
+          }
+          return payload;
+        } catch (error) {
+          this.notify("error", this.normalizeError(error));
+          throw error;
+        }
+      },
+      async runTelegramRealSend() {
+        try {
+          this.ensureSession();
+          const connectorId = this.forms.bridgeConnectorId.trim();
+          const roomId = this.forms.activeRoomId.trim();
+          if (!connectorId) {
+            throw new Error(this.tt("err_need_bridge_connector"));
+          }
+          if (!roomId) {
+            throw new Error(this.tt("err_need_room"));
+          }
+          if (!this.bridgeIsTelegramPlatform) {
+            throw new Error("selected_connector_not_telegram");
+          }
+          if (!this.bridgeCanOutbound) {
+            throw new Error(this.tt("err_bridge_outbound_not_supported"));
+          }
+          const botToken = this.normalizeOptional(this.forms.bridgeTelegramBotToken);
+          if (!botToken) {
+            this.notify("warning", this.tt("err_need_bridge_telegram_token"));
+          } else {
+            await this.syncTelegramConnectorConfig(connectorId, botToken);
+          }
+          const payload = await this.request("/bridges/telegram/send", {
+            method: "POST",
+            body: {
+              connector_id: connectorId,
+              room_id: roomId,
+              external_room_id: this.forms.bridgeExternalRoomId.trim() || undefined,
+              text: this.forms.bridgeTelegramSendText.trim() || undefined,
+              limit: Math.max(1, Number(this.forms.bridgePreviewLimit || 1)),
+            },
+          });
+          this.bridgeOutput = payload;
+          this.notify("success", this.tt("msg_bridge_telegram_send_ok"));
+          return payload;
+        } catch (error) {
+          this.notify("error", this.normalizeError(error));
+          throw error;
+        }
+      },
+      async syncTelegramConnectorConfig(connectorId, botToken) {
+        const normalizedConnectorId = String(connectorId || "").trim();
+        const normalizedToken = String(botToken || "").trim();
+        if (!normalizedConnectorId || !normalizedToken) {
+          return;
+        }
+        const apiBaseUrl = this.normalizeOptional(this.forms.bridgeTelegramApiBaseUrl);
+        const config = { bot_token: normalizedToken };
+        if (apiBaseUrl) {
+          config.api_base_url = apiBaseUrl;
+        }
+        await this.request(`/bridges/connectors/${encodeURIComponent(normalizedConnectorId)}`, {
+          method: "PATCH",
+          body: { config },
+        });
+        await this.loadBridgeConnectors({ silent: true });
       },
       async queryAudit() {
         try {

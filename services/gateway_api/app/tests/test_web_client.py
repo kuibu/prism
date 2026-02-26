@@ -31,6 +31,13 @@ def test_web_client_contains_chat_controls() -> None:
     assert 'name="bridge"' in response.text
     assert '@click="runBridgeInboundRelay"' in response.text
     assert '@click="runBridgeOutboundPreview"' in response.text
+    assert '@click="runTelegramRealPoll"' in response.text
+    assert '@click="runTelegramRealSend"' in response.text
+    assert '@change="onBridgePlatformChanged"' in response.text
+    assert "bridgeInboundButtonLabel" in response.text
+    assert "bridgeOutboundButtonLabel" in response.text
+    assert ":title=\"tt('err_no_session')\"\n                  ></el-alert>" in response.text
+    assert ":title=\"tt('err_no_session')\"\n                  />" not in response.text
 
 
 def test_web_client_persists_session_and_history() -> None:
@@ -46,3 +53,8 @@ def test_web_client_persists_session_and_history() -> None:
     assert "restoreHistoryCache" in js_source
     assert "loadBridgeConnectors" in js_source
     assert "createBridgeLink" in js_source
+    assert "BRIDGE_PLATFORM_UI_PRESETS" in js_source
+    assert "bridgeCanInbound" in js_source
+    assert "bridgeCanOutbound" in js_source
+    assert "runTelegramRealPoll" in js_source
+    assert "runTelegramRealSend" in js_source

@@ -19,6 +19,7 @@ from app.agent.skills import SkillRegistry
 from app.agent.tool_gateway import InMemoryRateCounter
 from app.api.router import api_router
 from app.audit.immudb_client import ImmudbClient
+from app.bridge.telegram_client import TelegramBridgeClient
 from app.core.config import get_settings
 from app.matrix.admin import AgentBotManager
 from app.matrix.client import MatrixClient
@@ -82,6 +83,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.agent_rate_counter = InMemoryRateCounter(window_seconds=60)
     app.state.matrix_client = MatrixClient(
         homeserver_url=settings.matrix_homeserver_url,
+        timeout_seconds=settings.http_timeout_seconds,
+        retry_attempts=settings.http_retry_attempts,
+    )
+    app.state.telegram_bridge_client = TelegramBridgeClient(
+        base_url=settings.telegram_api_base_url,
         timeout_seconds=settings.http_timeout_seconds,
         retry_attempts=settings.http_retry_attempts,
     )

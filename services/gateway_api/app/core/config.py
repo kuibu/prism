@@ -42,6 +42,22 @@ class Settings(BaseSettings):
 
     http_timeout_seconds: float = Field(default=3.0, validation_alias="HTTP_TIMEOUT_SECONDS")
     http_retry_attempts: int = Field(default=3, validation_alias="HTTP_RETRY_ATTEMPTS")
+    telegram_api_base_url: str = Field(
+        default="https://api.telegram.org",
+        validation_alias="TELEGRAM_API_BASE_URL",
+    )
+    telegram_poll_default_timeout_seconds: int = Field(
+        default=0,
+        validation_alias="TELEGRAM_POLL_DEFAULT_TIMEOUT_SECONDS",
+    )
+    telegram_poll_default_limit: int = Field(
+        default=20,
+        validation_alias="TELEGRAM_POLL_DEFAULT_LIMIT",
+    )
+    telegram_outbound_default_limit: int = Field(
+        default=3,
+        validation_alias="TELEGRAM_OUTBOUND_DEFAULT_LIMIT",
+    )
 
     agent_default_llm_enabled: bool = Field(
         default=True,

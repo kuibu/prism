@@ -98,23 +98,89 @@ class _StubMatrixClient:
         return rows[-max(1, limit) :]
 
 
+class _StubTelegramBridgeClient:
+    def __init__(self) -> None:
+        self.poll_calls: list[dict[str, Any]] = []
+        self.send_calls: list[dict[str, Any]] = []
+        self._updates: list[dict[str, Any]] = [
+            {
+                "update_id": 1001,
+                "message": {
+                    "chat": {"id": -10001},
+                    "text": "telegram inbound hello",
+                    "from": {"id": 77, "username": "tg_alice"},
+                },
+            },
+            {
+                "update_id": 1002,
+                "message": {
+                    "chat": {"id": -99999},
+                    "text": "no mapping for this room",
+                    "from": {"id": 88, "username": "tg_bob"},
+                },
+            },
+        ]
+
+    async def get_updates(
+        self,
+        *,
+        bot_token: str,
+        offset: int | None,
+        limit: int,
+        timeout_seconds: int,
+        api_base_url: str | None = None,
+    ) -> list[dict[str, Any]]:
+        self.poll_calls.append(
+            {
+                "bot_token": bot_token,
+                "offset": offset,
+                "limit": limit,
+                "timeout_seconds": timeout_seconds,
+                "api_base_url": api_base_url,
+            }
+        )
+        return self._updates[: max(1, limit)]
+
+    async def send_message(
+        self,
+        *,
+        bot_token: str,
+        chat_id: str,
+        text: str,
+        api_base_url: str | None = None,
+    ) -> dict[str, Any]:
+        self.send_calls.append(
+            {
+                "bot_token": bot_token,
+                "chat_id": chat_id,
+                "text": text,
+                "api_base_url": api_base_url,
+            }
+        )
+        return {"message_id": 9000 + len(self.send_calls)}
+
+
 def _auth_headers(token: str = "token_alice") -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
-def _install_stubs(client: TestClient) -> tuple[_StubAuditClient, _StubMatrixClient]:
+def _install_stubs(
+    client: TestClient,
+) -> tuple[_StubAuditClient, _StubMatrixClient, _StubTelegramBridgeClient]:
     audit_stub = _StubAuditClient()
     opa_stub = _StubOPAClient()
     matrix_stub = _StubMatrixClient()
+    telegram_stub = _StubTelegramBridgeClient()
     client.app.state.immudb_client = audit_stub
     client.app.state.opa_client = opa_stub
     client.app.state.matrix_client = matrix_stub
-    return audit_stub, matrix_stub
+    client.app.state.telegram_bridge_client = telegram_stub
+    return audit_stub, matrix_stub, telegram_stub
 
 
 def test_bridge_connector_and_link_crud_flow() -> None:
     with TestClient(app) as client:
-        audit_stub, _ = _install_stubs(client)
+        audit_stub, _, _ = _install_stubs(client)
 
         created_connector = client.post(
             "/api/v1/bridges/connectors",
@@ -186,7 +252,7 @@ def test_bridge_connector_and_link_crud_flow() -> None:
 
 def test_bridge_inbound_relay_sends_matrix_message() -> None:
     with TestClient(app) as client:
-        audit_stub, matrix_stub = _install_stubs(client)
+        audit_stub, matrix_stub, _ = _install_stubs(client)
 
         connector_resp = client.post(
             "/api/v1/bridges/connectors",
@@ -235,14 +301,16 @@ def test_bridge_inbound_relay_sends_matrix_message() -> None:
         assert len(matrix_stub.sent_messages) == 1
         assert matrix_stub.sent_messages[0]["room_id"] == "!release:localhost"
 
-        relay_audits = [item for item in audit_stub.events if item.action_type == "bridge_inbound_relay"]
+        relay_audits = [
+            item for item in audit_stub.events if item.action_type == "bridge_inbound_relay"
+        ]
         assert relay_audits
         assert relay_audits[-1].decision == relay_audits[-1].decision.ALLOW
 
 
 def test_bridge_outbound_preview_returns_messages() -> None:
     with TestClient(app) as client:
-        audit_stub, _ = _install_stubs(client)
+        audit_stub, _, _ = _install_stubs(client)
 
         connector_resp = client.post(
             "/api/v1/bridges/connectors",
@@ -275,7 +343,126 @@ def test_bridge_outbound_preview_returns_messages() -> None:
         assert payload["preview_items"][0]["external_room_id"] == "slack_ops_room"
         assert payload["preview_items"][0]["payload_text"].startswith("[Matrix->slack]")
 
-        preview_audits = [item for item in audit_stub.events if item.action_type == "bridge_outbound_preview"]
+        preview_audits = [
+            item for item in audit_stub.events if item.action_type == "bridge_outbound_preview"
+        ]
         assert preview_audits
         assert preview_audits[-1].decision == preview_audits[-1].decision.ALLOW
 
+
+def test_telegram_poll_relays_real_updates_to_matrix() -> None:
+    with TestClient(app) as client:
+        audit_stub, matrix_stub, telegram_stub = _install_stubs(client)
+
+        connector_resp = client.post(
+            "/api/v1/bridges/connectors",
+            headers=_auth_headers(),
+            json={
+                "platform": "telegram",
+                "display_name": "Telegram Real Bridge",
+                "direction": "bidirectional",
+                "enabled": True,
+                "config": {
+                    "bot_token": "123456:ABCDEF_TEST_TOKEN",
+                    "api_base_url": "https://api.telegram.org",
+                },
+            },
+        )
+        assert connector_resp.status_code == 201
+        connector_id = connector_resp.json()["connector_id"]
+        # Bot token must be masked in API responses.
+        assert connector_resp.json()["config"]["bot_token"].startswith("*")
+
+        link_resp = client.post(
+            "/api/v1/bridges/links",
+            headers=_auth_headers(),
+            json={
+                "connector_id": connector_id,
+                "room_id": "!bridge-room:localhost",
+                "external_room_id": "-10001",
+                "external_room_name": "Telegram Product Group",
+                "relay_prefix": "[TelegramBridge]",
+            },
+        )
+        assert link_resp.status_code == 201
+
+        poll_resp = client.post(
+            "/api/v1/bridges/telegram/poll",
+            headers=_auth_headers(),
+            json={"connector_id": connector_id, "max_updates": 10, "timeout_seconds": 0},
+        )
+        assert poll_resp.status_code == 200
+        poll_payload = poll_resp.json()
+        assert poll_payload["status"] == "ok"
+        assert poll_payload["processed"] == 1
+        assert poll_payload["skipped"] >= 1
+        assert poll_payload["room_event_ids"]
+
+        assert len(matrix_stub.sent_messages) == 1
+        assert matrix_stub.sent_messages[0]["room_id"] == "!bridge-room:localhost"
+        assert "[TelegramBridge]" in matrix_stub.sent_messages[0]["body"]
+        assert "telegram inbound hello" in matrix_stub.sent_messages[0]["body"]
+
+        assert telegram_stub.poll_calls
+        assert telegram_stub.poll_calls[0]["bot_token"] == "123456:ABCDEF_TEST_TOKEN"
+
+        action_types = [item.action_type for item in audit_stub.events]
+        assert "bridge_telegram_poll" in action_types
+        assert "bridge_telegram_poll_relay" in action_types
+
+
+def test_telegram_send_pushes_message_to_external() -> None:
+    with TestClient(app) as client:
+        audit_stub, _, telegram_stub = _install_stubs(client)
+
+        connector_resp = client.post(
+            "/api/v1/bridges/connectors",
+            headers=_auth_headers(),
+            json={
+                "platform": "telegram",
+                "display_name": "Telegram Outbound Bridge",
+                "direction": "outbound",
+                "enabled": True,
+                "config": {"bot_token": "654321:OUTBOUND_TEST_TOKEN"},
+            },
+        )
+        assert connector_resp.status_code == 201
+        connector_id = connector_resp.json()["connector_id"]
+
+        link_resp = client.post(
+            "/api/v1/bridges/links",
+            headers=_auth_headers(),
+            json={
+                "connector_id": connector_id,
+                "room_id": "!ops-room:localhost",
+                "external_room_id": "-100200",
+                "external_room_name": "Telegram Ops Group",
+                "relay_prefix": "[TelegramBridge]",
+            },
+        )
+        assert link_resp.status_code == 201
+
+        send_resp = client.post(
+            "/api/v1/bridges/telegram/send",
+            headers=_auth_headers(),
+            json={
+                "connector_id": connector_id,
+                "room_id": "!ops-room:localhost",
+                "external_room_id": "-100200",
+                "text": "hello from matrix bridge",
+            },
+        )
+        assert send_resp.status_code == 200
+        payload = send_resp.json()
+        assert payload["status"] == "ok"
+        assert payload["sent_count"] == 1
+        assert payload["external_room_id"] == "-100200"
+        assert payload["telegram_message_ids"]
+
+        assert telegram_stub.send_calls
+        assert telegram_stub.send_calls[0]["chat_id"] == "-100200"
+        assert telegram_stub.send_calls[0]["text"] == "hello from matrix bridge"
+
+        send_audits = [item for item in audit_stub.events if item.action_type == "bridge_telegram_send"]
+        assert send_audits
+        assert send_audits[-1].decision == send_audits[-1].decision.ALLOW
