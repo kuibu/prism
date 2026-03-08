@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Prism Desktop</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f5f6f7;
+        --card: #ffffff;
+        --text: #1f2937;
+        --sub: #6b7280;
+        --line: #d1d5db;
+        --primary: #0a66c2;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: radial-gradient(circle at 20% 20%, #ffffff 0%, var(--bg) 70%);
+        color: var(--text);
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+      }
+      .card {
+        width: min(760px, 95vw);
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.1);
+      }
+      h1 {
+        margin: 0 0 10px;
+        font-size: 24px;
+      }
+      p {
+        margin: 0 0 12px;
+        line-height: 1.5;
+      }
+      code,
+      pre {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      .muted {
+        color: var(--sub);
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 14px 0 16px;
+      }
+      button {
+        border: 0;
+        background: var(--primary);
+        color: #fff;
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 14px;
+        cursor: pointer;
+      }
+      button.secondary {
+        background: #374151;
+      }
+      pre {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 12px;
+        background: #f9fafb;
+        overflow: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <h1>Prism Desktop 无法连接 Web 服务</h1>
+      <p class="muted">
+        The desktop shell is running, but it cannot load the configured web endpoint.
+      </p>
+      <p>
+        Target URL: <code id="web-url"></code><br />
+        Load reason: <code id="reason"></code>
+      </p>
+      <div class="row">
+        <button id="retry-btn">重试 / Retry</button>
+        <button id="open-guide-btn" class="secondary">打开启动说明 / Open Guide</button>
+      </div>
+      <pre>cd /Users/a/repos/prism
+docker compose up -d --build
+open http://localhost:8080/web/</pre>
+    </main>
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const webUrl = params.get("webUrl") || "http://localhost:8080/web/";
+      const reason = params.get("reason") || "unknown";
+
+      document.getElementById("web-url").textContent = webUrl;
+      document.getElementById("reason").textContent = reason;
+
+      document.getElementById("retry-btn").addEventListener("click", async () => {
+        if (window.prismDesktop?.reloadWeb) {
+          await window.prismDesktop.reloadWeb();
+        }
+      });
+
+      document.getElementById("open-guide-btn").addEventListener("click", async () => {
+        if (window.prismDesktop?.openExternal) {
+          await window.prismDesktop.openExternal("http://localhost:8080/web/");
+        }
+      });
+    </script>
+  </body>
+</html>

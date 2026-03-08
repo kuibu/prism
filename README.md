@@ -64,6 +64,7 @@ Prism addresses them directly:
 ### 4) Developer-facing clients are available
 - Web client: `http://localhost:8080/web/`
 - Python CLI (`prism-cli`): `register`, `login`, `send`, `send-file`, `sync`, `status`
+- macOS desktop app (Electron): `clients/mac/` (native menu/shortcuts, auto-update, signing/notarization pipeline)
 
 ### 5) Observability and testing are in place
 - OpenTelemetry instrumentation (FastAPI + httpx)
@@ -116,6 +117,20 @@ docker compose run --rm gateway_api pytest -q
 make demo
 ```
 
+### 6) Run macOS desktop client (optional)
+```bash
+make mac-client-install
+make mac-client-check
+make mac-client-dev
+make mac-client-dist
+```
+
+For release publishing (`signed + notarized + auto-update metadata`), see:
+- `clients/mac/README.md`
+- `make mac-client-publish`
+- `.github/workflows/mac-release.yml`
+- `scripts/setup_mac_release_secrets.sh`
+
 Expected output includes:
 - `DEMO_OK`
 - `grant -> summarize allow -> revoke -> summarize deny -> audit verify`
@@ -155,6 +170,7 @@ repo/
         tests/
   clients/
     cli/
+    mac/
   policies/
     opa/
   docs/
@@ -166,6 +182,7 @@ repo/
 - Threat model: `docs/threat_model.md`
 - API reference: `docs/api_reference.md`
 - Demo script: `docs/demo_script.md`
+- macOS release pipeline: `docs/mac_release.md`
 - Third-party licenses: `docs/licenses.md`
 
 ## Non-goals (Current MVP)
@@ -215,6 +232,7 @@ Prism 是一个“下一代微信”方向的可运行 MVP，核心是：
 ### 4) 客户端已具备双入口
 - Web 端：`/web/`
 - Python CLI：`prism-cli`（`register/login/send/send-file/sync/status`）
+- macOS 客户端：`clients/mac/`（原生菜单/快捷键、自动更新、签名与公证发布链路）
 
 ### 5) 工程化基础已就位
 - OpenTelemetry + Prometheus + Grafana
@@ -245,12 +263,27 @@ docker compose run --rm gateway_api pytest -q
 make demo
 ```
 
+### 启动 macOS 客户端（可选）
+```bash
+make mac-client-install
+make mac-client-check
+make mac-client-dev
+make mac-client-dist
+```
+
+如需发布签名版（含公证与自动更新元数据），请看：
+- `clients/mac/README.md`
+- `make mac-client-publish`
+- `.github/workflows/mac-release.yml`
+- `scripts/setup_mac_release_secrets.sh`
+
 ## 关键文档
 
 - 架构说明：`docs/architecture.md`
 - 威胁建模：`docs/threat_model.md`
 - API 文档：`docs/api_reference.md`
 - 演示脚本：`docs/demo_script.md`
+- macOS 发布流水线：`docs/mac_release.md`
 - 三方许可证：`docs/licenses.md`
 
 ## 许可证

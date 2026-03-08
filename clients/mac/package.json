@@ -1,0 +1,25 @@
+{
+  "name": "prism-mac-client",
+  "version": "0.1.0",
+  "description": "Prism macOS desktop client wrapper for the web frontend",
+  "main": "main.js",
+  "author": "Prism Team",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "dev": "electron .",
+    "check": "node --check main.js && node --check preload.js && node --check electron-builder.config.cjs && node --check scripts/notarize.cjs",
+    "dist:mac": "electron-builder --mac dmg zip -c electron-builder.config.cjs",
+    "dist:mac:dir": "electron-builder --mac --dir -c electron-builder.config.cjs",
+    "dist:mac:publish": "electron-builder --mac dmg zip --publish always -c electron-builder.config.cjs"
+  },
+  "dependencies": {
+    "electron-log": "^5.2.4",
+    "electron-updater": "^6.3.9"
+  },
+  "devDependencies": {
+    "@electron/notarize": "^3.1.1",
+    "electron": "^32.3.3",
+    "electron-builder": "^24.13.3"
+  }
+}
