@@ -20,12 +20,16 @@ function resolvePublishConfig() {
     const owner = String(process.env.PRISM_GH_OWNER || repoOwnerFromEnv).trim();
     const repo = String(process.env.PRISM_GH_REPO || repoNameFromEnv).trim();
     const privateRepo = String(process.env.PRISM_GH_PRIVATE || "").trim() === "1";
+    const releaseType = String(process.env.PRISM_GH_RELEASE_TYPE || "release").trim();
+    if (!["draft", "prerelease", "release"].includes(releaseType)) {
+      throw new Error("PRISM_GH_RELEASE_TYPE must be one of: draft, prerelease, release");
+    }
     if (!owner || !repo) {
       throw new Error(
         "PRISM_GH_OWNER and PRISM_GH_REPO are required when PRISM_MAC_PUBLISH_PROVIDER=github (or set GITHUB_REPOSITORY)"
       );
     }
-    return [{ provider: "github", owner, repo, private: privateRepo }];
+    return [{ provider: "github", owner, repo, private: privateRepo, releaseType }];
   }
 
   throw new Error(`Unsupported PRISM_MAC_PUBLISH_PROVIDER: ${provider}`);

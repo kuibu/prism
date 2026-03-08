@@ -94,6 +94,7 @@ export PRISM_MAC_PUBLISH_PROVIDER=github
 export PRISM_GH_OWNER=your-org-or-user
 export PRISM_GH_REPO=prism
 export PRISM_GH_PRIVATE=0
+export PRISM_GH_RELEASE_TYPE=release
 ```
 
 Then publish build artifacts:
