@@ -27,12 +27,32 @@ scripts/setup_mac_release_secrets.sh \
   --team-id TEAMID1234
 ```
 
+## 发布前预检
+
+```bash
+cd /Users/a/repos/prism
+make mac-release-check
+```
+
+预检会输出：
+
+- `MISSING_SECRETS`：说明哪些 GitHub Secrets 还没配置
+- `LOCAL_CODESIGN_IDENTITY`：本机是否有可用签名身份
+- `WORKFLOW_EXISTS`：发布工作流是否已存在
+
 ## 触发发布
 
 ```bash
 cd /Users/a/repos/prism
 make mac-release-run VERSION=0.1.1
 ```
+
+注意：工作流中已强制开启：
+
+- `PRISM_REQUIRE_SIGNING=1`
+- `PRISM_REQUIRE_NOTARIZATION=1`
+
+即签名或公证任一步失败都会直接失败，不会再产出“未公证包”。
 
 ## 观察发布状态
 

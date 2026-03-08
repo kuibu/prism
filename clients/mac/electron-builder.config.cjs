@@ -36,6 +36,7 @@ function resolvePublishConfig() {
 }
 
 const publish = resolvePublishConfig();
+const forceCodeSigning = String(process.env.PRISM_REQUIRE_SIGNING || "").trim() === "1";
 
 module.exports = {
   appId: "com.prism.desktop",
@@ -47,6 +48,7 @@ module.exports = {
   files: ["main.js", "preload.js", "offline.html", "package.json"],
   asar: true,
   afterSign: "scripts/notarize.cjs",
+  forceCodeSigning,
   mac: {
     category: "public.app-category.productivity",
     target: [

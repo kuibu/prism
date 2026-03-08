@@ -23,6 +23,7 @@ module.exports = async function notarizeApp(context) {
   const appleId = readEnv("APPLE_ID");
   const appleIdPassword = readEnv("APPLE_APP_SPECIFIC_PASSWORD");
   const teamId = readEnv("APPLE_TEAM_ID");
+  const requireNotarization = readEnv("PRISM_REQUIRE_NOTARIZATION") === "1";
 
   if (appleApiKey && appleApiKeyId && appleApiIssuer) {
     const resolvedKeyPath = path.isAbsolute(appleApiKey)
@@ -52,7 +53,10 @@ module.exports = async function notarizeApp(context) {
     return;
   }
 
-  console.warn(
-    "[notarize] skipped: provide APPLE_API_KEY/APPLE_API_KEY_ID/APPLE_API_ISSUER or APPLE_ID/APPLE_APP_SPECIFIC_PASSWORD/APPLE_TEAM_ID"
-  );
+  const hint =
+    "provide APPLE_API_KEY/APPLE_API_KEY_ID/APPLE_API_ISSUER or APPLE_ID/APPLE_APP_SPECIFIC_PASSWORD/APPLE_TEAM_ID";
+  if (requireNotarization) {
+    throw new Error(`[notarize] required but credentials are missing: ${hint}`);
+  }
+  console.warn(`[notarize] skipped: ${hint}`);
 };

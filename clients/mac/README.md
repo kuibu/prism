@@ -50,6 +50,11 @@ clients/mac/dist/
 Code signing is handled by `electron-builder` (standard `CSC_*` env vars).  
 Notarization is handled in `scripts/notarize.cjs`.
 
+Important:
+
+- In release workflow, signing and notarization are **mandatory** (`PRISM_REQUIRE_SIGNING=1`, `PRISM_REQUIRE_NOTARIZATION=1`).
+- If credentials are missing, build fails immediately (no silent skip).
+
 Set one of the following notarization credential groups:
 
 1. App Store Connect API key mode
@@ -145,4 +150,11 @@ Watch workflow:
 
 ```bash
 gh run watch --repo kuibu/prism --exit-status
+```
+
+Check readiness before triggering:
+
+```bash
+cd /Users/a/repos/prism
+make mac-release-check
 ```

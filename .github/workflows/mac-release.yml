@@ -30,6 +30,8 @@ jobs:
       PRISM_MAC_PUBLISH_PROVIDER: github
       PRISM_GH_PRIVATE: "0"
       PRISM_GH_RELEASE_TYPE: release
+      PRISM_REQUIRE_SIGNING: "1"
+      PRISM_REQUIRE_NOTARIZATION: "1"
       APPLE_DEVELOPER_ID_CERT_P12_BASE64: ${{ secrets.APPLE_DEVELOPER_ID_CERT_P12_BASE64 }}
       APPLE_DEVELOPER_ID_CERT_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_CERT_PASSWORD }}
       APPLE_API_KEY_P8_BASE64: ${{ secrets.APPLE_API_KEY_P8_BASE64 }}
@@ -111,6 +113,17 @@ jobs:
 
       - name: Build, sign, notarize and publish
         run: npm run dist:mac:publish
+
+      - name: Verify signed + notarized app
+        run: |
+          APP_PATH="dist/mac-arm64/Prism Desktop.app"
+          if [[ ! -d "${APP_PATH}" ]]; then
+            echo "::error::App bundle not found: ${APP_PATH}"
+            exit 1
+          fi
+          codesign --verify --deep --strict "${APP_PATH}"
+          xcrun stapler validate "${APP_PATH}"
+          spctl -a -t exec -vv "${APP_PATH}"
 
       - name: Upload release artifacts to workflow run
         uses: actions/upload-artifact@v4

@@ -128,6 +128,7 @@ make mac-client-dist
 For release publishing (`signed + notarized + auto-update metadata`), see:
 - `clients/mac/README.md`
 - `make mac-client-publish`
+- `make mac-release-check`
 - `.github/workflows/mac-release.yml`
 - `scripts/setup_mac_release_secrets.sh`
 
@@ -274,6 +275,7 @@ make mac-client-dist
 如需发布签名版（含公证与自动更新元数据），请看：
 - `clients/mac/README.md`
 - `make mac-client-publish`
+- `make mac-release-check`
 - `.github/workflows/mac-release.yml`
 - `scripts/setup_mac_release_secrets.sh`
 

@@ -1,4 +1,4 @@
-.PHONY: up down logs test live-test demo mac-client-install mac-client-dev mac-client-check mac-client-dist mac-client-dist-dir mac-client-publish mac-release-run
+.PHONY: up down logs test live-test demo mac-client-install mac-client-dev mac-client-check mac-client-dist mac-client-dist-dir mac-client-publish mac-release-check mac-release-run
 
 up:
 	docker compose up -d --build
@@ -45,6 +45,9 @@ mac-client-dist-dir:
 
 mac-client-publish:
 	cd clients/mac && npm run dist:mac:publish
+
+mac-release-check:
+	./scripts/check_mac_release_readiness.sh kuibu/prism
 
 mac-release-run:
 	@if [ -z "$(VERSION)" ]; then \
